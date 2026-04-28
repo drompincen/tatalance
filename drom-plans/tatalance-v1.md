@@ -259,29 +259,43 @@ No JWT, no token handling in the frontend — just a session cookie from the sam
 - [ ] Configure `SecurityConfig`:
   - Permit: `GET /api/health`, `GET /oauth2/**`, `GET /login**`, all static assets (`/assets/**`, `/index.html`, `/`)
   - Require auth: all other `GET /api/**`, `POST /api/**`
-  - OAuth2 login: default success URL `/`, failure URL `/login?error`
+  - Enable both `formLogin()` (demo) and `oauth2Login()` (Google) — Spring Security supports both simultaneously
+  - Success URL `/` for both paths; failure URL `/login?error`
   - Logout: `POST /logout` clears session, redirects to `/`
-  - Disable CSRF for `/api/**` (API calls from SPA use same-origin cookies — CSRF is mitigated by SameSite cookie)
+  - Disable CSRF for `/api/**` (API calls from SPA use same-origin cookies — CSRF mitigated by SameSite cookie)
 - [ ] Add env vars to `application.yml`: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (no defaults — fail fast if missing in prod)
 - [ ] Add `OAuth2UserService` to restrict access by email:
   - Load `ALLOWED_EMAILS` from env (comma-separated)
-  - If authenticated email not in list → throw `OAuth2AuthenticationException` → redirects to `/login?error=unauthorized`
-- [ ] Add `GET /api/me` → `{ name, email, picture }` from `OAuth2AuthenticationToken`
+  - If authenticated email not in list → throw `OAuth2AuthenticationException` → `/login?error=unauthorized`
+- [ ] Add **demo login** `UserDetailsService` bean:
+  - Fixed credentials: username `tata`, password `tata` (BCrypt-hashed in config — never plain text in code)
+  - Returns a `UserDetails` with role `ROLE_USER` and display name "Demo"
+  - Enabled only when Spring profile `demo` is active — inactive in production by default
+  - `application-demo.yml` sets `demo.user.enabled=true`; prod profile leaves it false
+- [ ] Add `GET /api/me` → `{ name, email, picture }` — works for both auth paths:
+  - Google: reads from `OAuth2AuthenticationToken`
+  - Demo: reads from `UsernamePasswordAuthenticationToken`, returns `{ name: "Demo", email: "demo@local", picture: null }`
 - [ ] Write `AuthControllerTest`:
   - `/api/me` unauthenticated → 401
-  - `/api/me` with mock `OAuth2AuthenticationToken` → 200 + user info
-- [ ] Write security integration test: unauthenticated `GET /api/clients` → 401 (not redirect, for API calls)
+  - `/api/me` with mock `OAuth2AuthenticationToken` → 200 + Google user info
+  - `/api/me` with mock `UsernamePasswordAuthenticationToken` (demo) → 200 + `{ name: "Demo" }`
+- [ ] Write security integration test: unauthenticated `GET /api/clients` → 401
 
 #### Frontend
 - [ ] Create `AuthContext` — `currentUser` state, loaded via `GET /api/me`
-- [ ] `AuthGuard`: on 401, do `window.location.href = '/oauth2/authorization/google'`
-- [ ] Show user name + avatar in Topbar (replaces hardcoded "David")
-- [ ] Sign Out button in Topbar → `POST /logout` then reload
+- [ ] `AuthGuard`: on 401, redirect to `/login`
+- [ ] Create `/login` page — rendered by Spring Boot (Thymeleaf template or served as static HTML):
+  - "Sign in with Google" button → `/oauth2/authorization/google`
+  - Username / password form → `POST /login` (Spring Security form login endpoint)
+  - Error message shown when `?error` is in the URL
+- [ ] Show user name in Topbar (replaces hardcoded "David"); no avatar if demo user (`picture` is null)
+- [ ] Sign Out button → `POST /logout` then reload
 - [ ] Wrap `AppLayout` in `AuthGuard`
 
 ### Outcome
-Unauthenticated users land on Google sign-in. Only permitted emails get in.
-After sign-in, the app loads at `/` with the user's name in the Topbar.
+- **Demo mode** (profile `demo`): navigate to `/login`, enter `tata` / `tata`, full app access. No Google credentials needed.
+- **Production**: Google Sign-In only. Demo `UserDetailsService` bean is not loaded.
+- Both paths share the same session mechanism and `/api/me` contract.
 
 ---
 
