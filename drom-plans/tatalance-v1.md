@@ -59,35 +59,65 @@ with a local dev setup using a MongoDB Docker container.
 
 ### Steps
 - [ ] Create `backend/` using Spring Initializr: Java 21, Spring Boot 3.3, Maven
-  - Dependencies: Spring Web, Spring Data MongoDB, Spring Security, OAuth2 Client, Validation, Lombok
+  - Dependencies: Spring Web, Spring Data MongoDB, Spring Security, OAuth2 Client, Validation, Lombok, Spring Boot Actuator
   - No Flyway, no JPA, no H2 — DocumentDB is schemaless
 - [ ] Add `de.flapdoodle.embed:de.flapdoodle.embed.mongo` in `test` scope (embedded MongoDB for tests)
 - [ ] Set up project packages: `domain`, `application`, `infrastructure.web`, `infrastructure.persistence`, `config`
 - [ ] Create `docker-compose.yml` at repo root — `mongo:6` service on port 27017 for local dev
+- [ ] Create `.env.example` at repo root documenting all required env vars:
+  ```
+  MONGODB_URI=mongodb://localhost:27017/tatalance
+  GOOGLE_CLIENT_ID=
+  GOOGLE_CLIENT_SECRET=
+  ALLOWED_EMAILS=
+  # Demo profile only:
+  SPRING_PROFILES_ACTIVE=demo
+  ```
 - [ ] Create `backend/src/main/resources/application.yml`:
   ```yaml
   spring:
     data:
       mongodb:
         uri: ${MONGODB_URI:mongodb://localhost:27017/tatalance}
+    session:
+      store-type: none   # overridden to redis in prod profile
+  server:
+    servlet:
+      session:
+        cookie:
+          http-only: true
+          secure: false  # overridden to true in prod profile
+          same-site: strict
+  ```
+- [ ] Create `backend/src/main/resources/application-prod.yml`:
+  ```yaml
+  server.servlet.session.cookie.secure: true
+  spring.session.store-type: redis   # see Chapter 9 — session stickiness
   ```
 - [ ] Create `backend/src/main/resources/application-test.yml` — override MongoDB URI to flapdoodle embedded port (handled automatically by `@DataMongoTest`)
-- [ ] Configure CORS in `SecurityConfig` to allow `http://localhost:5173` (Vite dev proxy origin)
+- [ ] Configure CORS in `SecurityConfig` **only when `dev` profile is active** — permits `http://localhost:5173`; prod profile has no CORS config (same-origin, not needed)
 - [ ] Add SPA catch-all controller: `@Controller` returning `forward:/index.html` for all non-API, non-asset routes (enables React Router client-side navigation)
 - [ ] Configure Spring Boot to serve static resources from `classpath:/static/`
-- [ ] Add health-check endpoint `GET /api/health` → `{ status: "ok" }`
-- [ ] Write `HealthControllerTest` (`@WebMvcTest`) — `GET /api/health` returns 200
+- [ ] Add **deep health-check** endpoint `GET /api/health` — pings MongoDB (issue a `ping` command via `MongoTemplate`); returns `{ status: "ok", db: "ok" }` on success, `503` if DB unreachable
+- [ ] Add global exception handler: `@ControllerAdvice GlobalExceptionHandler` using Spring Boot 3's `ProblemDetail`:
+  - `MethodArgumentNotValidException` → 400, body `{ type, title, status, errors: [{field, message}] }`
+  - `NotFoundException` (custom) → 404
+  - Unhandled `Exception` → 500 (no stack trace in response body)
+- [ ] Write `HealthControllerTest` (`@WebMvcTest`, mock `MongoTemplate`) — 200 when DB ok, 503 when DB throws
+- [ ] Write `GlobalExceptionHandlerTest` — 400 with field errors, 404, 500
 - [ ] Verify `mvn test` passes and `mvn spring-boot:run` starts cleanly (with `docker-compose up -d`)
 
 ### Notes
 - DocumentDB in AWS is MongoDB 5.0-compatible. Use Spring Data MongoDB — the driver is compatible.
+- **DocumentDB incompatibilities to watch:** `$expr` in queries, `$lookup` (no joins anyway), `listCollections` filter. None affect v1's simple CRUD, but note for future features.
 - No schema migrations needed — documents are created on first write.
 - Index creation: use `@Indexed` and `@CompoundIndex` on `@Document` classes; Spring Data MongoDB
   creates them on startup when `spring.data.mongodb.auto-index-creation=true` (dev only; manage
-  indexes manually in prod via DocumentDB console or a startup script).
+  indexes manually in prod via DocumentDB console or a startup `CommandLineRunner`).
+- Flapdoodle runs real MongoDB (not DocumentDB) — tests pass against MongoDB. If a feature fails only on DocumentDB, it will only surface in prod. Known incompatibilities are minor for v1's use of simple find/save operations.
 
 ### Outcome
-`backend/` builds, tests pass, app starts with local MongoDB, health endpoint responds.
+`backend/` builds, tests pass, app starts with local MongoDB, health endpoint probes DB, errors return structured ProblemDetail JSON.
 
 ---
 
@@ -120,6 +150,7 @@ Client { _id (ObjectId), name (required), phone (required), email, notes, create
 - [ ] **DTOs**: `CreateClientRequest` (name, phone, email, notes), `ClientResponse`
 - [ ] **Integration test** `ClientIntegrationTest` (`@SpringBootTest`, uses flapdoodle embedded MongoDB):
   - create → verify persisted → list → verify appears → fetch by id
+  - fetch non-existent id → 404
 - [ ] Run `mvn test` — all green
 
 ### Acceptance criteria covered
@@ -127,6 +158,7 @@ Client { _id (ObjectId), name (required), phone (required), email, notes, create
 - Missing phone → 400 `{ field: "phone", message: "phone is required" }`
 - Valid save → 201 + `ClientResponse` with generated id
 - List → 200 + array
+- `GET /api/clients/{id}` with unknown id → 404
 
 ---
 
@@ -272,9 +304,14 @@ No JWT, no token handling in the frontend — just a session cookie from the sam
   - Returns a `UserDetails` with role `ROLE_USER` and display name "Demo"
   - Enabled only when Spring profile `demo` is active — inactive in production by default
   - `application-demo.yml` sets `demo.user.enabled=true`; prod profile leaves it false
+- [ ] **CSRF on the demo login form**: `POST /login` is subject to CSRF. Add Thymeleaf (`spring-boot-starter-thymeleaf`) for the login page so Spring Security injects the CSRF token into the form automatically. The login page is a Thymeleaf template at `templates/login.html`, not a React route — it sits outside the SPA. `SpaController` must explicitly exclude `/login` from forwarding.
 - [ ] Add `GET /api/me` → `{ name, email, picture }` — works for both auth paths:
   - Google: reads from `OAuth2AuthenticationToken`
   - Demo: reads from `UsernamePasswordAuthenticationToken`, returns `{ name: "Demo", email: "demo@local", picture: null }`
+- [ ] **Register OAuth redirect URIs in Google Cloud Console** (one-time manual step, required before any OAuth flow works):
+  - Dev: `http://localhost:8080/login/oauth2/code/google`
+  - Prod: `https://{prod-domain}/login/oauth2/code/google`
+  - Add both to the Google OAuth app's "Authorised redirect URIs" list
 - [ ] Write `AuthControllerTest`:
   - `/api/me` unauthenticated → 401
   - `/api/me` with mock `OAuth2AuthenticationToken` → 200 + Google user info
@@ -284,10 +321,11 @@ No JWT, no token handling in the frontend — just a session cookie from the sam
 #### Frontend
 - [ ] Create `AuthContext` — `currentUser` state, loaded via `GET /api/me`
 - [ ] `AuthGuard`: on 401, redirect to `/login`
-- [ ] Create `/login` page — rendered by Spring Boot (Thymeleaf template or served as static HTML):
+- [ ] Login page is a **Thymeleaf template** (`templates/login.html`) served by Spring Boot at `GET /login`:
   - "Sign in with Google" button → `/oauth2/authorization/google`
-  - Username / password form → `POST /login` (Spring Security form login endpoint)
+  - Username / password form → `POST /login` with CSRF token (injected by Thymeleaf `th:action`)
   - Error message shown when `?error` is in the URL
+  - Styled to match the app (inline CSS or a separate non-bundled stylesheet)
 - [ ] Show user name in Topbar (replaces hardcoded "David"); no avatar if demo user (`picture` is null)
 - [ ] Sign Out button → `POST /logout` then reload
 - [ ] Wrap `AppLayout` in `AuthGuard`
@@ -359,18 +397,35 @@ Directory: `infrastructure/`
 
 ### Steps
 
-#### Infrastructure (CDK)
+#### Infrastructure (CDK) — pre-requisites (one-time, manual)
+- [ ] **CDK bootstrap**: `npx cdk bootstrap aws://{account-id}/{region}` — required once before any `cdk deploy`
+- [ ] **Request ACM certificate** in AWS Console (or CDK `Certificate` construct with DNS validation):
+  - Domain: `{prod-domain}` (e.g. `tatalance.example.com`)
+  - Validation: DNS (add CNAME to your DNS registrar or Route 53)
+  - Certificate must be in the **same region** as the ALB
+  - Note: cert ARN is needed in `BackendStack` — either hardcode after issue or use a CDK lookup
+- [ ] **Google Cloud Console**: register both redirect URIs (see Chapter 6) before first OAuth test
+
+#### Infrastructure (CDK) — stacks
 - [ ] `npx cdk init app --language typescript` in `infrastructure/`
 - [ ] `VpcStack` — VPC, 2 AZs, public + private subnets, NAT gateway (single AZ for cost)
+  - Security groups: `albSg` (0.0.0.0/0 → 443, 80), `ecsSg` (albSg → 8080), `dbSg` (ecsSg → 27017)
+- [ ] `SessionStack` — ElastiCache Redis (cache.t3.micro, single node for v1), private subnet, security group allowing only `ecsSg`; Secrets Manager secret for Redis endpoint
+  - Spring Session Redis externalizes HTTP sessions so all Fargate tasks share session state — required for rolling deploys with >1 task
+  - Add `spring-session-data-redis` and `spring-boot-starter-data-redis` dependencies to `backend/pom.xml`
 - [ ] `DatabaseStack` — DocumentDB cluster (db.t3.medium, 1 instance for v1), private subnet group,
-  Secrets Manager secret for `{ username, password, host, port }`, security group allowing only ECS task SG
+  Secrets Manager secret for `{ username, password, host, port }`, security group `dbSg`
+  - Bundle Amazon RDS CA bundle (`rds-combined-ca-bundle.pem`) in Docker image (see Dockerfile section)
 - [ ] `BackendStack`:
   - ECR repository for Spring Boot image
   - ECS Cluster (Fargate)
+  - **Task execution role**: grants `ecr:GetAuthorizationToken`, `ecr:BatchGetImage`, `secretsmanager:GetSecretValue`, `logs:CreateLogStream`, `logs:PutLogEvents`
+  - **Task role**: grants `secretsmanager:GetSecretValue` for DB + Redis secrets (runtime access)
   - Task definition: 512 CPU / 1024 MB, image from ECR, env vars from Secrets Manager
-  - Fargate service: 1 desired task, rolling deploy (min 50%, max 200%)
-  - ALB (internet-facing), HTTPS listener (ACM cert), HTTP → HTTPS redirect
-  - ALB target group: port 8080, health check `GET /api/health`
+  - Fargate service: desired 1 task, rolling deploy (min 100%, max 200%) — ensures zero-downtime with session continuity
+  - ALB (internet-facing), HTTPS listener (ACM cert ARN from pre-requisites), HTTP → HTTPS redirect
+  - ALB **stickiness disabled** — sessions are in Redis, any task handles any request
+  - ALB target group: port 8080, health check `GET /api/health` (deep check — verifies DB connectivity)
 - [ ] `cdk deploy --all` to a fresh account — verify stacks create cleanly
 
 #### GitHub Actions — CI (`.github/workflows/ci.yml`)
@@ -390,21 +445,32 @@ Triggers: push to `main` only, requires CI to pass
 - [ ] GitHub Secrets required: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`,
   `ECR_REPOSITORY`, `ECS_CLUSTER`, `ECS_SERVICE`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`
 
-#### Dockerfile (multi-stage)
+#### Dockerfile (multi-stage, with dependency layer caching)
 ```dockerfile
-# Stage 1: build (Maven + Node via frontend-maven-plugin)
-FROM maven:3.9-eclipse-temurin-21 AS build
+# Stage 1: resolve dependencies (cached layer — only re-runs when pom.xml changes)
+FROM maven:3.9-eclipse-temurin-21 AS deps
 WORKDIR /app
+COPY backend/pom.xml backend/pom.xml
+RUN cd backend && mvn dependency:go-offline -B
+
+# Stage 2: build (re-runs when source or ui changes)
+FROM deps AS build
 COPY backend/ backend/
 COPY ui/ ui/
-RUN cd backend && mvn package -DskipTests
+RUN cd backend && mvn package -DskipTests -B
 
-# Stage 2: run
+# Stage 3: run
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+# Amazon RDS CA bundle — required for DocumentDB TLS
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /opt/rds-ca/global-bundle.pem
 COPY --from=build /app/backend/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+  "-Djavax.net.ssl.trustStore=/opt/rds-ca/global-bundle.pem", \
+  "-Djavax.net.ssl.trustStoreType=PEM", \
+  "-jar", "app.jar"]
 ```
+Note: `ADD https://...` fetches the CA bundle at image build time. If the URL is blocked in CI, download it into `backend/src/main/resources/` and `COPY` instead.
 
 #### Environment management
 - [ ] `application-prod.yml` — all secrets read from env vars, no defaults
@@ -420,23 +486,72 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ---
 
+## Chapter 9: Operational Readiness
+**Status:** pending
+
+### Goal
+The app is running in production. This chapter covers the operational concerns that make it
+observable, debuggable, and demo-ready — things that aren't features but are required for
+the app to be trustworthy once deployed.
+
+### Structured logging (CloudWatch-friendly)
+- [ ] Add `logback-spring.xml` to `backend/src/main/resources/`:
+  - Profile `prod`: JSON format (using `logstash-logback-encoder`) — one JSON line per log event
+  - Profile `dev`/`default`: human-readable console format
+  - Log fields: `timestamp`, `level`, `logger`, `message`, `requestId` (MDC), `traceId` (MDC)
+- [ ] Add `RequestIdFilter` (`OncePerRequestFilter`): generates a UUID per request, stores in MDC as `requestId`, adds `X-Request-Id` to response headers
+- [ ] Set CloudWatch log group retention to 30 days in CDK `BackendStack`
+- [ ] Verify: in prod, `docker run` emits JSON; CloudWatch Logs Insights query `fields @message | filter level = "ERROR"` works
+
+### Demo seed data
+- [ ] Create `backend/src/main/java/.../config/DataSeeder.java` — a `CommandLineRunner` annotated `@Profile("demo")`:
+  - Runs only in the `demo` profile
+  - Checks if the `clients` collection is empty; if so, inserts 3 sample clients
+  - Checks if the `jobs` collection is empty; if so, inserts 2 sample jobs for those clients
+  - Idempotent: safe to restart without duplicating data
+- [ ] Seed data matches names from the existing mock (`Maria Gonzalez`, `James Mitchell`, `Sofia Ramirez`)
+- [ ] Write `DataSeederTest` — verify seeder inserts data when collections empty, skips when already populated
+
+### Smoke test for production deploy
+- [ ] Add `smoke-test.sh` to `scripts/`:
+  ```bash
+  BASE_URL=$1  # e.g. https://tatalance.example.com
+  # 1. health check
+  curl -sf "$BASE_URL/api/health" | grep '"db":"ok"'
+  # 2. unauthenticated API call returns 401 (not 200, not 500)
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/clients")
+  [ "$STATUS" = "401" ] || exit 1
+  echo "Smoke test passed."
+  ```
+- [ ] Add smoke test as final step in `deploy.yml` CD workflow after `ecs wait services-stable`
+
+### Known limitations (documented, not blocked)
+- **Pagination**: `GET /api/clients` and `GET /api/jobs` return all records. Acceptable for v1 (expected < 100 records in demos). Pagination will be needed before real-user growth.
+- **DocumentDB vs MongoDB**: Flapdoodle tests run against real MongoDB 6; DocumentDB is MongoDB 5.0-compatible with some operator gaps. Simple find/save in v1 is not affected. Aggregation-heavy features (reports) should be tested against a DocumentDB instance before adding.
+- **Single Fargate task in prod**: 1 desired task means zero-downtime is provided by rolling deploy (new task starts before old stops). There is a brief window where both tasks serve traffic. Redis sessions ensure continuity.
+- **No staging environment**: deploys go straight to production. Acceptable for a solo-user tool. Add a staging stack in CDK before onboarding other users.
+
+---
+
 ## Summary — Delivery order
 
 | Chapter | Deliverable | Depends on |
 |---|---|---|
 | 0 | UI reorganization (React + Vite) | — |
-| 1 | Backend scaffold (Spring Boot + MongoDB) | — |
+| 1 | Backend scaffold (Spring Boot + MongoDB, error handler, health, logging) | — |
 | 2 | Add Client backend — TDD | 1 |
 | 3 | Add Client UI — wired to API | 0, 2 |
 | 4 | Add Job/Drive backend — TDD | 2 |
 | 5 | Add Job/Drive UI — wired to API | 3, 4 |
-| 6 | Google OAuth2 Sign-In | 1 |
+| 6 | Google OAuth2 + demo login (tata/tata) | 1 |
 | 7 | UI bundled in Spring Boot JAR | 0, 1 |
-| 8 | CI/CD + AWS deployment | 0, 1, 6, 7 |
+| 8 | CI/CD + AWS deployment (CDK, ECS, DocumentDB, Redis sessions) | 0, 1, 6, 7 |
+| 9 | Operational readiness (logging, seed data, smoke test) | 8 |
 
 **Chapters 0 and 1 start in parallel.**
 **Chapters 2 and 6 start in parallel once Chapter 1 is done.**
 **Chapter 7 (bundle) can start once Chapters 0 and 1 are done — independently of stories.**
+**Chapter 9 runs after first successful deploy (Chapter 8).**
 
 ---
 
@@ -454,7 +569,11 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 | Frontend | React 18 + Vite | Component model, testable, fast dev server |
 | UI testing | Vitest + Testing Library | Co-located with Vite, fast |
 | Auth | Spring Security OAuth2 Login + Google (server-side session) | No JWT complexity for single-admin v1 |
-| Container | Docker (multi-stage) + ECR | Standard AWS path |
+| Session store | ElastiCache Redis (prod) / in-memory (dev) | Externalizes sessions across Fargate tasks; required for rolling deploy |
+| Login page | Thymeleaf template | CSRF token auto-injection for form login; keeps login outside the React SPA |
+| Error responses | Spring Boot 3 ProblemDetail (RFC 9457) | Standardized JSON errors; built into framework |
+| Logging | Logback JSON (prod) / console (dev) | CloudWatch Logs Insights queryable |
+| Container | Docker (multi-stage, dep caching) + ECR | Standard AWS path; cached deps layer keeps builds fast |
 | Hosting | ECS Fargate + ALB | Serverless containers, no EC2 management |
 | IaC | AWS CDK (TypeScript) | Type-safe, composable |
 | CI/CD | GitHub Actions | Already on GitHub, free tier |
