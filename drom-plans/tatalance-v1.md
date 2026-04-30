@@ -61,17 +61,23 @@ with a local dev setup using a MongoDB Docker container.
 - [ ] Create `backend/` using Spring Initializr: Java 21, Spring Boot 3.3, Maven
   - Dependencies: Spring Web, Spring Data MongoDB, Spring Security, OAuth2 Client, Validation, Lombok, Spring Boot Actuator
   - No Flyway, no JPA, no H2 — DocumentDB is schemaless
-- [ ] Add `de.flapdoodle.embed:de.flapdoodle.embed.mongo` in `test` scope (embedded MongoDB for tests)
-- [ ] Set up project packages: `domain`, `application`, `infrastructure.web`, `infrastructure.persistence`, `config`
+- [ ] Add `de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x` in `test` scope — this is the Spring Boot 3-specific artifact; the old `de.flapdoodle.embed.mongo` artifact does NOT auto-configure with Spring Boot 3 and will cause all `@DataMongoTest` tests to fail with a connection error
+- [ ] Set up project packages under root `com.tatalance`: `domain`, `application`, `infrastructure.web`, `infrastructure.persistence`, `config`
 - [ ] Create `docker-compose.yml` at repo root — `mongo:6` service on port 27017 for local dev
 - [ ] Create `.env.example` at repo root documenting all required env vars:
   ```
+  # Local dev (default profile — no Google credentials needed with demo profile)
   MONGODB_URI=mongodb://localhost:27017/tatalance
-  GOOGLE_CLIENT_ID=
-  GOOGLE_CLIENT_SECRET=
-  ALLOWED_EMAILS=
-  # Demo profile only:
   SPRING_PROFILES_ACTIVE=demo
+
+  # Production (all required — app fails to start if missing)
+  # MONGODB_URI=mongodb://user:pass@docdb-host:27017/tatalance?tls=true
+  # REDIS_HOST=elasticache-host
+  # REDIS_PORT=6379
+  # GOOGLE_CLIENT_ID=
+  # GOOGLE_CLIENT_SECRET=
+  # ALLOWED_EMAILS=david@example.com
+  # SPRING_PROFILES_ACTIVE=prod
   ```
 - [ ] Create `backend/src/main/resources/application.yml`:
   ```yaml
@@ -79,8 +85,12 @@ with a local dev setup using a MongoDB Docker container.
     data:
       mongodb:
         uri: ${MONGODB_URI:mongodb://localhost:27017/tatalance}
+        auto-index-creation: true   # dev only; disabled in prod profile
     session:
       store-type: none   # overridden to redis in prod profile
+    jackson:
+      serialization:
+        write-dates-as-timestamps: false   # Instant → ISO 8601 string, not Unix nanos
   server:
     servlet:
       session:
@@ -88,15 +98,38 @@ with a local dev setup using a MongoDB Docker container.
           http-only: true
           secure: false  # overridden to true in prod profile
           same-site: strict
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health, info
+    endpoint:
+      health:
+        show-details: when-authorized
   ```
 - [ ] Create `backend/src/main/resources/application-prod.yml`:
   ```yaml
   server.servlet.session.cookie.secure: true
-  spring.session.store-type: redis   # see Chapter 9 — session stickiness
+  spring:
+    data:
+      mongodb:
+        auto-index-creation: false  # never auto-create indexes in prod
+      redis:
+        host: ${REDIS_HOST}
+        port: ${REDIS_PORT:6379}
+    session:
+      store-type: redis
+      redis:
+        namespace: tatalance:session
   ```
+  Add `REDIS_HOST` and `REDIS_PORT` to `.env.example` (sourced from Secrets Manager in ECS)
 - [ ] Create `backend/src/main/resources/application-test.yml` — override MongoDB URI to flapdoodle embedded port (handled automatically by `@DataMongoTest`)
 - [ ] Configure CORS in `SecurityConfig` **only when `dev` profile is active** — permits `http://localhost:5173`; prod profile has no CORS config (same-origin, not needed)
-- [ ] Add SPA catch-all controller: `@Controller` returning `forward:/index.html` for all non-API, non-asset routes (enables React Router client-side navigation)
+- [ ] Add SPA catch-all controller: `@Controller` with two mappings to cover all React Router paths:
+  - `@RequestMapping("/{path:[^\\.]*}")` — matches single segments like `/clients`, `/jobs`
+  - `@RequestMapping("/**/{path:[^\\.]*}")` — matches deep segments like `/clients/abc/jobs`
+  - Both return `forward:/index.html`
+  - Spring MVC picks more specific `@GetMapping("/login")` and `/api/**` routes first; Security filter chain intercepts `/oauth2/**` and `/login/oauth2/**` before MVC — the catch-all never fires for those
 - [ ] Configure Spring Boot to serve static resources from `classpath:/static/`
 - [ ] Add **deep health-check** endpoint `GET /api/health` — pings MongoDB (issue a `ping` command via `MongoTemplate`); returns `{ status: "ok", db: "ok" }` on success, `503` if DB unreachable
 - [ ] Add global exception handler: `@ControllerAdvice GlobalExceptionHandler` using Spring Boot 3's `ProblemDetail`:
@@ -105,6 +138,14 @@ with a local dev setup using a MongoDB Docker container.
   - Unhandled `Exception` → 500 (no stack trace in response body)
 - [ ] Write `HealthControllerTest` (`@WebMvcTest`, mock `MongoTemplate`) — 200 when DB ok, 503 when DB throws
 - [ ] Write `GlobalExceptionHandlerTest` — 400 with field errors, 404, 500
+- [ ] Add to `application.yml`: `spring.threads.virtual.enabled: true` — enables Java 21 virtual threads for all request handling threads; one-line opt-in, significant throughput gain for MongoDB I/O
+- [ ] Add `frontend-maven-plugin` skip configuration to `pom.xml`:
+  ```xml
+  <configuration>
+    <skip>${skipFrontend}</skip>
+  </configuration>
+  ```
+  with `<skipFrontend>false</skipFrontend>` as default property — makes `-DskipFrontend=true` actually work in CI
 - [ ] Verify `mvn test` passes and `mvn spring-boot:run` starts cleanly (with `docker-compose up -d`)
 
 ### Notes
@@ -132,25 +173,32 @@ Full TDD cycle for the Client domain. Red → Green → Refactor for each layer.
 Client { _id (ObjectId), name (required), phone (required), email, notes, createdAt }
 ```
 
+### Test annotation guide for this chapter
+- **`@DataMongoTest`** — slice test, loads only MongoDB beans (repositories). Use for repository tests. Fast.
+- **`@WebMvcTest(ClientController.class)`** — slice test, loads web + security layers only, service is mocked with `@MockBean`. Use for controller tests. Add `@WithMockUser` on tests that expect 2xx responses (security is active in this slice).
+- **`@SpringBootTest(webEnvironment = RANDOM_PORT)`** — full context with flapdoodle embedded MongoDB. Use for end-to-end integration tests. Slower; run fewer.
+
 ### Steps
-- [ ] **Document** `Client.java` — `@Document(collection="clients")`, `@NotBlank` on name + phone, `@Id String id`, `Instant createdAt`
+- [ ] **Document** `Client.java`:
+  - `@Document(collection="clients")`, `@Id String id`, `Instant createdAt`
+  - **NO Bean Validation annotations** — Spring Data MongoDB does not enforce `@NotBlank` on documents before save; validation belongs on the DTO, not the domain object
 - [ ] **Repository** `ClientRepository extends MongoRepository<Client, String>`
-- [ ] **[RED]** Write `ClientServiceTest` (unit, no DB):
+- [ ] **DTOs**: `CreateClientRequest` with `@NotBlank String name`, `@NotBlank String phone`, `String email`, `String notes`; `ClientResponse`
+- [ ] **[RED]** Write `ClientServiceTest` (unit, no DB, mock repository):
   - create with valid data → returns ClientResponse with id
-  - create with missing name → throws ConstraintViolationException
-  - create with missing phone → throws ConstraintViolationException
-  - list → returns all clients
+  - list → returns all clients (service delegates to repository, tests the mapping)
+  - Note: validation is NOT tested here — it fires at the controller layer, not the service
 - [ ] **[GREEN]** Implement `ClientService` — `create(CreateClientRequest)`, `list()`
-- [ ] **[RED]** Write `ClientControllerTest` (`@WebMvcTest`, mock service):
-  - `POST /api/clients` with valid body → 201 + ClientResponse
-  - `POST /api/clients` with missing name → 400 + field error `name`
-  - `POST /api/clients` with missing phone → 400 + field error `phone`
-  - `GET /api/clients` → 200 + array
-- [ ] **[GREEN]** Implement `ClientController` — `POST /api/clients`, `GET /api/clients`, `GET /api/clients/{id}`
-- [ ] **DTOs**: `CreateClientRequest` (name, phone, email, notes), `ClientResponse`
-- [ ] **Integration test** `ClientIntegrationTest` (`@SpringBootTest`, uses flapdoodle embedded MongoDB):
-  - create → verify persisted → list → verify appears → fetch by id
-  - fetch non-existent id → 404
+- [ ] **[RED]** Write `ClientControllerTest` (`@WebMvcTest`, `@MockBean ClientService`, `@WithMockUser` on authenticated tests):
+  - `@WithMockUser` — `POST /api/clients` with valid body → 201 + ClientResponse
+  - `@WithMockUser` — `POST /api/clients` with missing name → 400 + field error `name`
+  - `@WithMockUser` — `POST /api/clients` with missing phone → 400 + field error `phone`
+  - `@WithMockUser` — `GET /api/clients` → 200 + array
+  - (401 test belongs in the security integration test, not here)
+- [ ] **[GREEN]** Implement `ClientController` — `POST /api/clients` with `@Valid @RequestBody CreateClientRequest`, `GET /api/clients`, `GET /api/clients/{id}`
+- [ ] **Integration test** `ClientIntegrationTest` (`@SpringBootTest(webEnvironment = RANDOM_PORT)`, flapdoodle auto-configured, `@WithMockUser` or `TestRestTemplate` with session):
+  - POST → verify 201 → GET list → verify appears → GET by id → verify fields
+  - GET non-existent id → 404
 - [ ] Run `mvn test` — all green
 
 ### Acceptance criteria covered
@@ -219,28 +267,33 @@ Denormalize `clientName` on write — avoids a join on list queries (MongoDB has
 On `POST /api/jobs`, the service looks up the client, copies `client.name` into `job.clientName`.
 
 ### Steps
-- [ ] **Document** `Job.java` — `@Document(collection="jobs")`, `@NotBlank` on clientId/pickupLocation/dropoffLocation, `@NotNull` on pickupDateTime
+- [ ] **Document** `Job.java`:
+  - `@Document(collection="jobs")`, `@Id String id`, `Instant createdAt`, `JobStatus status`
+  - `@Indexed String clientId` — explicit index on this field; `findByClientId` does a full scan without it
+  - `@Field(targetType = FieldType.DECIMAL128) BigDecimal price` — without this, MongoDB stores `BigDecimal` as a String, breaking any future numeric queries; `DECIMAL128` preserves precision and stores as a proper numeric type
+  - **NO `@NotBlank` / `@NotNull` on the document** — same rule as `Client.java`; validation is on the DTO
 - [ ] **Enum** `JobStatus { BOOKED }`
 - [ ] **Repository** `JobRepository extends MongoRepository<Job, String>` — add `findByClientId(String)`
-- [ ] **[RED]** Write `JobServiceTest`:
+- [ ] **DTOs**: `CreateJobRequest` with `@NotBlank String clientId`, `@NotNull Instant pickupDateTime`, `@NotBlank String pickupLocation`, `@NotBlank String dropoffLocation`, `BigDecimal price`, `String notes`; `JobResponse` (includes `clientName`)
+- [ ] **[RED]** Write `JobServiceTest` (unit, mock repository and `ClientRepository`):
   - create with valid data → returns JobResponse with status BOOKED and clientName populated
-  - create with unknown clientId → throws ClientNotFoundException
-  - create missing pickupDateTime → throws ConstraintViolationException
-  - create missing pickupLocation → throws ConstraintViolationException
-  - create missing dropoffLocation → throws ConstraintViolationException
+  - create with unknown clientId → throws `ClientNotFoundException` (service explicitly checks; this is business logic, not validation)
   - list all → returns list
   - list by client → returns only that client's jobs
+  - Note: DTO field-level validation (missing pickupDateTime etc.) is tested in `JobControllerTest`, not here
 - [ ] **[GREEN]** Implement `JobService` — `create(CreateJobRequest)`, `list()`, `listByClient(String clientId)`
-- [ ] **[RED]** Write `JobControllerTest` (`@WebMvcTest`):
-  - `POST /api/jobs` valid → 201, status=BOOKED
-  - `POST /api/jobs` missing required → 400 with field errors
-  - `GET /api/jobs` → 200 + array
-  - `GET /api/clients/{id}/jobs` → 200 + array filtered
+- [ ] **[RED]** Write `JobControllerTest` (`@WebMvcTest`, `@MockBean JobService`, `@WithMockUser`):
+  - `@WithMockUser` — `POST /api/jobs` valid → 201, status=BOOKED
+  - `@WithMockUser` — `POST /api/jobs` missing `clientId` → 400 with field error
+  - `@WithMockUser` — `POST /api/jobs` missing `pickupDateTime` → 400
+  - `@WithMockUser` — `POST /api/jobs` missing `pickupLocation` → 400
+  - `@WithMockUser` — `POST /api/jobs` missing `dropoffLocation` → 400
+  - `@WithMockUser` — `GET /api/jobs` → 200 + array
+  - `@WithMockUser` — `GET /api/clients/{id}/jobs` → 200 + filtered array
 - [ ] **[GREEN]** Implement `JobController`
-- [ ] **DTOs**: `CreateJobRequest`, `JobResponse` (includes clientName)
-- [ ] **Integration test** `JobIntegrationTest`:
-  - insert client → create job for that client → list jobs → verify clientName denormalized → verify status BOOKED
-  - create job with non-existent clientId → 404
+- [ ] **Integration test** `JobIntegrationTest` (`@SpringBootTest(webEnvironment = RANDOM_PORT)`):
+  - insert client → POST job for that client → GET list → verify clientName denormalized → verify status BOOKED
+  - POST job with non-existent clientId → 404
 - [ ] Run `mvn test` — all green
 
 ---
@@ -295,7 +348,13 @@ No JWT, no token handling in the frontend — just a session cookie from the sam
   - Success URL `/` for both paths; failure URL `/login?error`
   - Logout: `POST /logout` clears session, redirects to `/`
   - Disable CSRF for `/api/**` (API calls from SPA use same-origin cookies — CSRF mitigated by SameSite cookie)
-- [ ] Add env vars to `application.yml`: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (no defaults — fail fast if missing in prod)
+- [ ] Add Google OAuth2 properties to `application.yml` as empty defaults:
+  ```yaml
+  spring.security.oauth2.client.registration.google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+  ```
+  Spring Boot's OAuth2 auto-config will **fail to start** if `client-id` is empty. Guard the `oauth2Login()` call in `SecurityConfig` with `@ConditionalOnProperty(name = "spring.security.oauth2.client.registration.google.client-id", matchIfMissing = false)` on the OAuth2 `SecurityFilterChain` bean — or restructure `SecurityConfig` to only call `.oauth2Login()` when the property is non-blank (check via `@Value`). In `demo` profile without Google credentials, only `formLogin()` is registered. In prod, both are required — app fails fast if `GOOGLE_CLIENT_ID` is missing.
 - [ ] Add `OAuth2UserService` to restrict access by email:
   - Load `ALLOWED_EMAILS` from env (comma-separated)
   - If authenticated email not in list → throw `OAuth2AuthenticationException` → `/login?error=unauthorized`
@@ -445,39 +504,56 @@ Triggers: push to `main` only, requires CI to pass
 - [ ] GitHub Secrets required: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`,
   `ECR_REPOSITORY`, `ECS_CLUSTER`, `ECS_SERVICE`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`
 
-#### Dockerfile (multi-stage, with dependency layer caching)
+#### Dockerfile (multi-stage, with dependency and npm layer caching)
 ```dockerfile
-# Stage 1: resolve dependencies (cached layer — only re-runs when pom.xml changes)
+# Stage 1a: resolve Maven dependencies (re-runs only when pom.xml changes)
 FROM maven:3.9-eclipse-temurin-21 AS deps
 WORKDIR /app
 COPY backend/pom.xml backend/pom.xml
-RUN cd backend && mvn dependency:go-offline -B
+RUN cd backend && mvn dependency:go-offline -DskipFrontend=true -B
 
-# Stage 2: build (re-runs when source or ui changes)
+# Stage 1b: resolve npm dependencies (re-runs only when package-lock.json changes)
+FROM node:20-alpine AS npm-deps
+WORKDIR /ui
+COPY ui/package.json ui/package-lock.json ./
+RUN npm ci
+
+# Stage 2: full build
 FROM deps AS build
 COPY backend/ backend/
 COPY ui/ ui/
+COPY --from=npm-deps /ui/node_modules ui/node_modules
+# Skip npm install — already done; skip frontend-maven-plugin's install-node phase
 RUN cd backend && mvn package -DskipTests -B
 
 # Stage 3: run
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-# Amazon RDS CA bundle — required for DocumentDB TLS
-ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /opt/rds-ca/global-bundle.pem
+# Import Amazon RDS CA into the JRE default cacerts — the MongoDB Java driver uses
+# the JRE trust store for TLS. Using -Djavax.net.ssl.trustStoreType=PEM is NOT valid
+# (JVM only accepts JKS/PKCS12); keytool import is the correct approach.
+RUN apk add --no-cache wget && \
+    wget -q -O /tmp/rds-ca.pem \
+      https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem && \
+    keytool -importcert -noprompt -alias rds-ca \
+      -keystore "$JAVA_HOME/lib/security/cacerts" \
+      -storepass changeit \
+      -file /tmp/rds-ca.pem && \
+    rm /tmp/rds-ca.pem
 COPY --from=build /app/backend/target/*.jar app.jar
-ENTRYPOINT ["java", \
-  "-Djavax.net.ssl.trustStore=/opt/rds-ca/global-bundle.pem", \
-  "-Djavax.net.ssl.trustStoreType=PEM", \
-  "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
-Note: `ADD https://...` fetches the CA bundle at image build time. If the URL is blocked in CI, download it into `backend/src/main/resources/` and `COPY` instead.
+MongoDB connection string only needs `?tls=true` — no extra JVM flags. The `keytool` import puts the Amazon CA into the JRE's default trust store which the MongoDB Java driver uses automatically.
 
 #### Environment management
-- [ ] `application-prod.yml` — all secrets read from env vars, no defaults
-- [ ] DocumentDB URI constructed from Secrets Manager secret: `mongodb://{user}:{pass}@{host}:{port}/tatalance?tls=true&tlsAllowInvalidCertificates=false`
-  (DocumentDB requires TLS — include `rds-combined-ca-bundle.pem` in the Docker image or use the JVM default trust store)
-- [ ] DocumentDB TLS: add `--tlsCAFile` or configure MongoDB driver to use `ssl=true`
-- [ ] `MONGODB_URI` injected as env var in ECS task definition from Secrets Manager
+- [ ] `application-prod.yml` — all secrets read from env vars, no defaults (see Chapter 1 for full content)
+- [ ] DocumentDB URI: `mongodb://{user}:{pass}@{host}:{port}/tatalance?tls=true` — `tls=true` is sufficient because the Amazon CA is already imported into the JRE cacerts in the Docker image
+- [ ] ECS task definition env vars (set in `BackendStack` CDK, sourced from Secrets Manager):
+  - `MONGODB_URI` — full DocumentDB connection string
+  - `REDIS_HOST` — ElastiCache primary endpoint
+  - `REDIS_PORT` — 6379
+  - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`
+  - **`SPRING_PROFILES_ACTIVE=prod`** — activates `application-prod.yml` (secure cookies, Redis session store, no CORS, no auto-index). This env var MUST be set or the app runs in default profile with insecure cookies and in-memory sessions in production.
 
 ### Outcome
 - PR → tests run in parallel (backend + UI), no deploy

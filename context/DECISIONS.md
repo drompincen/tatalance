@@ -36,3 +36,28 @@
 **Context:** Need consistent JSON error responses. Spring Boot 3 has built-in support.
 **Decision:** `@ControllerAdvice GlobalExceptionHandler` using `ProblemDetail`. Validation errors map to 400 with `errors` array. Unknown entities return 404. Unhandled exceptions return 500 with no stack trace.
 **Consequences:** Standardized contract for the React UI to parse. No custom error DTOs needed — framework type is sufficient.
+
+## 2026-04-30 Bean Validation on DTOs only, not on domain documents
+**Context:** Spring Data MongoDB does NOT run Bean Validation before saving documents (unlike JPA). Putting `@NotBlank` on `Client.java` or `Job.java` is dead code that gives false confidence.
+**Decision:** All `@NotBlank` / `@NotNull` annotations live only on `CreateClientRequest` / `CreateJobRequest` DTOs. `@Valid` on the `@RequestBody` parameter in the controller enforces them. Domain documents have no validation annotations.
+**Consequences:** Clear separation — the controller boundary is the only validation point. Services trust their inputs are valid. Domain classes stay clean.
+
+## 2026-04-30 BigDecimal → DECIMAL128 in MongoDB
+**Context:** Spring Data MongoDB serializes `BigDecimal` to `String` by default, losing numeric type in the database.
+**Decision:** Annotate the `price` field on `Job.java` with `@Field(targetType = FieldType.DECIMAL128)`.
+**Consequences:** Price is stored as MongoDB `Decimal128` (a 128-bit decimal float). Numeric queries and sorting work correctly. Future range queries on price are possible.
+
+## 2026-04-30 keytool CA import for DocumentDB TLS (not JVM system properties)
+**Context:** DocumentDB requires TLS. The MongoDB Java driver 4.x manages its own SSL context and does not reliably use `-Djavax.net.ssl.trustStore`. Also `trustStoreType=PEM` is not a valid JVM trust store type (JVM only accepts JKS/PKCS12).
+**Decision:** Import the Amazon RDS CA bundle into the JRE's default `cacerts` keystore during the Docker image build using `keytool -importcert`. The connection string only needs `?tls=true`. No JVM system properties needed.
+**Consequences:** Clean connection string. No extra JVM flags. CA import is a one-time Docker build step. If the CA bundle URL is blocked in CI, the PEM file must be committed to `backend/src/main/resources/` and `COPY`'d instead.
+
+## 2026-04-30 OAuth2 conditional on property presence
+**Context:** In `demo` profile, `GOOGLE_CLIENT_ID` is not set. Spring Boot's OAuth2 auto-configuration fails to start if `client-id` is empty.
+**Decision:** `SecurityConfig` inspects `spring.security.oauth2.client.registration.google.client-id` via `@Value`. Only registers `.oauth2Login()` on the `SecurityFilterChain` when the property is non-blank. In `demo` mode without Google credentials, only `formLogin()` is active. Prod requires both — app fails fast if `GOOGLE_CLIENT_ID` is absent in prod.
+**Consequences:** `demo` profile works without any Google credentials. Prod is still secure — missing credentials cause startup failure, not silent fallback.
+
+## 2026-04-30 Flapdoodle spring30x artifact for Spring Boot 3 tests
+**Context:** The legacy `de.flapdoodle.embed.mongo` artifact does not auto-configure with Spring Boot 3. `@DataMongoTest` silently fails to start an embedded MongoDB, causing all repository tests to fail with connection refused.
+**Decision:** Use `de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x` in `test` scope.
+**Consequences:** `@DataMongoTest` slices work correctly. `@SpringBootTest` also auto-configures embedded MongoDB. No test profile MongoDB URI override needed.
