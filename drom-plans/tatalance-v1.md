@@ -72,8 +72,6 @@ with a local dev setup using a MongoDB Docker container.
 
   # Production (all required — app fails to start if missing)
   # MONGODB_URI=mongodb://user:pass@docdb-host:27017/tatalance?tls=true
-  # REDIS_HOST=elasticache-host
-  # REDIS_PORT=6379
   # GOOGLE_CLIENT_ID=
   # GOOGLE_CLIENT_SECRET=
   # ALLOWED_EMAILS=david@example.com
@@ -86,8 +84,6 @@ with a local dev setup using a MongoDB Docker container.
       mongodb:
         uri: ${MONGODB_URI:mongodb://localhost:27017/tatalance}
         auto-index-creation: true   # dev only; disabled in prod profile
-    session:
-      store-type: none   # overridden to redis in prod profile
     jackson:
       serialization:
         write-dates-as-timestamps: false   # Instant → ISO 8601 string, not Unix nanos
@@ -114,15 +110,7 @@ with a local dev setup using a MongoDB Docker container.
     data:
       mongodb:
         auto-index-creation: false  # never auto-create indexes in prod
-      redis:
-        host: ${REDIS_HOST}
-        port: ${REDIS_PORT:6379}
-    session:
-      store-type: redis
-      redis:
-        namespace: tatalance:session
   ```
-  Add `REDIS_HOST` and `REDIS_PORT` to `.env.example` (sourced from Secrets Manager in ECS)
 - [ ] Create `backend/src/main/resources/application-test.yml` — override MongoDB URI to flapdoodle embedded port (handled automatically by `@DataMongoTest`)
 - [ ] Configure CORS in `SecurityConfig` **only when `dev` profile is active** — permits `http://localhost:5173`; prod profile has no CORS config (same-origin, not needed)
 - [ ] Add SPA catch-all controller: `@Controller` with two mappings to cover all React Router paths:
@@ -469,9 +457,6 @@ Directory: `infrastructure/`
 - [ ] `npx cdk init app --language typescript` in `infrastructure/`
 - [ ] `VpcStack` — VPC, 2 AZs, public + private subnets, NAT gateway (single AZ for cost)
   - Security groups: `albSg` (0.0.0.0/0 → 443, 80), `ecsSg` (albSg → 8080), `dbSg` (ecsSg → 27017)
-- [ ] `SessionStack` — ElastiCache Redis (cache.t3.micro, single node for v1), private subnet, security group allowing only `ecsSg`; Secrets Manager secret for Redis endpoint
-  - Spring Session Redis externalizes HTTP sessions so all Fargate tasks share session state — required for rolling deploys with >1 task
-  - Add `spring-session-data-redis` and `spring-boot-starter-data-redis` dependencies to `backend/pom.xml`
 - [ ] `DatabaseStack` — DocumentDB cluster (db.t3.medium, 1 instance for v1), private subnet group,
   Secrets Manager secret for `{ username, password, host, port }`, security group `dbSg`
   - Bundle Amazon RDS CA bundle (`rds-combined-ca-bundle.pem`) in Docker image (see Dockerfile section)
@@ -481,10 +466,9 @@ Directory: `infrastructure/`
   - **Task execution role**: grants `ecr:GetAuthorizationToken`, `ecr:BatchGetImage`, `secretsmanager:GetSecretValue`, `logs:CreateLogStream`, `logs:PutLogEvents`
   - **Task role**: grants `secretsmanager:GetSecretValue` for DB + Redis secrets (runtime access)
   - Task definition: 512 CPU / 1024 MB, image from ECR, env vars from Secrets Manager
-  - Fargate service: desired 1 task, rolling deploy (min 100%, max 200%) — ensures zero-downtime with session continuity
+  - Fargate service: desired 1 task, rolling deploy (min 100%, max 200%)
   - ALB (internet-facing), HTTPS listener (ACM cert ARN from pre-requisites), HTTP → HTTPS redirect
-  - ALB **stickiness disabled** — sessions are in Redis, any task handles any request
-  - ALB target group: port 8080, health check `GET /api/health` (deep check — verifies DB connectivity)
+  - ALB target group: port 8080, health check `GET /api/health`, **sticky sessions enabled** (`stickinessCookieDuration: Duration.days(1)`) — the free ALB `AWSALB` cookie pins David's requests to the same task, so in-memory sessions survive the ~30s deploy window when two tasks briefly overlap. No Redis needed.
 - [ ] `cdk deploy --all` to a fresh account — verify stacks create cleanly
 
 #### GitHub Actions — CI (`.github/workflows/ci.yml`)
@@ -501,8 +485,7 @@ Triggers: push to `main` only, requires CI to pass
   3. Push image to ECR with tag `${{ github.sha }}`
   4. Update ECS service: `aws ecs update-service --force-new-deployment`
   5. Wait for service stability: `aws ecs wait services-stable`
-- [ ] GitHub Secrets required: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`,
-  `ECR_REPOSITORY`, `ECS_CLUSTER`, `ECS_SERVICE`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`
+- [ ] GitHub Secrets required: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `ECR_REPOSITORY`, `ECS_CLUSTER`, `ECS_SERVICE`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`
 
 #### Dockerfile (multi-stage, with dependency and npm layer caching)
 ```dockerfile
@@ -550,10 +533,8 @@ MongoDB connection string only needs `?tls=true` — no extra JVM flags. The `ke
 - [ ] DocumentDB URI: `mongodb://{user}:{pass}@{host}:{port}/tatalance?tls=true` — `tls=true` is sufficient because the Amazon CA is already imported into the JRE cacerts in the Docker image
 - [ ] ECS task definition env vars (set in `BackendStack` CDK, sourced from Secrets Manager):
   - `MONGODB_URI` — full DocumentDB connection string
-  - `REDIS_HOST` — ElastiCache primary endpoint
-  - `REDIS_PORT` — 6379
   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`
-  - **`SPRING_PROFILES_ACTIVE=prod`** — activates `application-prod.yml` (secure cookies, Redis session store, no CORS, no auto-index). This env var MUST be set or the app runs in default profile with insecure cookies and in-memory sessions in production.
+  - **`SPRING_PROFILES_ACTIVE=prod`** — activates `application-prod.yml` (secure cookies, no auto-index, no CORS). MUST be set or the app runs in default profile with insecure cookies in production.
 
 ### Outcome
 - PR → tests run in parallel (backend + UI), no deploy
@@ -621,7 +602,7 @@ the app to be trustworthy once deployed.
 | 5 | Add Job/Drive UI — wired to API | 3, 4 |
 | 6 | Google OAuth2 + demo login (tata/tata) | 1 |
 | 7 | UI bundled in Spring Boot JAR | 0, 1 |
-| 8 | CI/CD + AWS deployment (CDK, ECS, DocumentDB, Redis sessions) | 0, 1, 6, 7 |
+| 8 | CI/CD + AWS deployment (CDK, ECS, DocumentDB, ALB sticky sessions) | 0, 1, 6, 7 |
 | 9 | Operational readiness (logging, seed data, smoke test) | 8 |
 
 **Chapters 0 and 1 start in parallel.**
@@ -645,7 +626,7 @@ the app to be trustworthy once deployed.
 | Frontend | React 18 + Vite | Component model, testable, fast dev server |
 | UI testing | Vitest + Testing Library | Co-located with Vite, fast |
 | Auth | Spring Security OAuth2 Login + Google (server-side session) | No JWT complexity for single-admin v1 |
-| Session store | ElastiCache Redis (prod) / in-memory (dev) | Externalizes sessions across Fargate tasks; required for rolling deploy |
+| Session store | In-memory + ALB sticky sessions | Free; ALB `AWSALB` cookie pins single user to same task; Redis unjustified for solo-admin tool |
 | Login page | Thymeleaf template | CSRF token auto-injection for form login; keeps login outside the React SPA |
 | Error responses | Spring Boot 3 ProblemDetail (RFC 9457) | Standardized JSON errors; built into framework |
 | Logging | Logback JSON (prod) / console (dev) | CloudWatch Logs Insights queryable |

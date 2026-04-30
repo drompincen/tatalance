@@ -27,10 +27,15 @@
 **Decision:** Login page is a Thymeleaf template. Spring Security injects the CSRF token automatically via `th:action`. The SPA catch-all controller explicitly excludes `/login`.
 **Consequences:** Login page is not part of the React bundle. Requires `spring-boot-starter-thymeleaf` dependency. Login page styled separately (inline CSS or non-bundled stylesheet).
 
-## 2026-04-29 ElastiCache Redis for session store
-**Context:** ECS Fargate rolling deploys (min 100%, max 200%) can run two tasks simultaneously. In-memory Spring sessions would be lost on task switches.
-**Decision:** Spring Session with Redis backend (`spring-session-data-redis`). In-memory only in dev profile.
-**Consequences:** Additional AWS resource (ElastiCache, ~$15-25/month for t3.micro). Session continuity across task restarts. All tasks share session state — no sticky sessions needed on ALB.
+## 2026-04-29 ElastiCache Redis for session store [SUPERSEDED]
+**Superseded by:** 2026-04-30 ALB sticky sessions over Redis
+**Was:** Spring Session Redis to survive rolling-deploy task switches.
+**Why superseded:** Single admin user; low deploy frequency; Redis adds ~$20/month and significant config complexity for a problem that ALB sticky sessions solves for free.
+
+## 2026-04-30 ALB sticky sessions over Redis for session continuity
+**Context:** Rolling Fargate deploys briefly run 2 tasks. Original solution was ElastiCache Redis. Simplification review found Redis unjustified for a single-admin tool.
+**Decision:** Enable ALB sticky sessions (`stickinessCookieDuration: Duration.days(1)`) on the target group. The `AWSALB` cookie pins David's requests to the same task for 24 hours. In-memory Spring sessions require no external store. No `spring-session-data-redis`, no ElastiCache, no Redis connection config.
+**Consequences:** If a task is replaced during a deploy while David is actively using the app, he may need to log in again (rare, ~30s window). Acceptable for a solo-admin tool. Saves ~$20/month and removes one CDK stack, two Maven dependencies, four env vars, and several config lines.
 
 ## 2026-04-29 ProblemDetail (RFC 9457) for API errors
 **Context:** Need consistent JSON error responses. Spring Boot 3 has built-in support.
