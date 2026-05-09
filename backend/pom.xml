@@ -30,13 +30,8 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
-        <!-- Embedded MongoDB — auto-starts in-memory instance at app startup (runtime scope = in JAR, not compile classpath) -->
-        <dependency>
-            <groupId>de.flapdoodle.embed</groupId>
-            <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
-            <version>4.11.0</version>
-            <scope>runtime</scope>
-        </dependency>
+        <!-- Embedded MongoDB — included only in the 'dev' profile (local dev). Excluded from cloud builds. -->
+        <!-- See 'dev' profile below -->
         <!-- OpenAPI spec + Swagger UI at /v3/api-docs and /swagger-ui/index.html -->
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -49,6 +44,23 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>de.flapdoodle.embed</groupId>
+                    <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
+                    <version>4.11.0</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

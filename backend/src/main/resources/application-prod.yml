@@ -1,4 +1,2 @@
-spring:
-  autoconfigure:
-    exclude:
-      - de.flapdoodle.embed.mongo.spring3x.EmbeddedMongoAutoConfiguration
+# Cloud profile — Flapdoodle excluded at build time via Maven -P-dev flag.
+# Spring Data MongoDB uses SPRING_DATA_MONGODB_URI env var set in Elastic Beanstalk.
