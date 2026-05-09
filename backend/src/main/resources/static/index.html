@@ -143,9 +143,14 @@
                     <div id="form-fields">
                         <!-- spec-driven fields inserted here; fallback below if spec unavailable -->
                         <div class="field">
-                            <label>Name <span class="req">*</span><span class="schema-type" id="type-name">string</span></label>
-                            <input type="text" id="f-name" placeholder="Full name" autocomplete="off">
-                            <div class="err" id="e-name">Name is required</div>
+                            <label>First Name <span class="req">*</span><span class="schema-type" id="type-firstName">string</span></label>
+                            <input type="text" id="f-firstName" placeholder="First name" autocomplete="off">
+                            <div class="err" id="e-firstName">First name is required</div>
+                        </div>
+                        <div class="field">
+                            <label>Last Name <span class="req">*</span><span class="schema-type" id="type-lastName">string</span></label>
+                            <input type="text" id="f-lastName" placeholder="Last name" autocomplete="off">
+                            <div class="err" id="e-lastName">Last name is required</div>
                         </div>
                         <div class="field">
                             <label>Phone <span class="req">*</span><span class="schema-type" id="type-phone">string</span></label>
@@ -308,7 +313,7 @@
                 if (!p) return null;
                 return p.type + (p.format ? ` · ${p.format}` : '');
             };
-            ['name', 'phone', 'email'].forEach(f => {
+            ['firstName', 'lastName', 'phone', 'email'].forEach(f => {
                 const el = document.getElementById(`type-${f}`);
                 const t = typeLabel(f);
                 if (el && t) el.textContent = t;
@@ -340,9 +345,10 @@
             return;
         }
         el.innerHTML = `<table>
-            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Added</th></tr></thead>
+            <thead><tr><th>First Name</th><th>Last Name</th><th>Phone</th><th>Email</th><th>Added</th></tr></thead>
             <tbody>${clients.map(c => `<tr>
-                <td style="font-weight:600">${esc(c.name)}</td>
+                <td style="font-weight:600">${esc(c.firstName)}</td>
+                <td>${esc(c.lastName)}</td>
                 <td>${esc2(c.phone)}</td>
                 <td>${esc2(c.email)}</td>
                 <td class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
@@ -367,11 +373,12 @@
     /* ── Form submit ── */
     document.getElementById('form').addEventListener('submit', async e => {
         e.preventDefault();
-        const name  = document.getElementById('f-name').value.trim();
+        const firstName = document.getElementById('f-firstName').value.trim();
+        const lastName  = document.getElementById('f-lastName').value.trim();
         const phone = document.getElementById('f-phone').value.trim();
         const email = document.getElementById('f-email').value.trim();
         let valid = true;
-        for (const [f, v] of [['name', name], ['phone', phone]]) {
+        for (const [f, v] of [['firstName', firstName], ['lastName', lastName], ['phone', phone]]) {
             document.getElementById(`f-${f}`).classList.toggle('invalid', !v);
             document.getElementById(`e-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
@@ -387,14 +394,15 @@
             const r = await fetch('/api/clients', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, phone, email: email || null })
+                body: JSON.stringify({ firstName, lastName, phone, email: email || null })
             });
             if (!r.ok) throw new Error();
-            document.getElementById('f-name').value = '';
+            document.getElementById('f-firstName').value = '';
+            document.getElementById('f-lastName').value = '';
             document.getElementById('f-phone').value = '';
             document.getElementById('f-email').value = '';
             fb.className = 'form-feedback ok';
-            fb.textContent = `✓ ${name} added`;
+            fb.textContent = `✓ ${firstName} ${lastName} added`;
             load();
         } catch {
             fb.className = 'form-feedback fail';
@@ -404,7 +412,7 @@
         }
     });
 
-    ['f-name','f-phone'].forEach(id => {
+    ['f-firstName','f-lastName','f-phone'].forEach(id => {
         document.getElementById(id).addEventListener('input', () => {
             document.getElementById(id).classList.remove('invalid');
             document.getElementById(`e-${id.replace('f-','')}`).classList.remove('show');
