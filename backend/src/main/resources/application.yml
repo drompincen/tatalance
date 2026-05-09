@@ -24,6 +24,11 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+app:
+  security:
+    username: ${APP_USERNAME:admin}
+    password: ${APP_PASSWORD:admin}
+
 logging:
   level:
     com.tatalance: DEBUG
