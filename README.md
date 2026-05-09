@@ -13,6 +13,21 @@ Then open: `http://localhost:8080/index.html`
 
 Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
+## Environment
+
+| Layer | Details |
+|---|---|
+| Hardware | Windows on ARM64 (Qualcomm / Snapdragon) |
+| Windows | 11 — 10.0.26200.8246 |
+| WSL | 2.6.3.0 — kernel 6.6.87.2-microsoft-standard-WSL2 (aarch64) |
+| WSLg | 1.0.71 |
+| IntelliJ JDK | OpenJDK 23.0.2 (ARM64 — `os.arch=aarch64`) |
+| Maven JDK | OpenJDK 23.0.2 via Maven wrapper (Windows x86_64 — `os.arch=amd64`) |
+| Maven | 3.9.9 |
+| IDE | IntelliJ IDEA |
+
+> **Why two JDKs?** Maven runs as a Windows process invoked through WSL interop and picks up the x86_64 JDK first in Windows PATH (`amd64`). IntelliJ uses its own configured project SDK which is the native ARM64 JDK (`aarch64`). The ARM64 fix in `TatalanceApplication.java` handles the IntelliJ case.
+
 ## Versions
 
 | Component | Version | Notes |
