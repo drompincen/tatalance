@@ -24,12 +24,40 @@ At the start of every session:
 
 ## For Luciano's Claude Sessions
 
-If this session belongs to Luciano:
-- Work on the `luciano` branch only
-- Test changes at: `http://tatalance-luciano.eba-7u2dj39y.us-east-1.elasticbeanstalk.com/index.html`
-- Check logs with: `aws logs get-log-events ... --profile luciano-dev` (see `docs/troubleshooting.md`)
+If this session belongs to Luciano, run this checklist at session start:
+
+**1. Check AWS CLI is installed and configured:**
+```bash
+aws sts get-caller-identity --profile luciano-dev
+```
+If this fails with "command not found", install it:
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" && \
+unzip awscliv2.zip && sudo ./aws/install && aws --version
+```
+Then configure:
+```bash
+aws configure --profile luciano-dev
+# Key ID:     AKIAQUE2DN2D57DBILZX
+# Secret:     ask drom
+# Region:     us-east-1
+# Format:     json
+```
+
+**2. Check Maven uses Windows process:**
+```bash
+mvn -version   # must show "Maven home: C:\..."
+```
+If not, follow `docs/luciano-setup.md` Step 2.
+
+**3. Work on luciano branch only:**
+- Branch: `luciano`
+- EB env: `http://tatalance-luciano.eba-7u2dj39y.us-east-1.elasticbeanstalk.com/index.html`
+- MongoDB: `tatalance-luciano` database on Atlas
+- Logs: `aws logs get-log-events ... --profile luciano-dev` (see `docs/troubleshooting.md`)
 - When ready to merge: `gh pr create --base main`
-- Read `docs/luciano-setup.md` for full setup and `docs/how-we-work.md` for team workflow
+- Full setup guide: `docs/luciano-setup.md`
+- Team workflow: `docs/how-we-work.md`
 
 ## Key Docs
 
