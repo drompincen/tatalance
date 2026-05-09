@@ -4,9 +4,21 @@ Chauffeur platform POC — Spring Boot 3.3.5, Flapdoodle embedded MongoDB, stati
 
 ## Running
 
+| Environment | Command | Notes |
+|---|---|---|
+| IntelliJ IDEA | Run `TatalanceApplication` | ARM64 fix applied automatically |
+| Windows Terminal | `cd backend && mvn spring-boot:run` | Uses Windows JVM — works on ARM64 |
+| WSL2 (via Windows Maven) | See note below | Must invoke Windows `mvn.cmd`, not Linux `mvn` |
+
+**WSL2 note:** If your WSL2 shell's `mvn` is the Linux binary (`which mvn` returns `/usr/...`), Flapdoodle will fail — it runs as a Linux ARM64 process and there's no MongoDB binary for Ubuntu 24.04. Use the Windows Maven instead:
+
 ```bash
-cd backend
-mvn spring-boot:run
+# Find Windows Maven location
+ls /mnt/c/Users/$USER/.m2/wrapper/dists/
+
+# Invoke it directly (adjust path to match your wrapper dist)
+/mnt/c/Users/$USER/.m2/wrapper/dists/apache-maven-3.9.9-bin/*/apache-maven-3.9.9/bin/mvn.cmd \
+  -f backend/pom.xml spring-boot:run
 ```
 
 Then open: `http://localhost:8080/index.html`
@@ -76,34 +88,20 @@ de:
 
 Both are already in the codebase. If another Claude session reports that ARM64 + embedded MongoDB cannot proceed — **do not add any other workaround**. Pull latest (`git pull origin main`) and run. The fix is present.
 
-## Luciano Issues
+## Known Limitations
 
-### Cannot start backend from WSL2 Linux CLI
+### Native Linux ARM64 (WSL2) is not supported
 
-**Symptom:** `mvn spring-boot:run` inside WSL2 fails with Flapdoodle `PlatformPackageResolver` error — no matching MongoDB binary found.
+Flapdoodle has no MongoDB binary for Linux ARM64 / Ubuntu 24.04 (Noble). If you run `mvn spring-boot:run` with a native Linux ARM64 JVM, the app will print a clear error and exit immediately rather than throwing a cryptic Flapdoodle stack trace.
 
-**Error:** `java.lang.RuntimeException: rollback after error on transition to State(Package)` — Flapdoodle tries to resolve `GenericFeatureAwareVersion{6.0.5}:Platform{operatingSystem=Linux, architecture=X86_64, distribution=Ubuntu}` but finds no download URL.
+**Root cause:** Maven running as a Windows process sees `os.name=Windows` and downloads the Windows x86_64 MongoDB binary (works under ARM emulation). Maven running as a native Linux process sees `os.name=Linux, os.arch=aarch64` and tries to find a Linux ARM64 binary for Ubuntu 24.04 — which Flapdoodle does not have.
 
-**What was tried:**
-1. Overriding `os.arch` to `amd64` (removed the Windows-only check) — Flapdoodle then correctly resolves architecture as X86_64, but still fails because MongoDB 6.0.5 has no x86_64 binary for Ubuntu 24.04 (Noble). Flapdoodle falls back to Ubuntu 20.04 but still cannot resolve.
-2. Changing embedded MongoDB version to 7.0.9 — same failure, no matching binary.
+**Do not:**
+- Remove the `Windows`-only guard in `TatalanceApplication.java` — that breaks IntelliJ
+- Change embedded MongoDB version to 7.0.9 — same failure
+- Force `os.arch=amd64` on Linux — Flapdoodle then looks for Linux x86_64 on Ubuntu 24.04, also missing
 
-**Theory:** The other Claude session works because Maven runs as a **Windows process** via WSL interop (see Environment table: `Maven JDK: OpenJDK 23.0.2 via Maven wrapper (Windows x86_64 — os.arch=amd64)`). As a Windows process, `os.name=Windows` and Flapdoodle downloads the **Windows x86_64** MongoDB binary, which runs natively. In this session, Maven runs as a **native Linux process** inside WSL2 (`os.name=Linux`, `os.arch=aarch64`), so Flapdoodle tries to find a Linux x86_64 binary which doesn't exist for Ubuntu 24.04.
-
-**Environment diff from working session:**
-
-| | Working session | This session |
-|---|---|---|
-| Maven process | Windows (WSL interop) | Native Linux (WSL2) |
-| `os.name` | `Windows 11` | `Linux` |
-| `os.arch` | `amd64` | `aarch64` |
-| JDK | OpenJDK 23.0.2 (x86_64) | OpenJDK 21.0.10 (aarch64) |
-| MongoDB binary resolved | Windows x86_64 | Linux x86_64 (not found) |
-
-**Possible fixes to verify:**
-1. Install Maven wrapper (`mvnw.cmd`) so it runs as a Windows process from WSL2 — matching the working session
-2. Use MongoDB version that has Ubuntu 24.04 ARM64 support (e.g., 7.0+ or 8.0+) and keep native `aarch64` arch
-3. Install `qemu-user-static` to actually execute x86_64 Linux MongoDB binaries under emulation
+**Do:** Use IntelliJ or a Windows terminal (see Running section above).
 
 ## springdoc version note
 
