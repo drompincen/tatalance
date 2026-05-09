@@ -3,6 +3,7 @@ package com.tatalance.client;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,7 @@ public class ClientController {
     @ApiResponse(responseCode = "201", description = "Client created")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Client create(@RequestBody Client client) {
+    public Client create(@Valid @RequestBody Client client) {
         client.setCreatedAt(Instant.now());
         return repository.save(client);
     }
