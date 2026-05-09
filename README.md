@@ -103,6 +103,43 @@ Flapdoodle has no MongoDB binary for Linux ARM64 / Ubuntu 24.04 (Noble). If you 
 
 **Do:** Use IntelliJ or a Windows terminal (see Running section above).
 
+## WSL2 Setup — Wire `mvn` to Windows Maven
+
+Both developers run Claude in WSL2. The working setup uses a thin WSL2 shell script that delegates `mvn` to the Windows `mvn.cmd` via `cmd.exe`. This makes Maven run as a Windows process (`os.name=Windows`), which is required for Flapdoodle to resolve the correct MongoDB binary.
+
+**Check if you already have this:**
+
+```bash
+which mvn        # should be ~/.local/bin/mvn
+mvn -version     # "Maven home: C:\..." confirms it is Windows Maven
+```
+
+**If `which mvn` returns `/usr/bin/mvn` or similar, set it up:**
+
+```bash
+# Step 1 — find your Windows Maven mvn.cmd
+find /mnt/c/Users/$USER/.m2/wrapper/dists -name "mvn.cmd" 2>/dev/null
+# Example output: /mnt/c/Users/luciano/.m2/wrapper/dists/apache-maven-3.9.9-bin/<hash>/apache-maven-3.9.9/bin/mvn.cmd
+
+# Step 2 — create the wrapper (replace path with your output from step 1)
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/mvn << 'EOF'
+#!/bin/sh
+exec cmd.exe /c "C:\\Users\\luciano\\.m2\\wrapper\\dists\\apache-maven-3.9.9-bin\\<hash>\\apache-maven-3.9.9\\bin\\mvn.cmd" "$@"
+EOF
+chmod +x ~/.local/bin/mvn
+
+# Step 3 — verify
+which mvn        # ~/.local/bin/mvn
+mvn -version     # Maven home: C:\...
+```
+
+Once `mvn -version` shows a Windows path, run normally:
+
+```bash
+cd backend && mvn spring-boot:run
+```
+
 ## springdoc version note
 
 springdoc 2.8.x requires Spring Boot 3.4+. This project uses Spring Boot 3.3.5, so springdoc is pinned to **2.6.0**. Do not upgrade springdoc without also upgrading Spring Boot.
