@@ -1,3 +1,53 @@
+# Tatalance — Project Context for Claude
+
+## Team
+
+This is a two-person project: **drom** (father, lead) and **luciano** (son, learning Java/cloud/MongoDB).
+Both use Claude Code in WSL2. Each has their own branch and cloud sandbox.
+
+| Developer | Branch | EB Environment | MongoDB DB |
+|---|---|---|---|
+| drom | `drom` | `tatalance-drom` | `tatalance-drom` |
+| luciano | `luciano` | `tatalance-luciano` | `tatalance-luciano` |
+| shared QA | `main` | `tatalance-qa` | `tatalance-qa` |
+| prod | manual | `tatalance-prod` | `tatalance-prod` |
+
+## Session Start Protocol
+
+At the start of every session:
+
+1. **Check which branch you are on:** `git branch --show-current`
+2. **Pull latest from your branch:** `git pull origin <branch>`
+3. **Pull latest from main too:** `git fetch origin main`
+4. **Read active issues:** check `https://github.com/drompincen/tatalance/issues` for in-progress work
+5. **Never push directly to `main`** — always open a PR
+
+## For Luciano's Claude Sessions
+
+If this session belongs to Luciano:
+- Work on the `luciano` branch only
+- Test changes at: `http://tatalance-luciano.eba-7u2dj39y.us-east-1.elasticbeanstalk.com/index.html`
+- Check logs with: `aws logs get-log-events ... --profile luciano-dev` (see `docs/troubleshooting.md`)
+- When ready to merge: `gh pr create --base main`
+- Read `docs/luciano-setup.md` for full setup and `docs/how-we-work.md` for team workflow
+
+## Key Docs
+
+- `docs/luciano-setup.md` — full onboarding guide
+- `docs/troubleshooting.md` — local + cloud troubleshooting
+- `docs/how-we-work.md` — branch strategy, PR process, issue tracking
+- `README.md` — stack versions, environment table, known limitations
+
+## Cloud Infrastructure
+
+- AWS Account: `043272859271` (us-east-1)
+- EB Application: `tatalance`
+- MongoDB Atlas cluster: `tatalance-cluster.6mdixph.mongodb.net`
+- GitHub Actions deploys via OIDC (no long-lived AWS keys in repo)
+- Pipeline: push to branch → build JAR (Flapdoodle excluded via `-P-dev`) → deploy to matching EB env
+
+---
+
 # drom-flow — Project Configuration
 
 > **drom-flow** is active in this project. It provides workflows, parallel agent orchestration, closed-loop pipelines, persistent memory, and lifecycle hooks. The statusline shows drom-flow branding, git state, session time, edit/agent counts, and memory status.
