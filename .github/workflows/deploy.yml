@@ -2,13 +2,13 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, drom, luciano]
   workflow_dispatch:
     inputs:
       environment:
         description: 'Target environment'
         required: true
-        default: 'drom'
+        default: 'qa'
         type: choice
         options: [drom, luciano, qa, prod]
 
@@ -35,12 +35,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'push' && 'qa' || inputs.environment }}
+    environment: ${{ github.event_name == 'push' && github.ref_name || inputs.environment }}
     permissions:
       id-token: write
       contents: read
     env:
-      TARGET_ENV: ${{ github.event_name == 'push' && 'qa' || inputs.environment }}
+      TARGET_ENV: ${{ github.event_name == 'push' && github.ref_name || inputs.environment }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -52,13 +52,17 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Set MongoDB URI
+      - name: Wait for environment to be Ready
         run: |
-          aws elasticbeanstalk update-environment \
-            --application-name tatalance \
-            --environment-name tatalance-${{ env.TARGET_ENV }} \
-            --option-settings \
-              Namespace=aws:elasticbeanstalk:application:environment,OptionName=SPRING_DATA_MONGODB_URI,Value="${{ secrets.MONGODB_URI }}"
+          for i in $(seq 1 20); do
+            STATUS=$(aws elasticbeanstalk describe-environments \
+              --application-name tatalance \
+              --environment-names tatalance-${{ env.TARGET_ENV }} \
+              --query "Environments[0].Status" --output text)
+            echo "Status: $STATUS"
+            [ "$STATUS" = "Ready" ] && break
+            sleep 15
+          done
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
@@ -71,3 +75,4 @@ jobs:
           region: us-east-1
           version_label: ${{ github.sha }}-${{ env.TARGET_ENV }}
           deployment_package: tatalance-0.0.1-SNAPSHOT.jar
+          wait_for_environment_recovery: 120
