@@ -1,0 +1,5 @@
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        enabled: false

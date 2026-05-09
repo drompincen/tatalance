@@ -1,0 +1,73 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'drom'
+        type: choice
+        options: [drom, luciano, qa, prod]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+          cache: maven
+
+      - name: Build JAR
+        run: cd backend && mvn package -DskipTests
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: backend/target/tatalance-*.jar
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'qa' || inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TARGET_ENV: ${{ github.event_name == 'push' && 'qa' || inputs.environment }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Set MongoDB URI
+        run: |
+          aws elasticbeanstalk update-environment \
+            --application-name tatalance \
+            --environment-name tatalance-${{ env.TARGET_ENV }} \
+            --option-settings \
+              Namespace=aws:elasticbeanstalk:application:environment,OptionName=SPRING_DATA_MONGODB_URI,Value="${{ secrets.MONGODB_URI }}"
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws_session_token: ${{ env.AWS_SESSION_TOKEN }}
+          application_name: tatalance
+          environment_name: tatalance-${{ env.TARGET_ENV }}
+          region: us-east-1
+          version_label: ${{ github.sha }}-${{ env.TARGET_ENV }}
+          deployment_package: tatalance-0.0.1-SNAPSHOT.jar
