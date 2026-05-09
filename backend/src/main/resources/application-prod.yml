@@ -1,5 +1,4 @@
-de:
-  flapdoodle:
-    mongodb:
-      embedded:
-        enabled: false
+spring:
+  autoconfigure:
+    exclude:
+      - de.flapdoodle.embed.mongo.spring3x.EmbeddedMongoAutoConfiguration
