@@ -1,9 +1,50 @@
 ---
 title: Tatalance v1 — Client, Job/Drive, Auth, CI/CD
-status: pending
+status: in-progress
 created: 2026-04-27
-updated: 2026-04-27
-current_chapter: 0
+updated: 2026-05-08
+current_chapter: poc
+---
+
+## Chapter POC: Minimal POC — Spring Boot + Flapdoodle + index.html
+**Status:** completed
+
+### Goal
+Prove the stack end-to-end locally: Spring Boot serving an API and a static UI, with MongoDB in-memory via Flapdoodle. No auth, no React build, no Docker.
+
+### Steps
+- [x] Create `backend/` Maven project structure
+- [x] `pom.xml` — Spring Boot 3.3.5, spring-data-mongodb, flapdoodle spring30x 4.11.0 (runtime)
+- [x] `TatalanceApplication.java` — main entry point
+- [x] `Client.java` — `@Document`, no validation annotations
+- [x] `ClientRepository.java` — `MongoRepository<Client, String>`
+- [x] `ClientController.java` — `GET /api/clients`, `POST /api/clients`
+- [x] `application.yml` — port 8080, ISO 8601 dates, virtual threads, flapdoodle MongoDB 6.0.5
+- [x] `src/main/resources/static/index.html` — Add Client form + live list, bundled in JAR
+- [x] Closed-loop compile verification (3 iterations to resolve flapdoodle version)
+- [x] Server running: `http://localhost:8080` (Windows browser) · `172.23.80.1:8080` (from WSL)
+
+### Outcome
+- `POST /api/clients` → 201 + MongoDB ObjectId + ISO 8601 timestamp ✓
+- `GET /api/clients` → 200 + array ✓
+- `GET /` → index.html served from JAR static resources ✓
+- Flapdoodle starts embedded MongoDB 6.0.5 (Windows binary, cached after first download) ✓
+
+### OpenAPI additions (2026-05-08)
+- [x] Add `springdoc-openapi-starter-webmvc-ui 2.6.0` to pom.xml (2.8.x requires Spring Boot 3.4+)
+- [x] `@OpenAPIDefinition` on `TatalanceApplication` — title, version, description
+- [x] `@Tag` + `@Operation` + `@ApiResponse` on `ClientController`
+- [x] `springdoc` config in `application.yml` (method sort, /v3/api-docs path)
+- [x] `index.html` updated — tabbed UI (Clients | API Spec), live spec-driven explorer, Swagger UI link
+- [x] `/v3/api-docs` → OpenAPI 3.0.1 JSON ✓
+- [x] `/swagger-ui/index.html` → Swagger UI ✓
+
+### Known POC constraints (not bugs)
+- Data resets on restart (in-memory by design)
+- No auth — all endpoints open
+- No React/Vite — plain HTML/JS in static resources
+- First startup ~35s (MongoDB binary download, cached after)
+
 ---
 
 # Plan: Tatalance v1 — Full Stack Build

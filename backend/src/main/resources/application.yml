@@ -1,0 +1,29 @@
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.5
+
+spring:
+  application:
+    name: tatalance
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    operationsSorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    com.tatalance: DEBUG

@@ -3,3 +3,5 @@
 .mcp.json
 .claude/.javaducker/
 setup-backup/
+backend/target/
+backend/.idea/

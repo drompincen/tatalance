@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatalance — POC</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+        /* ── Header ── */
+        header {
+            background: #1a1a2e;
+            color: white;
+            padding: 0 32px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        }
+        header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
+        .badge { font-size: 0.7rem; padding: 3px 9px; border-radius: 20px; border: 1px solid; font-weight: 500; }
+        .badge-poc  { background: rgba(255,165,0,.1); border-color: rgba(255,165,0,.3); color: #ffa500; }
+        .badge-mongo { background: rgba(78,204,163,.12); border-color: rgba(78,204,163,.35); color: #4ecca3; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ecca3; display: inline-block; margin-right: 5px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+        /* ── Tabs in header ── */
+        nav { margin-left: auto; display: flex; gap: 2px; }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,.5);
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background .15s, color .15s;
+        }
+        .tab-btn:hover { color: white; background: rgba(255,255,255,.08); }
+        .tab-btn.active { color: white; background: rgba(255,255,255,.14); }
+
+        /* ── Tab panes ── */
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* ── Cards ── */
+        .page { max-width: 1020px; margin: 32px auto; padding: 0 24px; }
+        .grid-2 { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .card-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin-bottom: 20px; }
+
+        /* ── Form ── */
+        .field { margin-bottom: 14px; }
+        label { display: block; font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+        .req { color: #e53e3e; }
+        .opt { color: #bbb; font-weight: 400; }
+        .schema-type { margin-left: auto; font-size: 0.7rem; font-weight: 400; color: #bbb; font-family: monospace; background: #f5f5f5; padding: 1px 6px; border-radius: 4px; }
+        input { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; transition: border-color .15s, box-shadow .15s; background: #fafafa; }
+        input:focus { outline: none; border-color: #0f3460; background: white; box-shadow: 0 0 0 3px rgba(15,52,96,.08); }
+        input.invalid { border-color: #e53e3e; }
+        .err { color: #e53e3e; font-size: 0.76rem; margin-top: 4px; display: none; }
+        .err.show { display: block; }
+        .btn { width: 100%; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 4px; transition: background .15s, opacity .15s; }
+        .btn:hover { background: #16213e; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .form-feedback { margin-top: 12px; font-size: 0.82rem; min-height: 18px; text-align: center; }
+        .form-feedback.ok { color: #38a169; }
+        .form-feedback.fail { color: #e53e3e; }
+
+        /* ── Client list ── */
+        .list-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
+        .count { font-size: 0.8rem; color: #bbb; font-weight: 400; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th { text-align: left; padding: 8px 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #aaa; border-bottom: 2px solid #f0f0f0; }
+        td { padding: 11px 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+        .muted { color: #bbb; }
+        .empty-state { text-align: center; padding: 48px 24px; color: #ccc; }
+        .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
+        .empty-state p { font-size: 0.85rem; }
+        .refresh-ts { font-size: 0.72rem; color: #ddd; margin-top: 12px; text-align: right; }
+
+        /* ── API tab ── */
+        .api-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
+
+        .api-meta { margin-bottom: 16px; }
+        .api-meta h2 { font-size: 1.1rem; font-weight: 700; }
+        .api-meta .ver { display: inline-block; font-size: 0.72rem; background: #eef; color: #4477cc; border-radius: 4px; padding: 2px 8px; margin-left: 8px; font-family: monospace; }
+        .api-desc { font-size: 0.85rem; color: #777; margin-top: 4px; margin-bottom: 16px; }
+        .swagger-link { display: inline-block; font-size: 0.82rem; color: #0f3460; text-decoration: none; border: 1px solid #0f3460; border-radius: 6px; padding: 6px 14px; transition: background .15s; }
+        .swagger-link:hover { background: #0f3460; color: white; }
+
+        .endpoint { border: 1px solid #f0f0f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+        .endpoint-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
+        .endpoint-header:hover { background: #fafafa; }
+        .method-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; color: white; min-width: 50px; text-align: center; letter-spacing: 0.5px; }
+        .method-GET    { background: #38a169; }
+        .method-POST   { background: #3182ce; }
+        .method-PUT    { background: #d97706; }
+        .method-PATCH  { background: #805ad5; }
+        .method-DELETE { background: #e53e3e; }
+        code.path { font-family: monospace; font-size: 0.88rem; color: #1a1a2e; }
+        .op-summary { font-size: 0.84rem; color: #555; margin-left: auto; }
+        .endpoint-body { padding: 0 16px 14px; border-top: 1px solid #f0f0f0; background: #fafafa; }
+        .endpoint-body p { font-size: 0.82rem; color: #666; margin-top: 10px; }
+        .schema-block { margin-top: 10px; }
+        .schema-block h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; margin-bottom: 6px; }
+        .schema-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .schema-table th { text-align: left; padding: 4px 8px; color: #aaa; border-bottom: 1px solid #eee; font-weight: 600; font-size: 0.7rem; }
+        .schema-table td { padding: 5px 8px; border-bottom: 1px solid #f5f5f5; }
+        .schema-table tr:last-child td { border-bottom: none; }
+        .prop-name { font-family: monospace; color: #0f3460; }
+        .prop-type { color: #888; font-family: monospace; font-size: 0.76rem; }
+        .prop-req  { color: #e53e3e; font-size: 0.7rem; }
+        .hidden { display: none; }
+
+        .spec-loading { text-align: center; padding: 48px; color: #bbb; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Tatalance</h1>
+    <span class="badge badge-poc">POC</span>
+    <span class="badge badge-mongo"><span class="dot"></span>MongoDB in-memory</span>
+    <nav>
+        <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
+        <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
+    </nav>
+</header>
+
+<!-- ── Clients tab ── -->
+<div id="tab-clients" class="tab-pane active">
+    <div class="page">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">Add Client</div>
+                <form id="form" novalidate>
+                    <div id="form-fields">
+                        <!-- spec-driven fields inserted here; fallback below if spec unavailable -->
+                        <div class="field">
+                            <label>Name <span class="req">*</span><span class="schema-type" id="type-name">string</span></label>
+                            <input type="text" id="f-name" placeholder="Full name" autocomplete="off">
+                            <div class="err" id="e-name">Name is required</div>
+                        </div>
+                        <div class="field">
+                            <label>Phone <span class="req">*</span><span class="schema-type" id="type-phone">string</span></label>
+                            <input type="text" id="f-phone" placeholder="+1 555 000 0000" autocomplete="off">
+                            <div class="err" id="e-phone">Phone is required</div>
+                        </div>
+                        <div class="field">
+                            <label>Email <span class="opt">(optional)</span><span class="schema-type" id="type-email">string · email</span></label>
+                            <input type="email" id="f-email" placeholder="name@example.com" autocomplete="off">
+                        </div>
+                    </div>
+                    <button class="btn" type="submit" id="submit-btn">Add Client</button>
+                </form>
+                <div class="form-feedback" id="fb"></div>
+            </div>
+
+            <div class="card">
+                <div class="list-header">
+                    <div class="card-title" style="margin-bottom:0">Clients</div>
+                    <span class="count" id="count"></span>
+                </div>
+                <div id="list"></div>
+                <div class="refresh-ts" id="ts"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── API Spec tab ── -->
+<div id="tab-api" class="tab-pane">
+    <div class="page">
+        <div class="api-grid">
+            <div class="card">
+                <div class="card-title">API Info</div>
+                <div id="api-info"><div class="spec-loading">Loading spec…</div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Endpoints</div>
+                <div id="api-endpoints"><div class="spec-loading">Loading spec…</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ── Helpers ── */
+    const esc = s => String(s ?? '').replace(/[&<>"']/g,
+        c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    function resolveRef(spec, obj) {
+        if (!obj) return null;
+        if (obj.$ref) {
+            const parts = obj.$ref.replace(/^#\//, '').split('/');
+            return parts.reduce((o, k) => o?.[k], spec) ?? null;
+        }
+        return obj;
+    }
+
+    /* ── Tab switching ── */
+    function showTab(name) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`tab-${name}`).classList.add('active');
+        document.getElementById(`btn-${name}`).classList.add('active');
+    }
+
+    /* ── Endpoint body expand/collapse ── */
+    function toggleEndpoint(el) {
+        const body = el.nextElementSibling;
+        if (body && body.classList.contains('endpoint-body')) {
+            body.classList.toggle('hidden');
+        }
+    }
+
+    /* ── Render API tab from spec ── */
+    function renderApiTab(spec) {
+        const info = spec.info ?? {};
+
+        // Info card
+        document.getElementById('api-info').innerHTML = `
+            <div class="api-meta">
+                <h2>${esc(info.title ?? 'API')} <span class="ver">${esc(info.version ?? '')}</span></h2>
+                <div class="api-desc">${esc(info.description ?? '')}</div>
+                <a href="/swagger-ui/index.html" target="_blank" class="swagger-link">Open Swagger UI ↗</a>
+            </div>
+            <hr style="border:none;border-top:1px solid #f0f0f0;margin:16px 0">
+            <div style="font-size:.8rem;color:#aaa">
+                <div>Spec: <a href="/v3/api-docs" target="_blank" style="color:#0f3460">/v3/api-docs</a></div>
+                <div style="margin-top:4px">OpenAPI ${esc(spec.openapi ?? '')}</div>
+            </div>`;
+
+        // Endpoints card
+        const paths = spec.paths ?? {};
+        const SKIP_KEYS = new Set(['parameters', 'summary', 'description']);
+
+        const endpointsHtml = Object.entries(paths).flatMap(([path, methods]) =>
+            Object.entries(methods)
+                .filter(([m]) => !SKIP_KEYS.has(m))
+                .map(([method, op]) => {
+                    const m = method.toUpperCase();
+                    const reqBodySchema = resolveRef(spec,
+                        op.requestBody?.content?.['application/json']?.schema);
+                    const respSchema = resolveRef(spec,
+                        op.responses?.['200']?.content?.['application/json']?.schema ??
+                        op.responses?.['201']?.content?.['application/json']?.schema);
+
+                    const schemaHtml = (schema, title) => {
+                        if (!schema?.properties) return '';
+                        const rows = Object.entries(schema.properties)
+                            .map(([n, p]) => {
+                                const rSchema = resolveRef(spec, p);
+                                const t = rSchema?.type ?? '?';
+                                const fmt = rSchema?.format ? ` · ${rSchema.format}` : '';
+                                const req = schema.required?.includes(n) ? '<span class="prop-req">required</span>' : '';
+                                return `<tr>
+                                    <td class="prop-name">${esc(n)}</td>
+                                    <td class="prop-type">${esc(t+fmt)}</td>
+                                    <td>${req}</td>
+                                </tr>`;
+                            }).join('');
+                        return `<div class="schema-block">
+                            <h4>${title}</h4>
+                            <table class="schema-table">
+                                <thead><tr><th>Field</th><th>Type</th><th></th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>`;
+                    };
+
+                    const hasBody = reqBodySchema || respSchema;
+                    return `
+                        <div class="endpoint">
+                            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                                <span class="method-badge method-${m}">${m}</span>
+                                <code class="path">${esc(path)}</code>
+                                <span class="op-summary">${esc(op.summary ?? '')}</span>
+                            </div>
+                            ${hasBody ? `
+                            <div class="endpoint-body hidden">
+                                ${op.description ? `<p>${esc(op.description)}</p>` : ''}
+                                ${schemaHtml(reqBodySchema, 'Request body')}
+                                ${schemaHtml(resolveRef(spec, respSchema?.items) ?? respSchema, 'Response schema')}
+                            </div>` : ''}
+                        </div>`;
+                })
+        ).join('');
+
+        document.getElementById('api-endpoints').innerHTML = endpointsHtml || '<div class="spec-loading">No endpoints found</div>';
+    }
+
+    /* ── Enrich form labels with spec types ── */
+    function enrichFormFromSpec(spec) {
+        try {
+            const schemas = spec.components?.schemas ?? {};
+            const clientSchema = schemas['Client'];
+            if (!clientSchema?.properties) return;
+            const props = clientSchema.properties;
+            const typeLabel = (name) => {
+                const p = props[name];
+                if (!p) return null;
+                return p.type + (p.format ? ` · ${p.format}` : '');
+            };
+            ['name', 'phone', 'email'].forEach(f => {
+                const el = document.getElementById(`type-${f}`);
+                const t = typeLabel(f);
+                if (el && t) el.textContent = t;
+            });
+        } catch (e) { /* non-critical */ }
+    }
+
+    /* ── Load OpenAPI spec ── */
+    fetch('/v3/api-docs')
+        .then(r => r.json())
+        .then(spec => {
+            renderApiTab(spec);
+            enrichFormFromSpec(spec);
+        })
+        .catch(() => {
+            document.getElementById('api-info').innerHTML =
+                '<div class="spec-loading">Could not load spec — is the server running?</div>';
+            document.getElementById('api-endpoints').innerHTML = '';
+        });
+
+    /* ── Client list ── */
+    const esc2 = s => esc(s) || '<span class="muted">—</span>';
+
+    function render(clients) {
+        document.getElementById('count').textContent = `(${clients.length})`;
+        const el = document.getElementById('list');
+        if (!clients.length) {
+            el.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
+            return;
+        }
+        el.innerHTML = `<table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Added</th></tr></thead>
+            <tbody>${clients.map(c => `<tr>
+                <td style="font-weight:600">${esc(c.name)}</td>
+                <td>${esc2(c.phone)}</td>
+                <td>${esc2(c.email)}</td>
+                <td class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function load() {
+        fetch('/api/clients')
+            .then(r => r.json())
+            .then(data => {
+                render(data);
+                document.getElementById('ts').textContent =
+                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+            })
+            .catch(() => {
+                document.getElementById('list').innerHTML =
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+            });
+    }
+
+    /* ── Form submit ── */
+    document.getElementById('form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const name  = document.getElementById('f-name').value.trim();
+        const phone = document.getElementById('f-phone').value.trim();
+        const email = document.getElementById('f-email').value.trim();
+        let valid = true;
+        for (const [f, v] of [['name', name], ['phone', phone]]) {
+            document.getElementById(`f-${f}`).classList.toggle('invalid', !v);
+            document.getElementById(`e-${f}`).classList.toggle('show', !v);
+            if (!v) valid = false;
+        }
+        if (!valid) return;
+
+        const btn = document.getElementById('submit-btn');
+        const fb  = document.getElementById('fb');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        fb.className = 'form-feedback'; fb.textContent = '';
+
+        try {
+            const r = await fetch('/api/clients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone, email: email || null })
+            });
+            if (!r.ok) throw new Error();
+            document.getElementById('f-name').value = '';
+            document.getElementById('f-phone').value = '';
+            document.getElementById('f-email').value = '';
+            fb.className = 'form-feedback ok';
+            fb.textContent = `✓ ${name} added`;
+            load();
+        } catch {
+            fb.className = 'form-feedback fail';
+            fb.textContent = '✗ Save failed — check server logs';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Add Client';
+        }
+    });
+
+    ['f-name','f-phone'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            document.getElementById(id).classList.remove('invalid');
+            document.getElementById(`e-${id.replace('f-','')}`).classList.remove('show');
+        });
+    });
+
+    load();
+    setInterval(load, 10000);
+</script>
+</body>
+</html>
