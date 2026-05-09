@@ -13,6 +13,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class TatalanceApplication {
     public static void main(String[] args) {
+        // Flapdoodle has no Windows ARM64 MongoDB binary. Force x86_64 so it
+        // downloads the x86_64 binary, which runs under Windows on ARM emulation.
+        if (System.getProperty("os.name", "").contains("Windows")
+                && "aarch64".equals(System.getProperty("os.arch"))) {
+            System.setProperty("os.arch", "amd64");
+        }
         SpringApplication.run(TatalanceApplication.class, args);
     }
 }
