@@ -13,12 +13,25 @@ Then open: `http://localhost:8080/index.html`
 
 Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
-## Stack
+## Versions
 
-- Java 21, Spring Boot 3.3.5
-- Flapdoodle embedded MongoDB (`de.flapdoodle.embed.mongo.spring30x:4.11.0`) — no external MongoDB needed
-- springdoc-openapi 2.6.0 — OpenAPI spec at `/v3/api-docs`
-- Static UI bundled in `src/main/resources/static/`
+| Component | Version | Notes |
+|---|---|---|
+| Java | 21 | |
+| Spring Boot | 3.3.5 | parent POM |
+| Spring Framework | 6.1.x | managed by Spring Boot |
+| spring-boot-starter-web | 3.3.5 | managed by Spring Boot |
+| spring-boot-starter-data-mongodb | 3.3.5 | managed by Spring Boot |
+| de.flapdoodle.embed.mongo.spring30x | 4.11.0 | **not** in Spring Boot BOM — version must be explicit |
+| Embedded MongoDB | 6.0.5 | set via `de.flapdoodle.mongodb.embedded.version` in `application.yml` |
+| springdoc-openapi-starter-webmvc-ui | 2.6.0 | 2.7+ requires Spring Boot 3.4+ |
+| Maven | 3.x | build tool |
+
+### Version constraints
+
+- **springdoc ≤ 2.6.x** while on Spring Boot 3.3.x — `LiteWebJarsResourceResolver` (used by 2.7+) is only in Spring Framework 6.2 (Spring Boot 3.4+)
+- **flapdoodle spring30x must be pinned** — it is not managed by the Spring Boot BOM; latest tested version is `4.11.0`
+- **Embedded MongoDB 6.0.5** — must be set explicitly in `application.yml`; spring30x 4.11 does not auto-detect it
 
 ## Windows ARM64 (Qualcomm / Snapdragon)
 
