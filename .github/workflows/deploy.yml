@@ -35,12 +35,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'push' && github.ref_name || inputs.environment }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'qa' || github.ref_name) }}
     permissions:
       id-token: write
       contents: read
     env:
-      TARGET_ENV: ${{ github.event_name == 'push' && github.ref_name || inputs.environment }}
+      TARGET_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'qa' || github.ref_name) }}
     steps:
       - uses: actions/download-artifact@v4
         with:
