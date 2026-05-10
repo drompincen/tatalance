@@ -126,7 +126,7 @@
 <header>
     <h1>Tatalance</h1>
     <span class="badge badge-poc">POC</span>
-    <span class="badge badge-mongo"><span class="dot"></span>MongoDB in-memory</span>
+    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB</span></span>
     <nav>
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
@@ -320,6 +320,15 @@
             });
         } catch (e) { /* non-critical */ }
     }
+
+    /* ── DB type badge ── */
+    fetch('/api/info')
+        .then(r => r.json())
+        .then(info => {
+            const el = document.getElementById('db-badge');
+            if (el) el.textContent = info.dbType === 'atlas' ? 'MongoDB Atlas' : 'MongoDB in-memory';
+        })
+        .catch(() => {});
 
     /* ── Load OpenAPI spec ── */
     fetch('/v3/api-docs')
