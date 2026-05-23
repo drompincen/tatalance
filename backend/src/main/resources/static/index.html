@@ -155,7 +155,7 @@
                         <div class="field">
                             <label>Phone <span class="req">*</span><span class="schema-type" id="type-phone">string</span></label>
                             <input type="text" id="f-phone" placeholder="+1 555 000 0000" autocomplete="off">
-                            <div class="err" id="e-phone">Phone is required</div>
+                            <div class="err" id="e-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
                         </div>
                         <div class="field">
                             <label>Email <span class="opt">(optional)</span><span class="schema-type" id="type-email">string · email</span></label>
@@ -378,11 +378,15 @@
         const phone = document.getElementById('f-phone').value.trim();
         const email = document.getElementById('f-email').value.trim();
         let valid = true;
-        for (const [f, v] of [['firstName', firstName], ['lastName', lastName], ['phone', phone]]) {
+        for (const [f, v] of [['firstName', firstName], ['lastName', lastName]]) {
             document.getElementById(`f-${f}`).classList.toggle('invalid', !v);
             document.getElementById(`e-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
         }
+        const phoneValid = /^\+[1-9]\d{9,14}$/.test(phone);
+        document.getElementById('f-phone').classList.toggle('invalid', !phoneValid);
+        document.getElementById('e-phone').classList.toggle('show', !phoneValid);
+        if (!phoneValid) valid = false;
         if (!valid) return;
 
         const btn = document.getElementById('submit-btn');

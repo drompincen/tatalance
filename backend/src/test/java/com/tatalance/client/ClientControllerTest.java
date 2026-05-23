@@ -32,7 +32,7 @@ class ClientControllerTest {
         saved.setId("abc123");
         saved.setFirstName("John");
         saved.setLastName("Doe");
-        saved.setPhone("+1234");
+        saved.setPhone("+12125551234");
         saved.setCreatedAt(Instant.now());
 
         when(repository.save(any(Client.class))).thenReturn(saved);
@@ -40,7 +40,7 @@ class ClientControllerTest {
         mockMvc.perform(post("/api/clients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"firstName":"John","lastName":"Doe","phone":"+1234"}
+                                {"firstName":"John","lastName":"Doe","phone":"+12125551234"}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.firstName").value("John"))
@@ -53,7 +53,7 @@ class ClientControllerTest {
         mockMvc.perform(post("/api/clients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"firstName":"","lastName":"Doe","phone":"+1234"}
+                                {"firstName":"","lastName":"Doe","phone":"+12125551234"}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -63,7 +63,47 @@ class ClientControllerTest {
         mockMvc.perform(post("/api/clients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"firstName":"John","lastName":"","phone":"+1234"}
+                                {"firstName":"John","lastName":"","phone":"+12125551234"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_phoneIsBlank() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"John","lastName":"Doe","phone":""}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_phoneIsTooShort() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"John","lastName":"Doe","phone":"+123"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_phoneMissingPlus() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"John","lastName":"Doe","phone":"12125551234"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_phoneHasLetters() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"John","lastName":"Doe","phone":"+1212555abc4"}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -74,7 +114,7 @@ class ClientControllerTest {
         client.setId("abc123");
         client.setFirstName("John");
         client.setLastName("Doe");
-        client.setPhone("+1234");
+        client.setPhone("+12125551234");
         client.setCreatedAt(Instant.now());
 
         when(repository.findAll()).thenReturn(List.of(client));
