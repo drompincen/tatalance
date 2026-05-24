@@ -129,6 +129,7 @@
     <span class="badge badge-mongo"><span class="dot"></span>MongoDB in-memory</span>
     <nav>
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
+        <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
     </nav>
 </header>
@@ -174,6 +175,65 @@
                 </div>
                 <div id="list"></div>
                 <div class="refresh-ts" id="ts"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Drivers tab ── -->
+<div id="tab-drivers" class="tab-pane">
+    <div class="page">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">Add Driver</div>
+                <form id="driver-form" novalidate>
+                    <div class="field">
+                        <label>First Name <span class="req">*</span></label>
+                        <input type="text" id="d-firstName" placeholder="First name" autocomplete="off">
+                        <div class="err" id="de-firstName">First name is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Last Name <span class="req">*</span></label>
+                        <input type="text" id="d-lastName" placeholder="Last name" autocomplete="off">
+                        <div class="err" id="de-lastName">Last name is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Phone <span class="req">*</span></label>
+                        <input type="text" id="d-phone" placeholder="+1 555 000 0000" autocomplete="off">
+                        <div class="err" id="de-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
+                    </div>
+                    <div class="field">
+                        <label>Email <span class="opt">(optional)</span></label>
+                        <input type="email" id="d-email" placeholder="name@example.com" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label>Vehicle <span class="opt">(optional)</span></label>
+                        <input type="text" id="d-vehicle" placeholder="2024 Mercedes S-Class" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label>Payout Type <span class="req">*</span></label>
+                        <select id="d-payoutType" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;">
+                            <option value="PERCENTAGE">Percentage</option>
+                            <option value="FLAT">Flat rate</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Payout Rate <span class="req">*</span></label>
+                        <input type="number" id="d-payoutRate" placeholder="70" min="0" autocomplete="off">
+                        <div class="err" id="de-payoutRate">Payout rate is required</div>
+                    </div>
+                    <button class="btn" type="submit" id="driver-submit-btn">Add Driver</button>
+                </form>
+                <div class="form-feedback" id="driver-fb"></div>
+            </div>
+
+            <div class="card">
+                <div class="list-header">
+                    <div class="card-title" style="margin-bottom:0">Drivers</div>
+                    <span class="count" id="driver-count"></span>
+                </div>
+                <div id="driver-list"></div>
+                <div class="refresh-ts" id="driver-ts"></div>
             </div>
         </div>
     </div>
@@ -425,6 +485,122 @@
 
     load();
     setInterval(load, 10000);
+
+    /* ── Driver list ── */
+    const availColors = { AVAILABLE: '#38a169', ON_TRIP: '#d97706', OFF_DUTY: '#999' };
+
+    function renderDrivers(drivers) {
+        document.getElementById('driver-count').textContent = `(${drivers.length})`;
+        const el = document.getElementById('driver-list');
+        if (!drivers.length) {
+            el.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>No drivers yet — add the first one!</p></div>`;
+            return;
+        }
+        el.innerHTML = `<table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Payout</th><th>Status</th></tr></thead>
+            <tbody>${drivers.map(d => `<tr>
+                <td style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
+                <td>${esc2(d.phone)}</td>
+                <td>${esc2(d.vehicle)}</td>
+                <td>${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
+                <td>
+                    <select onchange="updateAvailability('${d.id}', this.value)"
+                        style="font-size:.8rem;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;color:${availColors[d.availability] || '#555'}">
+                        ${['AVAILABLE','ON_TRIP','OFF_DUTY'].map(a =>
+                            `<option value="${a}" ${a === d.availability ? 'selected' : ''}>${a.replace('_',' ')}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function loadDrivers() {
+        fetch('/api/drivers')
+            .then(r => r.json())
+            .then(data => {
+                renderDrivers(data);
+                document.getElementById('driver-ts').textContent =
+                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+            })
+            .catch(() => {
+                document.getElementById('driver-list').innerHTML =
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+            });
+    }
+
+    function updateAvailability(id, value) {
+        fetch(`/api/drivers/${id}/availability`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ availability: value })
+        }).then(() => loadDrivers());
+    }
+
+    /* ── Driver form ── */
+    document.getElementById('driver-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const firstName = document.getElementById('d-firstName').value.trim();
+        const lastName  = document.getElementById('d-lastName').value.trim();
+        const phone     = document.getElementById('d-phone').value.trim();
+        const email     = document.getElementById('d-email').value.trim();
+        const vehicle   = document.getElementById('d-vehicle').value.trim();
+        const payoutType = document.getElementById('d-payoutType').value;
+        const payoutRate = document.getElementById('d-payoutRate').value.trim();
+
+        let valid = true;
+        for (const [f, v] of [['firstName', firstName], ['lastName', lastName]]) {
+            document.getElementById(`d-${f}`).classList.toggle('invalid', !v);
+            document.getElementById(`de-${f}`).classList.toggle('show', !v);
+            if (!v) valid = false;
+        }
+        const phoneValid = /^\+[1-9]\d{9,14}$/.test(phone);
+        document.getElementById('d-phone').classList.toggle('invalid', !phoneValid);
+        document.getElementById('de-phone').classList.toggle('show', !phoneValid);
+        if (!phoneValid) valid = false;
+
+        const rateValid = payoutRate !== '' && Number(payoutRate) >= 0;
+        document.getElementById('d-payoutRate').classList.toggle('invalid', !rateValid);
+        document.getElementById('de-payoutRate').classList.toggle('show', !rateValid);
+        if (!rateValid) valid = false;
+
+        if (!valid) return;
+
+        const btn = document.getElementById('driver-submit-btn');
+        const fb  = document.getElementById('driver-fb');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        fb.className = 'form-feedback'; fb.textContent = '';
+
+        try {
+            const r = await fetch('/api/drivers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName, phone, email: email || null, vehicle: vehicle || null, payoutType, payoutRate: Number(payoutRate) })
+            });
+            if (!r.ok) throw new Error();
+            ['d-firstName','d-lastName','d-phone','d-email','d-vehicle','d-payoutRate'].forEach(id => document.getElementById(id).value = '');
+            fb.className = 'form-feedback ok';
+            fb.textContent = `✓ ${firstName} ${lastName} added`;
+            loadDrivers();
+        } catch {
+            fb.className = 'form-feedback fail';
+            fb.textContent = '✗ Save failed — check server logs';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Add Driver';
+        }
+    });
+
+    ['d-firstName','d-lastName','d-phone','d-payoutRate'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            document.getElementById(id).classList.remove('invalid');
+            const errId = 'de-' + id.replace('d-','');
+            const errEl = document.getElementById(errId);
+            if (errEl) errEl.classList.remove('show');
+        });
+    });
+
+    loadDrivers();
+    setInterval(loadDrivers, 10000);
 </script>
 </body>
 </html>
