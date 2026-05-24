@@ -1,11 +1,14 @@
 package com.tatalance.client;
 
+import com.tatalance.ride.RideRepository;
+import com.tatalance.ride.RideStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -16,24 +19,68 @@ import java.util.List;
 public class ClientController {
 
     private final ClientRepository repository;
+    private final RideRepository rideRepository;
 
-    public ClientController(ClientRepository repository) {
+    public ClientController(ClientRepository repository, RideRepository rideRepository) {
         this.repository = repository;
+        this.rideRepository = rideRepository;
     }
 
-    @Operation(summary = "List all clients", description = "Returns every client stored in the database")
+    @Operation(summary = "List all clients")
     @ApiResponse(responseCode = "200", description = "Client list")
     @GetMapping
     public List<Client> list() {
         return repository.findAll();
     }
 
-    @Operation(summary = "Create a client", description = "Saves a new client and returns the created document with generated id and createdAt timestamp")
+    @Operation(summary = "Get client by id")
+    @ApiResponse(responseCode = "200", description = "Client found")
+    @ApiResponse(responseCode = "404", description = "Client not found")
+    @GetMapping("/{id}")
+    public Client getById(@PathVariable String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+    }
+
+    @Operation(summary = "Create a client")
     @ApiResponse(responseCode = "201", description = "Client created")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Client create(@Valid @RequestBody Client client) {
         client.setCreatedAt(Instant.now());
         return repository.save(client);
+    }
+
+    @Operation(summary = "Update a client")
+    @ApiResponse(responseCode = "200", description = "Client updated")
+    @ApiResponse(responseCode = "404", description = "Client not found")
+    @PutMapping("/{id}")
+    public Client update(@PathVariable String id, @Valid @RequestBody Client updates) {
+        Client existing = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+        existing.setFirstName(updates.getFirstName());
+        existing.setLastName(updates.getLastName());
+        existing.setPhone(updates.getPhone());
+        existing.setEmail(updates.getEmail());
+        return repository.save(existing);
+    }
+
+    @Operation(summary = "Delete a client")
+    @ApiResponse(responseCode = "204", description = "Client deleted")
+    @ApiResponse(responseCode = "400", description = "Client has active rides")
+    @ApiResponse(responseCode = "404", description = "Client not found")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String id) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
+        }
+        var activeRides = rideRepository.findByClientIdAndStatusIn(id,
+                List.of(RideStatus.SCHEDULED, RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
+        if (!activeRides.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot delete client with active rides (" + activeRides.size() + " active)");
+        }
+        repository.deleteById(id);
     }
 }

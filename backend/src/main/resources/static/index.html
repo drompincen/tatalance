@@ -63,9 +63,15 @@
         input.invalid { border-color: #e53e3e; }
         .err { color: #e53e3e; font-size: 0.76rem; margin-top: 4px; display: none; }
         .err.show { display: block; }
-        .btn { width: 100%; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 4px; transition: background .15s, opacity .15s; }
+        .btn { padding: 10px 20px; background: #0f3460; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 4px; transition: background .15s, opacity .15s; }
         .btn:hover { background: #16213e; }
         .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-cancel { width: auto; display: inline-block; background: #666; margin-left: 8px; padding: 10px 18px; }
+        .btn-cancel:hover { background: #888; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; font-weight: 500; }
+        .btn-sm:hover { background: #f0f0f0; }
+        .btn-danger { color: #e53e3e; border-color: #e53e3e; }
+        .btn-danger:hover { background: #fff5f5; }
         .form-feedback { margin-top: 12px; font-size: 0.82rem; min-height: 18px; text-align: center; }
         .form-feedback.ok { color: #38a169; }
         .form-feedback.fail { color: #e53e3e; }
@@ -166,6 +172,7 @@
                         </div>
                     </div>
                     <button class="btn" type="submit" id="submit-btn">Add Client</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancel</button>
                 </form>
                 <div class="form-feedback" id="fb"></div>
             </div>
@@ -475,13 +482,17 @@
             return;
         }
         el.innerHTML = `<table>
-            <thead><tr><th>First Name</th><th>Last Name</th><th>Phone</th><th>Email</th><th>Added</th></tr></thead>
+            <thead><tr><th>First Name</th><th>Last Name</th><th>Phone</th><th>Email</th><th>Added</th><th></th></tr></thead>
             <tbody>${clients.map(c => `<tr>
                 <td style="font-weight:600">${esc(c.firstName)}</td>
                 <td>${esc(c.lastName)}</td>
                 <td>${esc2(c.phone)}</td>
                 <td>${esc2(c.email)}</td>
                 <td class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
+                <td style="white-space:nowrap">
+                    <button class="btn-sm" onclick="editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}')">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
+                </td>
             </tr>`).join('')}</tbody>
         </table>`;
     }
@@ -525,24 +536,25 @@
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
-            const r = await fetch('/api/clients', {
-                method: 'POST',
+            const url = editingClientId ? `/api/clients/${editingClientId}` : '/api/clients';
+            const method = editingClientId ? 'PUT' : 'POST';
+            const r = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, phone, email: email || null })
             });
             if (!r.ok) throw new Error();
-            document.getElementById('f-firstName').value = '';
-            document.getElementById('f-lastName').value = '';
-            document.getElementById('f-phone').value = '';
-            document.getElementById('f-email').value = '';
+            const wasEdit = !!editingClientId;
+            cancelEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = `✓ ${firstName} ${lastName} added`;
+            fb.textContent = wasEdit ? `✓ ${firstName} ${lastName} updated` : `✓ ${firstName} ${lastName} added`;
             load();
         } catch {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ Save failed — check server logs';
         } finally {
-            btn.disabled = false; btn.textContent = 'Add Client';
+            btn.disabled = false;
+            btn.textContent = editingClientId ? 'Update Client' : 'Add Client';
         }
     });
 
@@ -552,6 +564,51 @@
             document.getElementById(`e-${id.replace('f-','')}`).classList.remove('show');
         });
     });
+
+    /* ── Edit / Delete client ── */
+    let editingClientId = null;
+
+    window.editClient = function(id, firstName, lastName, phone, email) {
+        editingClientId = id;
+        document.getElementById('f-firstName').value = firstName;
+        document.getElementById('f-lastName').value = lastName;
+        document.getElementById('f-phone').value = phone;
+        document.getElementById('f-email').value = email;
+        document.getElementById('submit-btn').textContent = 'Update Client';
+        document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Edit Client';
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+        if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    };
+
+    window.cancelEdit = function() {
+        editingClientId = null;
+        document.getElementById('f-firstName').value = '';
+        document.getElementById('f-lastName').value = '';
+        document.getElementById('f-phone').value = '';
+        document.getElementById('f-email').value = '';
+        document.getElementById('submit-btn').textContent = 'Add Client';
+        document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Add Client';
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        document.getElementById('fb').className = 'form-feedback';
+        document.getElementById('fb').textContent = '';
+    };
+
+    window.deleteClient = async function(id, name) {
+        if (!confirm(`Delete ${name}?`)) return;
+        try {
+            const r = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+            if (r.status === 400) {
+                const data = await r.json();
+                alert(data.message || 'Cannot delete — client has active rides');
+                return;
+            }
+            if (!r.ok) throw new Error();
+            load();
+        } catch {
+            alert('Delete failed — check server logs');
+        }
+    };
 
     load();
     setInterval(load, 10000);

@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -96,5 +98,41 @@ class ClientIntegrationTest {
         assertThat(docs).hasSize(1);
         assertThat(docs.get(0).getString("firstName")).isEqualTo("Madonna");
         assertThat(docs.get(0).getString("lastName")).isEmpty();
+    }
+
+    @Test
+    void should_updateClient() {
+        var request = Map.of("firstName", "John", "lastName", "Doe", "phone", "+12125551234");
+        var created = restTemplate.postForEntity("/api/clients", request, Map.class);
+        var id = (String) created.getBody().get("id");
+
+        var update = Map.of("firstName", "Jane", "lastName", "Smith", "phone", "+13055559999");
+        var response = restTemplate.exchange("/api/clients/" + id, HttpMethod.PUT,
+                new HttpEntity<>(update), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().get("firstName")).isEqualTo("Jane");
+        assertThat(response.getBody().get("lastName")).isEqualTo("Smith");
+        assertThat(response.getBody().get("phone")).isEqualTo("+13055559999");
+    }
+
+    @Test
+    void should_deleteClient() {
+        var request = Map.of("firstName", "John", "lastName", "Doe", "phone", "+12125551234");
+        var created = restTemplate.postForEntity("/api/clients", request, Map.class);
+        var id = (String) created.getBody().get("id");
+
+        var response = restTemplate.exchange("/api/clients/" + id, HttpMethod.DELETE, null, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        var list = restTemplate.getForEntity("/api/clients", List.class);
+        assertThat(list.getBody()).isEmpty();
+    }
+
+    @Test
+    void should_return404_when_updatingNonexistentClient() {
+        var update = Map.of("firstName", "Jane", "lastName", "Smith", "phone", "+13055559999");
+        var response = restTemplate.exchange("/api/clients/nonexistent", HttpMethod.PUT,
+                new HttpEntity<>(update), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }
