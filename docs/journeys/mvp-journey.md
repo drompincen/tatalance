@@ -256,6 +256,20 @@ Story 2 (Add Driver)    ---+
 - **Story 3** depends on both 1 and 2 (needs clients to book for, drivers exist in system)
 - **Stories 4, 5, 6, 7** are strictly sequential — each depends on the previous status transition
 
+## Polish Stories (improve the core journey)
+
+These stories don't add new steps to the journey but improve quality and usability:
+
+| # | Story | Why | Issue |
+|---|---|---|---|
+| 1 | User-friendly validation error messages | Generic "Bad Request" confuses David — needs specific field errors with examples | #25 |
+| 2 | Edit and delete Clients | Can't fix typos or remove test data | #26 |
+| 3 | Edit and delete Drivers | Can't update vehicle info or deactivate a driver | #27 |
+| 4 | Edit and cancel Rides | Can't correct mistakes or handle client cancellations | #28 |
+| 5 | Inline ride completion form | Browser popups are clunky — should be an inline panel with context | #29 |
+
+---
+
 ## What's NOT in the MVP
 
 These are visible in the prototype but deferred to later iterations:
