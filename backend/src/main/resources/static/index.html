@@ -131,6 +131,7 @@
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
+        <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
     </nav>
 </header>
@@ -290,6 +291,20 @@
                 <div id="ride-list"></div>
                 <div class="refresh-ts" id="ride-ts"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Invoices tab ── -->
+<div id="tab-invoices" class="tab-pane">
+    <div class="page">
+        <div class="card">
+            <div class="list-header">
+                <div class="card-title" style="margin-bottom:0">Invoices</div>
+                <span class="count" id="invoice-count"></span>
+            </div>
+            <div id="invoice-list"></div>
+            <div class="refresh-ts" id="invoice-ts"></div>
         </div>
     </div>
 </div>
@@ -730,7 +745,7 @@
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
                 <td>${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button>` :
-                    (r.status === 'COMPLETED' && r.totalAmount ? `<span style="font-size:.78rem;color:#38a169;font-weight:600">$${r.totalAmount}</span>` : '')}</td>
+                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}</td>
             </tr>`).join('')}</tbody>
         </table>`;
     }
@@ -814,6 +829,61 @@
     setInterval(loadRides, 10000);
     setInterval(loadClientDropdown, 10000);
     setInterval(loadAvailableDrivers, 10000);
+
+    /* ── Invoices ── */
+    function generateInvoice(rideId) {
+        fetch('/api/invoices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rideId })
+        }).then(r => {
+            if (!r.ok) return r.json().then(e => { throw new Error(e.message || 'Failed'); });
+            return r.json();
+        }).then(inv => {
+            loadInvoices();
+            showTab('invoices');
+        }).catch(e => alert('Invoice failed: ' + e.message));
+    }
+
+    const invStatusColors = { OUTSTANDING: '#d97706', PAID: '#38a169' };
+
+    function renderInvoices(invoices) {
+        document.getElementById('invoice-count').textContent = `(${invoices.length})`;
+        const el = document.getElementById('invoice-list');
+        if (!invoices.length) {
+            el.innerHTML = `<div class="empty-state"><div class="icon">📄</div><p>No invoices yet — complete a ride and generate one!</p></div>`;
+            return;
+        }
+        el.innerHTML = `<table>
+            <thead><tr><th>Invoice #</th><th>Client</th><th>Base</th><th>Extras</th><th>Tax</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>${invoices.map(i => `<tr>
+                <td style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
+                <td>${esc(i.clientName)}</td>
+                <td>$${i.baseCharge}</td>
+                <td>$${i.additionalCharges}</td>
+                <td>$${i.tax}</td>
+                <td style="font-weight:700">$${i.total}</td>
+                <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${i.status}</span></td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function loadInvoices() {
+        fetch('/api/invoices')
+            .then(r => r.json())
+            .then(data => {
+                renderInvoices(data);
+                document.getElementById('invoice-ts').textContent =
+                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+            })
+            .catch(() => {
+                document.getElementById('invoice-list').innerHTML =
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+            });
+    }
+
+    loadInvoices();
+    setInterval(loadInvoices, 10000);
 </script>
 </body>
 </html>
