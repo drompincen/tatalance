@@ -2,6 +2,9 @@ package com.tatalance.ride;
 
 import com.tatalance.client.Client;
 import com.tatalance.client.ClientRepository;
+import com.tatalance.driver.Availability;
+import com.tatalance.driver.Driver;
+import com.tatalance.driver.DriverRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,6 +34,9 @@ class RideControllerTest {
 
     @MockBean
     private ClientRepository clientRepository;
+
+    @MockBean
+    private DriverRepository driverRepository;
 
     private Client sampleClient() {
         var client = new Client();
@@ -166,5 +172,102 @@ class RideControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].clientId").value("cli001"));
+    }
+
+    private Driver sampleDriver() {
+        var driver = new Driver();
+        driver.setId("drv001");
+        driver.setFirstName("Carlos");
+        driver.setLastName("Mendez");
+        driver.setPhone("+13055551002");
+        driver.setAvailability(Availability.AVAILABLE);
+        driver.setActive(true);
+        return driver;
+    }
+
+    @Test
+    void should_assignDriver_when_available() throws Exception {
+        var ride = sampleRide();
+        var driver = sampleDriver();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"drv001"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ASSIGNED"))
+                .andExpect(jsonPath("$.assignedDriverId").value("drv001"))
+                .andExpect(jsonPath("$.assignedDriverName").value("Carlos Mendez"));
+    }
+
+    @Test
+    void should_return400_when_driverNotAvailable() throws Exception {
+        var ride = sampleRide();
+        var driver = sampleDriver();
+        driver.setAvailability(Availability.ON_TRIP);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"drv001"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_driverIdMissing() throws Exception {
+        var ride = sampleRide();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_rideNotFound_forAssign() throws Exception {
+        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/rides/unknown/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"drv001"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_return400_when_driverNotFound() throws Exception {
+        var ride = sampleRide();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(driverRepository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"unknown"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_listAvailableDrivers() throws Exception {
+        var driver = sampleDriver();
+        when(driverRepository.findByAvailability(Availability.AVAILABLE)).thenReturn(List.of(driver));
+
+        mockMvc.perform(get("/api/drivers/available"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].firstName").value("Carlos"));
     }
 }

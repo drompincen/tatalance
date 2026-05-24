@@ -2,7 +2,7 @@ package com.tatalance.ride;
 
 public enum RideStatus {
     SCHEDULED,
-    ACCEPTED,
+    ASSIGNED,
     IN_PROGRESS,
     COMPLETED,
     CANCELLED

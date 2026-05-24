@@ -25,6 +25,7 @@ public class Ride {
     private String notes;
     private RideStatus status = RideStatus.SCHEDULED;
     private String assignedDriverId;
+    private String assignedDriverName;
     private Instant createdAt;
 
     public String getId() { return id; }
@@ -47,6 +48,8 @@ public class Ride {
     public void setStatus(RideStatus status) { this.status = status; }
     public String getAssignedDriverId() { return assignedDriverId; }
     public void setAssignedDriverId(String assignedDriverId) { this.assignedDriverId = assignedDriverId; }
+    public String getAssignedDriverName() { return assignedDriverName; }
+    public void setAssignedDriverName(String assignedDriverName) { this.assignedDriverName = assignedDriverName; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }
