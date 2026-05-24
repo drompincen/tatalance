@@ -130,6 +130,7 @@
     <nav>
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
+        <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
     </nav>
 </header>
@@ -234,6 +235,60 @@
                 </div>
                 <div id="driver-list"></div>
                 <div class="refresh-ts" id="driver-ts"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Rides tab ── -->
+<div id="tab-rides" class="tab-pane">
+    <div class="page">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">Book a Ride</div>
+                <form id="ride-form" novalidate>
+                    <div class="field">
+                        <label>Client <span class="req">*</span></label>
+                        <select id="r-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;">
+                            <option value="">Select a client…</option>
+                        </select>
+                        <div class="err" id="re-clientId">Client is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Pickup Date/Time <span class="req">*</span></label>
+                        <input type="datetime-local" id="r-pickupDateTime" autocomplete="off">
+                        <div class="err" id="re-pickupDateTime">Pickup date/time is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Pickup Location <span class="req">*</span></label>
+                        <input type="text" id="r-pickupLocation" placeholder="Miami Airport" autocomplete="off">
+                        <div class="err" id="re-pickupLocation">Pickup location is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Dropoff Location <span class="req">*</span></label>
+                        <input type="text" id="r-dropoffLocation" placeholder="South Beach Hotel" autocomplete="off">
+                        <div class="err" id="re-dropoffLocation">Dropoff location is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Base Price <span class="opt">(optional)</span></label>
+                        <input type="number" id="r-basePrice" placeholder="85.00" min="0" step="0.01" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label>Notes <span class="opt">(optional)</span></label>
+                        <input type="text" id="r-notes" placeholder="VIP client, extra luggage" autocomplete="off">
+                    </div>
+                    <button class="btn" type="submit" id="ride-submit-btn">Book Ride</button>
+                </form>
+                <div class="form-feedback" id="ride-fb"></div>
+            </div>
+
+            <div class="card">
+                <div class="list-header">
+                    <div class="card-title" style="margin-bottom:0">Rides</div>
+                    <span class="count" id="ride-count"></span>
+                </div>
+                <div id="ride-list"></div>
+                <div class="refresh-ts" id="ride-ts"></div>
             </div>
         </div>
     </div>
@@ -601,6 +656,117 @@
 
     loadDrivers();
     setInterval(loadDrivers, 10000);
+
+    /* ── Rides ── */
+    const statusColors = { SCHEDULED: '#3182ce', ACCEPTED: '#805ad5', IN_PROGRESS: '#d97706', COMPLETED: '#38a169', CANCELLED: '#e53e3e' };
+
+    function loadClientDropdown() {
+        fetch('/api/clients').then(r => r.json()).then(clients => {
+            const sel = document.getElementById('r-clientId');
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Select a client…</option>' +
+                clients.map(c => `<option value="${c.id}">${esc(c.firstName)} ${esc(c.lastName)}</option>`).join('');
+            if (current) sel.value = current;
+        }).catch(() => {});
+    }
+
+    function renderRides(rides) {
+        document.getElementById('ride-count').textContent = `(${rides.length})`;
+        const el = document.getElementById('ride-list');
+        if (!rides.length) {
+            el.innerHTML = `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
+            return;
+        }
+        el.innerHTML = `<table>
+            <thead><tr><th>Client</th><th>Pickup</th><th>From</th><th>To</th><th>Price</th><th>Status</th></tr></thead>
+            <tbody>${rides.map(r => `<tr>
+                <td style="font-weight:600">${esc(r.clientName)}</td>
+                <td style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
+                <td>${esc2(r.pickupLocation)}</td>
+                <td>${esc2(r.dropoffLocation)}</td>
+                <td>${r.basePrice ? '$' + r.basePrice : '<span class="muted">—</span>'}</td>
+                <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function loadRides() {
+        fetch('/api/rides')
+            .then(r => r.json())
+            .then(data => {
+                renderRides(data);
+                document.getElementById('ride-ts').textContent =
+                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+            })
+            .catch(() => {
+                document.getElementById('ride-list').innerHTML =
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+            });
+    }
+
+    document.getElementById('ride-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const clientId = document.getElementById('r-clientId').value;
+        const pickupDateTime = document.getElementById('r-pickupDateTime').value;
+        const pickupLocation = document.getElementById('r-pickupLocation').value.trim();
+        const dropoffLocation = document.getElementById('r-dropoffLocation').value.trim();
+        const basePrice = document.getElementById('r-basePrice').value.trim();
+        const notes = document.getElementById('r-notes').value.trim();
+
+        let valid = true;
+        for (const [f, v] of [['clientId', clientId], ['pickupDateTime', pickupDateTime], ['pickupLocation', pickupLocation], ['dropoffLocation', dropoffLocation]]) {
+            const input = document.getElementById(`r-${f}`);
+            input.classList.toggle('invalid', !v);
+            document.getElementById(`re-${f}`).classList.toggle('show', !v);
+            if (!v) valid = false;
+        }
+        if (!valid) return;
+
+        const btn = document.getElementById('ride-submit-btn');
+        const fb  = document.getElementById('ride-fb');
+        btn.disabled = true; btn.textContent = 'Booking…';
+        fb.className = 'form-feedback'; fb.textContent = '';
+
+        try {
+            const body = {
+                clientId,
+                pickupDateTime: new Date(pickupDateTime).toISOString(),
+                pickupLocation,
+                dropoffLocation
+            };
+            if (basePrice) body.basePrice = Number(basePrice);
+            if (notes) body.notes = notes;
+
+            const r = await fetch('/api/rides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!r.ok) throw new Error();
+            ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-notes'].forEach(id => document.getElementById(id).value = '');
+            fb.className = 'form-feedback ok';
+            fb.textContent = '✓ Ride booked';
+            loadRides();
+        } catch {
+            fb.className = 'form-feedback fail';
+            fb.textContent = '✗ Booking failed — check server logs';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Book Ride';
+        }
+    });
+
+    ['r-clientId','r-pickupDateTime','r-pickupLocation','r-dropoffLocation'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            document.getElementById(id).classList.remove('invalid');
+            const errEl = document.getElementById('re-' + id.replace('r-',''));
+            if (errEl) errEl.classList.remove('show');
+        });
+    });
+
+    loadClientDropdown();
+    loadRides();
+    setInterval(loadRides, 10000);
+    setInterval(loadClientDropdown, 10000);
 </script>
 </body>
 </html>
