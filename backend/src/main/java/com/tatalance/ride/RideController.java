@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +104,47 @@ public class RideController {
 
         driver.setAvailability(Availability.ON_TRIP);
         driverRepository.save(driver);
+
+        return rideRepository.save(ride);
+    }
+
+    @Operation(summary = "Complete a ride")
+    @ApiResponse(responseCode = "200", description = "Ride completed")
+    @ApiResponse(responseCode = "400", description = "Ride not in ASSIGNED status or missing fields")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PostMapping("/rides/{id}/complete")
+    public Ride completeRide(@PathVariable String id, @Valid @RequestBody CompleteRideRequest req) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+
+        if (ride.getStatus() != RideStatus.ASSIGNED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be in ASSIGNED status to complete");
+        }
+
+        ride.setActualStart(req.getActualStart());
+        ride.setActualEnd(req.getActualEnd());
+        ride.setWaitingTimeMinutes(req.getWaitingTimeMinutes());
+        ride.setTolls(req.getTolls());
+        ride.setParking(req.getParking());
+        ride.setAdditionalCharges(req.getAdditionalCharges());
+        ride.setChargeDescription(req.getChargeDescription());
+
+        // Calculate total: basePrice + tolls + parking + additionalCharges
+        BigDecimal total = ride.getBasePrice() != null ? ride.getBasePrice() : BigDecimal.ZERO;
+        if (req.getTolls() != null) total = total.add(req.getTolls());
+        if (req.getParking() != null) total = total.add(req.getParking());
+        if (req.getAdditionalCharges() != null) total = total.add(req.getAdditionalCharges());
+        ride.setTotalAmount(total);
+
+        ride.setStatus(RideStatus.COMPLETED);
+
+        // Free the driver
+        if (ride.getAssignedDriverId() != null) {
+            driverRepository.findById(ride.getAssignedDriverId()).ifPresent(driver -> {
+                driver.setAvailability(Availability.AVAILABLE);
+                driverRepository.save(driver);
+            });
+        }
 
         return rideRepository.save(ride);
     }

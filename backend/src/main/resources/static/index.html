@@ -685,6 +685,29 @@
         }).then(() => { loadRides(); loadAvailableDrivers(); loadDrivers(); });
     }
 
+    function completeRide(rideId) {
+        const now = new Date().toISOString();
+        const start = prompt('Actual start time (ISO):', now);
+        if (!start) return;
+        const end = prompt('Actual end time (ISO):', now);
+        if (!end) return;
+        const tolls = prompt('Tolls ($):', '0') || '0';
+        const parking = prompt('Parking ($):', '0') || '0';
+        const additional = prompt('Additional charges ($):', '0') || '0';
+        const desc = prompt('Charge description (optional):', '') || null;
+
+        fetch(`/api/rides/${rideId}/complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                actualStart: start, actualEnd: end,
+                tolls: Number(tolls), parking: Number(parking),
+                additionalCharges: Number(additional),
+                chargeDescription: desc
+            })
+        }).then(() => { loadRides(); loadAvailableDrivers(); loadDrivers(); });
+    }
+
     function renderRides(rides) {
         document.getElementById('ride-count').textContent = `(${rides.length})`;
         const el = document.getElementById('ride-list');
@@ -693,7 +716,7 @@
             return;
         }
         el.innerHTML = `<table>
-            <thead><tr><th>Client</th><th>Pickup</th><th>From</th><th>To</th><th>Driver</th><th>Status</th></tr></thead>
+            <thead><tr><th>Client</th><th>Pickup</th><th>From</th><th>To</th><th>Driver</th><th>Status</th><th></th></tr></thead>
             <tbody>${rides.map(r => `<tr>
                 <td style="font-weight:600">${esc(r.clientName)}</td>
                 <td style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
@@ -706,6 +729,8 @@
                             ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
+                <td>${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button>` :
+                    (r.status === 'COMPLETED' && r.totalAmount ? `<span style="font-size:.78rem;color:#38a169;font-weight:600">$${r.totalAmount}</span>` : '')}</td>
             </tr>`).join('')}</tbody>
         </table>`;
     }

@@ -26,6 +26,14 @@ public class Ride {
     private RideStatus status = RideStatus.SCHEDULED;
     private String assignedDriverId;
     private String assignedDriverName;
+    private Instant actualStart;
+    private Instant actualEnd;
+    private Integer waitingTimeMinutes;
+    private BigDecimal tolls;
+    private BigDecimal parking;
+    private BigDecimal additionalCharges;
+    private String chargeDescription;
+    private BigDecimal totalAmount;
     private Instant createdAt;
 
     public String getId() { return id; }
@@ -50,6 +58,22 @@ public class Ride {
     public void setAssignedDriverId(String assignedDriverId) { this.assignedDriverId = assignedDriverId; }
     public String getAssignedDriverName() { return assignedDriverName; }
     public void setAssignedDriverName(String assignedDriverName) { this.assignedDriverName = assignedDriverName; }
+    public Instant getActualStart() { return actualStart; }
+    public void setActualStart(Instant actualStart) { this.actualStart = actualStart; }
+    public Instant getActualEnd() { return actualEnd; }
+    public void setActualEnd(Instant actualEnd) { this.actualEnd = actualEnd; }
+    public Integer getWaitingTimeMinutes() { return waitingTimeMinutes; }
+    public void setWaitingTimeMinutes(Integer waitingTimeMinutes) { this.waitingTimeMinutes = waitingTimeMinutes; }
+    public BigDecimal getTolls() { return tolls; }
+    public void setTolls(BigDecimal tolls) { this.tolls = tolls; }
+    public BigDecimal getParking() { return parking; }
+    public void setParking(BigDecimal parking) { this.parking = parking; }
+    public BigDecimal getAdditionalCharges() { return additionalCharges; }
+    public void setAdditionalCharges(BigDecimal additionalCharges) { this.additionalCharges = additionalCharges; }
+    public String getChargeDescription() { return chargeDescription; }
+    public void setChargeDescription(String chargeDescription) { this.chargeDescription = chargeDescription; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

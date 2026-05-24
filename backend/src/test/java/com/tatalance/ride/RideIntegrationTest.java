@@ -175,6 +175,51 @@ class RideIntegrationTest {
     }
 
     @Test
+    void should_completeAssignedRide() {
+        var clientId = createClient();
+        var driverId = createDriver();
+
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL", "basePrice", 85);
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        // Assign
+        restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
+                Map.of("driverId", driverId), Map.class);
+
+        // Complete
+        var completeBody = Map.of(
+                "actualStart", "2026-06-01T14:05:00Z",
+                "actualEnd", "2026-06-01T15:10:00Z",
+                "tolls", 5.50,
+                "parking", 10.00
+        );
+        var completeResponse = restTemplate.postForEntity(
+                "/api/rides/" + rideId + "/complete", completeBody, Map.class);
+        assertThat(completeResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(completeResponse.getBody().get("status")).isEqualTo("COMPLETED");
+        assertThat(((Number) completeResponse.getBody().get("totalAmount")).doubleValue()).isEqualTo(100.50);
+
+        // Verify driver is back to AVAILABLE
+        var driverResponse = restTemplate.getForEntity("/api/drivers/" + driverId, Map.class);
+        assertThat(driverResponse.getBody().get("availability")).isEqualTo("AVAILABLE");
+    }
+
+    @Test
+    void should_return400_when_completingScheduledRide() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var completeBody = Map.of("actualStart", "2026-06-01T14:05:00Z", "actualEnd", "2026-06-01T15:10:00Z");
+        var response = restTemplate.postForEntity("/api/rides/" + rideId + "/complete", completeBody, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void should_reassignDriver_beforeRideStarts() {
         var clientId = createClient();
         var driver1Id = createDriver();

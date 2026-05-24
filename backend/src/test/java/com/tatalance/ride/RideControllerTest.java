@@ -270,4 +270,97 @@ class RideControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].firstName").value("Carlos"));
     }
+
+    @Test
+    void should_completeRide_when_assigned() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        ride.setAssignedDriverId("drv001");
+        ride.setBasePrice(new BigDecimal("85.00"));
+        var driver = sampleDriver();
+        driver.setAvailability(Availability.ON_TRIP);
+
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"actualStart":"2026-06-01T14:05:00Z","actualEnd":"2026-06-01T15:10:00Z",
+                                 "tolls":5.50,"parking":10.00,"additionalCharges":15.00,
+                                 "chargeDescription":"Extra stop"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.totalAmount").value(115.50))
+                .andExpect(jsonPath("$.actualStart").value("2026-06-01T14:05:00Z"))
+                .andExpect(jsonPath("$.chargeDescription").value("Extra stop"));
+    }
+
+    @Test
+    void should_return400_when_rideNotAssigned() throws Exception {
+        var ride = sampleRide(); // status is SCHEDULED
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"actualStart":"2026-06-01T14:05:00Z","actualEnd":"2026-06-01T15:10:00Z"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_actualStartMissing() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"actualEnd":"2026-06-01T15:10:00Z"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_actualEndMissing() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"actualStart":"2026-06-01T14:05:00Z"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_completeRide_withZeroExtras() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        ride.setAssignedDriverId("drv001");
+        ride.setBasePrice(new BigDecimal("50.00"));
+        var driver = sampleDriver();
+        driver.setAvailability(Availability.ON_TRIP);
+
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"actualStart":"2026-06-01T14:05:00Z","actualEnd":"2026-06-01T15:10:00Z"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.totalAmount").value(50.00));
+    }
 }
