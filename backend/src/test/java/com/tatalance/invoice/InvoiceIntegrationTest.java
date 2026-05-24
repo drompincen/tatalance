@@ -116,4 +116,46 @@ class InvoiceIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().get("clientName")).isEqualTo("Ana Torres");
     }
+
+    @Test
+    void should_recordPayment_and_markPaid() {
+        var rideId = createCompletedRide();
+        var created = restTemplate.postForEntity("/api/invoices",
+                Map.of("rideId", rideId), Map.class);
+        var invoiceId = created.getBody().get("id").toString();
+        var total = ((Number) created.getBody().get("total")).doubleValue();
+
+        var payment = Map.of(
+                "date", "2026-06-02T10:00:00Z",
+                "amount", total,
+                "method", "ZELLE",
+                "reference", "zelle-ref-001"
+        );
+        var payResponse = restTemplate.postForEntity(
+                "/api/invoices/" + invoiceId + "/payments", payment, Map.class);
+        assertThat(payResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(payResponse.getBody().get("status")).isEqualTo("PAID");
+
+        // Verify persistence
+        var getResponse = restTemplate.getForEntity("/api/invoices/" + invoiceId, Map.class);
+        assertThat(getResponse.getBody().get("status")).isEqualTo("PAID");
+    }
+
+    @Test
+    void should_remainOutstanding_afterPartialPayment() {
+        var rideId = createCompletedRide();
+        var created = restTemplate.postForEntity("/api/invoices",
+                Map.of("rideId", rideId), Map.class);
+        var invoiceId = created.getBody().get("id").toString();
+
+        var payment = Map.of(
+                "date", "2026-06-02T10:00:00Z",
+                "amount", 10.00,
+                "method", "CASH"
+        );
+        var payResponse = restTemplate.postForEntity(
+                "/api/invoices/" + invoiceId + "/payments", payment, Map.class);
+        assertThat(payResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(payResponse.getBody().get("status")).isEqualTo("OUTSTANDING");
+    }
 }

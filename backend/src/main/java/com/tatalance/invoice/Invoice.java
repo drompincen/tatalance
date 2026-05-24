@@ -5,6 +5,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "invoices")
 public class Invoice {
@@ -19,6 +21,7 @@ public class Invoice {
     private BigDecimal tax;
     private BigDecimal total;
     private InvoiceStatus status = InvoiceStatus.OUTSTANDING;
+    private List<Payment> payments = new ArrayList<>();
     private Instant createdAt;
 
     public String getId() { return id; }
@@ -41,6 +44,8 @@ public class Invoice {
     public void setTotal(BigDecimal total) { this.total = total; }
     public InvoiceStatus getStatus() { return status; }
     public void setStatus(InvoiceStatus status) { this.status = status; }
+    public List<Payment> getPayments() { return payments; }
+    public void setPayments(List<Payment> payments) { this.payments = payments; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

@@ -6,6 +6,7 @@ import com.tatalance.ride.RideStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -89,6 +90,33 @@ public class InvoiceController {
     public Invoice getById(@PathVariable String id) {
         return invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
+    }
+
+    @Operation(summary = "Record a payment against an invoice")
+    @ApiResponse(responseCode = "200", description = "Payment recorded")
+    @ApiResponse(responseCode = "400", description = "Invoice not outstanding or invalid payment")
+    @ApiResponse(responseCode = "404", description = "Invoice not found")
+    @PostMapping("/{id}/payments")
+    public Invoice recordPayment(@PathVariable String id, @Valid @RequestBody Payment payment) {
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
+
+        if (invoice.getStatus() != InvoiceStatus.OUTSTANDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invoice is already paid");
+        }
+
+        invoice.getPayments().add(payment);
+
+        // Check if total payments cover the invoice total
+        BigDecimal totalPaid = invoice.getPayments().stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalPaid.compareTo(invoice.getTotal()) >= 0) {
+            invoice.setStatus(InvoiceStatus.PAID);
+        }
+
+        return invoiceRepository.save(invoice);
     }
 
     private String generateInvoiceNumber() {
