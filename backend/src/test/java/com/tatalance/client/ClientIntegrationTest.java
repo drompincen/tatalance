@@ -34,7 +34,7 @@ class ClientIntegrationTest {
         var request = Map.of(
                 "firstName", "John",
                 "lastName", "Doe",
-                "phone", "+1234"
+                "phone", "+12125551234"
         );
 
         var createResponse = restTemplate.postForEntity("/api/clients", request, Map.class);
@@ -50,14 +50,14 @@ class ClientIntegrationTest {
 
     @Test
     void should_return400_when_firstNameMissing() {
-        var request = Map.of("lastName", "Doe", "phone", "+1234");
+        var request = Map.of("lastName", "Doe", "phone", "+12125551234");
         var response = restTemplate.postForEntity("/api/clients", request, Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     void should_return400_when_lastNameMissing() {
-        var request = Map.of("firstName", "John", "phone", "+1234");
+        var request = Map.of("firstName", "John", "phone", "+12125551234");
         var response = restTemplate.postForEntity("/api/clients", request, Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
@@ -67,7 +67,7 @@ class ClientIntegrationTest {
         // Insert a document with the old "name" field directly
         var oldDoc = new Document()
                 .append("name", "Luciano Perez")
-                .append("phone", "+5555");
+                .append("phone", "+15551234567");
         mongoTemplate.insert(oldDoc, "clients");
 
         // Run the migration manually (it already ran on startup, but the collection was cleaned)
@@ -88,7 +88,7 @@ class ClientIntegrationTest {
     void should_migrateSingleWordName_when_noSpace() {
         var oldDoc = new Document()
                 .append("name", "Madonna")
-                .append("phone", "+1111");
+                .append("phone", "+14155559876");
         mongoTemplate.insert(oldDoc, "clients");
 
         new ClientNameMigration(mongoTemplate).run();
