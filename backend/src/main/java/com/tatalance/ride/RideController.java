@@ -61,4 +61,13 @@ public class RideController {
     public List<Ride> listByClient(@PathVariable String clientId) {
         return rideRepository.findByClientId(clientId);
     }
+
+    @Operation(summary = "List rides assigned to a driver",
+            description = "Returns rides where assignedDriverId matches, sorted by pickupDateTime ascending. "
+                    + "Powers the mobile driver queue (issue #33).")
+    @ApiResponse(responseCode = "200", description = "Driver's rides")
+    @GetMapping("/drivers/{driverId}/rides")
+    public List<Ride> listByDriver(@PathVariable String driverId) {
+        return rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc(driverId);
+    }
 }

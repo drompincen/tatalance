@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface RideRepository extends MongoRepository<Ride, String> {
     List<Ride> findByClientId(String clientId);
+    List<Ride> findByAssignedDriverIdOrderByPickupDateTimeAsc(String assignedDriverId);
 }

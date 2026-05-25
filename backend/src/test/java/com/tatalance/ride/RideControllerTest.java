@@ -172,4 +172,30 @@ class RideControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].clientId").value("cli001"));
     }
+
+    @Test
+    void should_listRidesByDriver_when_driverAssigned() throws Exception {
+        // M3 (#33) — Driver queue endpoint. Returns rides where assignedDriverId
+        // matches, sorted by pickupDateTime ascending.
+        var ride = sampleRide();
+        ride.setAssignedDriverId("drv001");
+        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv001"))
+                .thenReturn(List.of(ride));
+
+        mockMvc.perform(get("/api/drivers/drv001/rides"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].assignedDriverId").value("drv001"))
+                .andExpect(jsonPath("$[0].pickupLocation").value("Miami Airport"));
+    }
+
+    @Test
+    void should_returnEmptyList_when_driverHasNoRides() throws Exception {
+        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv999"))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/drivers/drv999/rides"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
 }

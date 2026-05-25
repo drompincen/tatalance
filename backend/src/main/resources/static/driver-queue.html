@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>My Queue — Tatalance</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #1a1a2e;
+            --muted: #4b5563;
+            --line: #e2e8f0;
+            --primary: #0f3460;
+            --scheduled: #3182ce;
+            --assigned: #805ad5;
+            --in-progress: #d97706;
+            --completed: #38a169;
+            --cancelled: #e53e3e;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100dvh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            font-size: 16px;
+        }
+
+        header {
+            background: #1a1a2e;
+            color: white;
+            padding: 14px 16px;
+        }
+        header h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        header .subtitle {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        main {
+            padding: 16px;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .day-heading {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin: 18px 4px 8px;
+        }
+        .day-heading:first-child { margin-top: 4px; }
+
+        .ride-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px 12px;
+        }
+        .pickup-time {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .client-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            grid-column: 1 / -1;
+        }
+        .route {
+            font-size: 0.9rem;
+            color: var(--muted);
+            grid-column: 1 / -1;
+            line-height: 1.4;
+        }
+        .arrow { color: #94a3b8; padding: 0 4px; }
+
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            color: white;
+            justify-self: end;
+            align-self: start;
+        }
+        .badge-SCHEDULED   { background: var(--scheduled); }
+        .badge-ASSIGNED    { background: var(--assigned); }
+        .badge-IN_PROGRESS { background: var(--in-progress); }
+        .badge-COMPLETED   { background: var(--completed); }
+        .badge-CANCELLED   { background: var(--cancelled); }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .empty-state p { font-size: 0.95rem; }
+
+        .error-state {
+            padding: 24px 16px;
+            border-radius: 12px;
+            background: #fee2e2;
+            color: #991b1b;
+            margin-top: 16px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="header-title">My Queue</h1>
+        <div class="subtitle" id="header-subtitle">Today and upcoming rides</div>
+    </header>
+
+    <main id="content">
+        <div class="empty-state" data-test="empty-state" id="empty-state" style="display:none">
+            <div class="icon">🚘</div>
+            <p>No rides assigned. Pull down to refresh.</p>
+        </div>
+        <div id="rides"></div>
+    </main>
+
+    <script>
+        const esc = s => String(s ?? '').replace(/[&<>"']/g,
+            c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+        const qs = new URLSearchParams(location.search);
+        const driverId = qs.get('id') || '';
+
+        function formatTime(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        }
+        function formatDateHeading(iso) {
+            if (!iso) return 'Unscheduled';
+            const d = new Date(iso);
+            const today = new Date();
+            const sameDay = d.toDateString() === today.toDateString();
+            if (sameDay) return 'Today';
+            return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function render(rides) {
+            const empty = document.getElementById('empty-state');
+            const container = document.getElementById('rides');
+            container.innerHTML = '';
+
+            if (!rides.length) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            // Group by day, preserving the server's ascending sort.
+            const groups = new Map();
+            for (const r of rides) {
+                const key = formatDateHeading(r.pickupDateTime);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(r);
+            }
+
+            for (const [day, dayRides] of groups) {
+                const h = document.createElement('div');
+                h.className = 'day-heading';
+                h.textContent = day;
+                container.appendChild(h);
+
+                for (const r of dayRides) {
+                    const card = document.createElement('article');
+                    card.className = 'ride-card';
+                    card.setAttribute('data-test', 'ride-card');
+                    card.setAttribute('data-ride-id', r.id);
+                    card.innerHTML = `
+                        <div class="pickup-time">${esc(formatTime(r.pickupDateTime))}</div>
+                        <span class="status-badge badge-${esc(r.status)}" data-test="status-badge">${esc(r.status)}</span>
+                        <div class="client-name">${esc(r.clientName || 'Unknown client')}</div>
+                        <div class="route">${esc(r.pickupLocation || '—')} <span class="arrow">→</span> ${esc(r.dropoffLocation || '—')}</div>
+                    `;
+                    container.appendChild(card);
+                }
+            }
+        }
+
+        function loadDriverHeader() {
+            if (!driverId) return;
+            fetch(`/api/drivers/${encodeURIComponent(driverId)}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    if (!d) return;
+                    document.getElementById('header-title').textContent =
+                        `${d.firstName || ''} ${d.lastName || ''}`.trim() || 'My Queue';
+                    document.getElementById('header-subtitle').textContent =
+                        d.vehicle ? d.vehicle : 'Today and upcoming rides';
+                })
+                .catch(() => {});
+        }
+
+        function loadQueue() {
+            if (!driverId) {
+                document.getElementById('empty-state').style.display = 'block';
+                return;
+            }
+            fetch(`/api/drivers/${encodeURIComponent(driverId)}/rides`)
+                .then(r => r.json())
+                .then(render)
+                .catch(() => {
+                    document.getElementById('rides').innerHTML =
+                        '<div class="error-state">Could not load your queue. Pull down to retry.</div>';
+                });
+        }
+
+        loadDriverHeader();
+        loadQueue();
+        // Light refresh — keeps the queue current as David assigns work.
+        setInterval(loadQueue, 15000);
+    </script>
+</body>
+</html>
