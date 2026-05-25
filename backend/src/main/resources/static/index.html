@@ -286,6 +286,9 @@
                 <form id="ride-form" novalidate>
                     <div class="field">
                         <label>Client <span class="req">*</span></label>
+                        <input type="search" id="r-clientSearch" placeholder="Search by name…"
+                               autocomplete="off" autocapitalize="off" spellcheck="false"
+                               style="margin-bottom:6px">
                         <select id="r-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;">
                             <option value="">Select a client…</option>
                         </select>
@@ -367,6 +370,11 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`tab-${name}`).classList.add('active');
         document.getElementById(`btn-${name}`).classList.add('active');
+        // Always fetch fresh client list when entering Rides — David may have
+        // just added a client and expects to book a ride for them.
+        if (name === 'rides' && typeof loadClientDropdown === 'function') {
+            loadClientDropdown();
+        }
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -713,8 +721,25 @@
             sel.innerHTML = '<option value="">Select a client…</option>' +
                 clients.map(c => `<option value="${c.id}">${esc(c.firstName)} ${esc(c.lastName)}</option>`).join('');
             if (current) sel.value = current;
+            applyClientSearchFilter();
         }).catch(() => {});
     }
+
+    function applyClientSearchFilter() {
+        const q = (document.getElementById('r-clientSearch')?.value || '').trim().toLowerCase();
+        const sel = document.getElementById('r-clientId');
+        if (!sel) return;
+        Array.from(sel.options).forEach(opt => {
+            if (!opt.value) return; // keep the placeholder
+            const match = !q || opt.textContent.toLowerCase().includes(q);
+            opt.hidden = !match;
+            opt.style.display = match ? '' : 'none';
+        });
+        // If the currently selected option got filtered out, reset
+        if (sel.selectedOptions[0]?.hidden) sel.value = '';
+    }
+
+    document.getElementById('r-clientSearch').addEventListener('input', applyClientSearchFilter);
 
     function renderRides(rides) {
         document.getElementById('ride-count').textContent = `(${rides.length})`;
