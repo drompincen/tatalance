@@ -34,16 +34,12 @@ class SecurityConfigTest {
     }
 
     @Test
-    void should_redirectToLogin_when_browserRequestUnauthenticated() throws Exception {
+    void should_redirectToCustomLoginPage_when_browserRequestUnauthenticated() throws Exception {
+        // SecurityConfig.formLogin().loginPage("/login.html") — the mobile-friendly
+        // login page (issue #35) replaced Spring Security's default /login form.
         mockMvc.perform(get("/api/clients").accept(MediaType.TEXT_HTML))
             .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrlPattern("**/login"));
-    }
-
-    @Test
-    void should_returnOk_when_loginPageAccessedUnauthenticated() throws Exception {
-        mockMvc.perform(get("/login"))
-            .andExpect(status().isOk());
+            .andExpect(redirectedUrlPattern("**/login.html"));
     }
 
     @Test

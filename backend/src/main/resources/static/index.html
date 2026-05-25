@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tatalance — POC</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -119,6 +119,43 @@
         .hidden { display: none; }
 
         .spec-loading { text-align: center; padding: 48px; color: #bbb; font-size: 0.9rem; }
+
+        /* ── Mobile (iPhone Safari etc, ≤ 768px) — see docs/journeys/mobile-iphone-journey.md ── */
+        @media (max-width: 768px) {
+            body { min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
+            header {
+                padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+                height: auto;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            header h1 { font-size: 1.05rem; }
+            nav {
+                margin-left: 0;
+                width: 100%;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                gap: 4px;
+            }
+            .tab-btn {
+                font-size: 16px;
+                padding: 11px 14px;
+                min-height: 44px;
+                flex-shrink: 0;
+            }
+            .page { padding: 0 16px; margin: 16px auto; }
+            .grid-2, .api-grid { grid-template-columns: 1fr; gap: 16px; }
+            .card { padding: 16px; }
+            input, select, textarea { font-size: 16px !important; padding: 12px; }
+            .btn {
+                font-size: 16px;
+                padding: 12px 16px;
+                min-height: 44px;
+            }
+            table { font-size: 0.95rem; }
+            th, td { padding: 8px 6px; }
+        }
     </style>
 </head>
 <body>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Sign in — Tatalance</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            padding-top: calc(24px + env(safe-area-inset-top));
+            padding-bottom: calc(24px + env(safe-area-inset-bottom));
+        }
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.08);
+            width: 100%;
+            max-width: 360px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #4b5563;
+            margin-bottom: 24px;
+        }
+        .field { margin-bottom: 16px; }
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1.5px solid #cbd5e0;
+            border-radius: 8px;
+            background: #fafafa;
+            color: #1a1a2e;
+        }
+        input:focus {
+            outline: none;
+            border-color: #0f3460;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(15,52,96,.1);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 44px;
+            margin-top: 8px;
+        }
+        button:hover { background: #16213e; }
+        button:active { background: #0a2440; }
+        .message {
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .message-error { background: #fee2e2; color: #991b1b; }
+        .message-info { background: #dbeafe; color: #1e3a8a; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>Sign in</h1>
+        <p class="subtitle">Tatalance — chauffeur platform demo</p>
+
+        <div id="msg-error" class="message message-error" role="alert">
+            Wrong username or password.
+        </div>
+        <div id="msg-info" class="message message-info" role="status">
+            You have been signed out.
+        </div>
+
+        <form method="post" action="/login" novalidate>
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text"
+                       id="username"
+                       name="username"
+                       autocomplete="username"
+                       autocapitalize="off"
+                       autocorrect="off"
+                       inputmode="text"
+                       spellcheck="false"
+                       required>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       autocomplete="current-password"
+                       required>
+            </div>
+            <button type="submit">Sign in</button>
+        </form>
+    </div>
+
+    <script>
+        var qs = new URLSearchParams(location.search);
+        if (qs.has('error'))  document.getElementById('msg-error').style.display = 'block';
+        if (qs.has('logout')) document.getElementById('msg-info').style.display  = 'block';
+    </script>
+</body>
+</html>

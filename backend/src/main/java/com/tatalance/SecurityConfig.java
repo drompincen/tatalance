@@ -27,11 +27,15 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/logout").permitAll()
+                .requestMatchers("/login", "/login.html", "/logout").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults())
-            .formLogin(Customizer.withDefaults())
+            .formLogin(form -> form
+                .loginPage("/login.html")
+                .loginProcessingUrl("/login")
+                .permitAll()
+            )
             .logout(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable());
         return http.build();

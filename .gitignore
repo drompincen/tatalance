@@ -5,3 +5,14 @@
 setup-backup/
 backend/target/
 backend/.idea/
+
+# Node / Playwright
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Local AWS CLI installer artifacts (Luciano onboarding only)
+aws/
+awscliv2.zip
+iam attach-role-policy *
