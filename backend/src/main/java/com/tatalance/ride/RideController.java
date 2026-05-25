@@ -10,8 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Rides", description = "Ride booking and management")
 @RestController
@@ -69,5 +71,52 @@ public class RideController {
     @GetMapping("/drivers/{driverId}/rides")
     public List<Ride> listByDriver(@PathVariable String driverId) {
         return rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc(driverId);
+    }
+
+    @Operation(summary = "Start a ride (mobile driver action)",
+            description = "Transitions SCHEDULED or ACCEPTED → IN_PROGRESS and records actualStart=now. "
+                    + "Powers the Start button on the driver queue (issue #34).")
+    @PostMapping("/rides/{id}/start")
+    public Ride start(@PathVariable String id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot start a ride in status " + ride.getStatus());
+        }
+        ride.setStatus(RideStatus.IN_PROGRESS);
+        ride.setActualStart(Instant.now());
+        return rideRepository.save(ride);
+    }
+
+    @Operation(summary = "Complete a ride with billable extras (mobile driver action)",
+            description = "Transitions IN_PROGRESS → COMPLETED. Body may include tolls / parking / "
+                    + "additionalCharges; billableAmount = basePrice + extras. Issue #34.")
+    @PostMapping("/rides/{id}/complete")
+    public Ride complete(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (ride.getStatus() != RideStatus.IN_PROGRESS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot complete a ride in status " + ride.getStatus() + " — start it first");
+        }
+        BigDecimal tolls   = asDecimal(body, "tolls");
+        BigDecimal parking = asDecimal(body, "parking");
+        BigDecimal extras  = asDecimal(body, "additionalCharges");
+        BigDecimal base    = ride.getBasePrice() == null ? BigDecimal.ZERO : ride.getBasePrice();
+        ride.setTolls(tolls);
+        ride.setParking(parking);
+        ride.setAdditionalCharges(extras);
+        ride.setBillableAmount(base.add(tolls).add(parking).add(extras));
+        ride.setActualEnd(Instant.now());
+        ride.setStatus(RideStatus.COMPLETED);
+        return rideRepository.save(ride);
+    }
+
+    private static BigDecimal asDecimal(Map<String, Object> body, String key) {
+        if (body == null || body.get(key) == null) return BigDecimal.ZERO;
+        Object v = body.get(key);
+        if (v instanceof Number n) return new BigDecimal(n.toString());
+        return new BigDecimal(v.toString());
     }
 }

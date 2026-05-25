@@ -70,6 +70,75 @@
             grid-template-columns: 1fr auto;
             gap: 8px 12px;
         }
+        .ride-card.completed { opacity: 0.6; }
+
+        .actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .action-btn {
+            flex: 1;
+            min-height: 44px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 12px;
+        }
+        .action-btn.primary { background: var(--primary); color: white; }
+        .action-btn.primary:active { background: #0a2440; }
+        .action-btn.complete { background: var(--completed); color: white; }
+        .action-btn.complete:active { background: #2f855a; }
+
+        .complete-form {
+            grid-column: 1 / -1;
+            margin-top: 10px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            display: none;
+        }
+        .complete-form.open { display: block; }
+        .complete-form .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .complete-form label {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .complete-form input {
+            width: 110px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            text-align: right;
+        }
+        .complete-form .total {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            padding-top: 8px;
+            border-top: 1px solid var(--line);
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .complete-form .confirm-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .complete-form .confirm-row button { flex: 1; }
+        .action-btn.cancel { background: var(--line); color: var(--text); }
         .pickup-time {
             font-size: 1.1rem;
             font-weight: 700;
@@ -186,7 +255,7 @@
 
                 for (const r of dayRides) {
                     const card = document.createElement('article');
-                    card.className = 'ride-card';
+                    card.className = 'ride-card' + (r.status === 'COMPLETED' ? ' completed' : '');
                     card.setAttribute('data-test', 'ride-card');
                     card.setAttribute('data-ride-id', r.id);
                     card.innerHTML = `
@@ -194,10 +263,95 @@
                         <span class="status-badge badge-${esc(r.status)}" data-test="status-badge">${esc(r.status)}</span>
                         <div class="client-name">${esc(r.clientName || 'Unknown client')}</div>
                         <div class="route">${esc(r.pickupLocation || '—')} <span class="arrow">→</span> ${esc(r.dropoffLocation || '—')}</div>
+                        ${actionsFor(r)}
+                        ${completeFormFor(r)}
                     `;
                     container.appendChild(card);
                 }
             }
+        }
+
+        function actionsFor(r) {
+            if (r.status === 'SCHEDULED' || r.status === 'ACCEPTED') {
+                return `<div class="actions">
+                    <button class="action-btn primary" data-test="start-btn"
+                            onclick="startRide('${esc(r.id)}')">Start ride</button>
+                </div>`;
+            }
+            if (r.status === 'IN_PROGRESS') {
+                return `<div class="actions">
+                    <button class="action-btn complete" data-test="complete-btn"
+                            onclick="openCompleteForm('${esc(r.id)}')">Complete ride</button>
+                </div>`;
+            }
+            return '';
+        }
+
+        function completeFormFor(r) {
+            if (r.status !== 'IN_PROGRESS') return '';
+            const base = Number(r.basePrice || 0);
+            return `<div class="complete-form" data-test="complete-form" data-ride-id="${esc(r.id)}">
+                <div class="row"><label>Base price</label><span>$${base.toFixed(2)}</span></div>
+                <div class="row"><label for="tolls-${esc(r.id)}">Tolls</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
+                           id="tolls-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
+                <div class="row"><label for="parking-${esc(r.id)}">Parking</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
+                           id="parking-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
+                <div class="row"><label for="extras-${esc(r.id)}">Extras</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
+                           id="extras-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
+                <div class="total">
+                    <span>Total billable</span>
+                    <span data-test="billable" id="billable-${esc(r.id)}">$${base.toFixed(2)}</span>
+                </div>
+                <div class="confirm-row">
+                    <button class="action-btn cancel" onclick="closeCompleteForm('${esc(r.id)}')">Cancel</button>
+                    <button class="action-btn complete" data-test="confirm-complete-btn"
+                            onclick="submitComplete('${esc(r.id)}')">Confirm</button>
+                </div>
+            </div>`;
+        }
+
+        function readNumber(id) {
+            const v = parseFloat(document.getElementById(id)?.value || '0');
+            return Number.isFinite(v) ? v : 0;
+        }
+
+        function recalc(id, base) {
+            const total = base + readNumber(`tolls-${id}`) + readNumber(`parking-${id}`) + readNumber(`extras-${id}`);
+            const el = document.getElementById(`billable-${id}`);
+            if (el) el.textContent = `$${total.toFixed(2)}`;
+        }
+
+        function openCompleteForm(id) {
+            document.querySelector(`.complete-form[data-ride-id="${id}"]`)?.classList.add('open');
+        }
+        function closeCompleteForm(id) {
+            document.querySelector(`.complete-form[data-ride-id="${id}"]`)?.classList.remove('open');
+        }
+
+        function startRide(id) {
+            fetch(`/api/rides/${encodeURIComponent(id)}/start`, { method: 'POST' })
+                .then(r => { if (!r.ok) throw new Error(`start failed: ${r.status}`); return r.json(); })
+                .then(loadQueue)
+                .catch(err => alert(err.message));
+        }
+
+        function submitComplete(id) {
+            const body = {
+                tolls: readNumber(`tolls-${id}`),
+                parking: readNumber(`parking-${id}`),
+                additionalCharges: readNumber(`extras-${id}`),
+            };
+            fetch(`/api/rides/${encodeURIComponent(id)}/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            })
+                .then(r => { if (!r.ok) throw new Error(`complete failed: ${r.status}`); return r.json(); })
+                .then(loadQueue)
+                .catch(err => alert(err.message));
         }
 
         function loadDriverHeader() {

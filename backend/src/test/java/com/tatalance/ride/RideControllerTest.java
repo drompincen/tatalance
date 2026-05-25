@@ -198,4 +198,67 @@ class RideControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
+
+    @Test
+    void should_startRide_when_scheduled() throws Exception {
+        // M4 (#34) — start endpoint, transitions to IN_PROGRESS + actualStart=now
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.SCHEDULED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/start"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.actualStart").exists());
+    }
+
+    @Test
+    void should_return404_when_startingMissingRide() throws Exception {
+        when(rideRepository.findById("missing")).thenReturn(Optional.empty());
+        mockMvc.perform(post("/api/rides/missing/start"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_return409_when_startingAlreadyCompletedRide() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.COMPLETED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/start"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void should_completeRide_andCalculateBillable() throws Exception {
+        // M4 (#34) — complete endpoint, transitions to COMPLETED + billable = base + extras
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.IN_PROGRESS);
+        ride.setBasePrice(new BigDecimal("85.00"));
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tolls": 8.50, "parking": 12.00, "additionalCharges": 15.00}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.actualEnd").exists())
+                .andExpect(jsonPath("$.billableAmount").value(120.50));
+    }
+
+    @Test
+    void should_return409_when_completingScheduledRide() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.SCHEDULED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isConflict());
+    }
 }
