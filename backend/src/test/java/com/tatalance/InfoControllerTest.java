@@ -1,6 +1,8 @@
 package com.tatalance;
 
 import com.tatalance.client.ClientRepository;
+import com.tatalance.driver.DriverRepository;
+import com.tatalance.ride.RideRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,6 +24,12 @@ class InfoControllerTest {
 
     @MockBean
     ClientRepository repository;
+
+    @MockBean
+    DriverRepository driverRepository;
+
+    @MockBean
+    RideRepository rideRepository;
 
     @Test
     void should_returnEmbedded_when_noDbTypeConfigured() throws Exception {

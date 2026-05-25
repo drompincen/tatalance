@@ -1,6 +1,8 @@
 package com.tatalance;
 
 import com.tatalance.client.ClientRepository;
+import com.tatalance.driver.DriverRepository;
+import com.tatalance.ride.RideRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,6 +28,14 @@ class SecurityConfigTest {
 
     @MockBean
     ClientRepository repository;
+
+    // @WebMvcTest with no controller arg scans ALL controllers — Driver and Ride
+    // need their repos mocked too or the context fails to load.
+    @MockBean
+    DriverRepository driverRepository;
+
+    @MockBean
+    RideRepository rideRepository;
 
     @Test
     void should_return401_when_apiRequestUnauthenticated() throws Exception {

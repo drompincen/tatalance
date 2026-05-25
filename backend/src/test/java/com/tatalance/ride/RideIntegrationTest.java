@@ -26,6 +26,7 @@ class RideIntegrationTest {
     void cleanUp() {
         mongoTemplate.dropCollection("rides");
         mongoTemplate.dropCollection("clients");
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
     private String createClient() {
