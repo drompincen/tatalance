@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -247,5 +249,57 @@ class RideIntegrationTest {
                 Map.of("driverId", driver2Id), Map.class);
         assertThat(reassignResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(reassignResponse.getBody().get("assignedDriverName")).isEqualTo("Mike Johnson");
+    }
+
+    @Test
+    void should_updateScheduledRide() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL", "basePrice", 85);
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var update = Map.of("clientId", clientId, "pickupDateTime", "2026-06-02T10:00:00Z",
+                "pickupLocation", "Brickell", "dropoffLocation", "Wynwood", "basePrice", 60);
+        var response = restTemplate.exchange("/api/rides/" + rideId, HttpMethod.PUT,
+                new HttpEntity<>(update), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().get("pickupLocation")).isEqualTo("Brickell");
+        assertThat(response.getBody().get("dropoffLocation")).isEqualTo("Wynwood");
+    }
+
+    @Test
+    void should_cancelScheduledRide() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var response = restTemplate.postForEntity("/api/rides/" + rideId + "/cancel", null, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().get("status")).isEqualTo("CANCELLED");
+    }
+
+    @Test
+    void should_cancelAssignedRide_and_freeDriver() {
+        var clientId = createClient();
+        var driverId = createDriver();
+
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
+                Map.of("driverId", driverId), Map.class);
+
+        var cancelResponse = restTemplate.postForEntity("/api/rides/" + rideId + "/cancel", null, Map.class);
+        assertThat(cancelResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(cancelResponse.getBody().get("status")).isEqualTo("CANCELLED");
+
+        // Verify driver is back to AVAILABLE
+        var driverResponse = restTemplate.getForEntity("/api/drivers/" + driverId, Map.class);
+        assertThat(driverResponse.getBody().get("availability")).isEqualTo("AVAILABLE");
     }
 }

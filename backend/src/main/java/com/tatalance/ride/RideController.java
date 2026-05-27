@@ -108,6 +108,53 @@ public class RideController {
         return rideRepository.save(ride);
     }
 
+    @Operation(summary = "Update a scheduled ride")
+    @ApiResponse(responseCode = "200", description = "Ride updated")
+    @ApiResponse(responseCode = "400", description = "Ride not in SCHEDULED status")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PutMapping("/rides/{id}")
+    public Ride update(@PathVariable String id, @Valid @RequestBody Ride updates) {
+        Ride existing = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (existing.getStatus() != RideStatus.SCHEDULED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Only SCHEDULED rides can be edited");
+        }
+        Client client = clientRepository.findById(updates.getClientId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
+        existing.setClientId(updates.getClientId());
+        existing.setClientName(client.getFirstName() + " " + client.getLastName());
+        existing.setPickupDateTime(updates.getPickupDateTime());
+        existing.setPickupLocation(updates.getPickupLocation());
+        existing.setDropoffLocation(updates.getDropoffLocation());
+        existing.setBasePrice(updates.getBasePrice());
+        existing.setNotes(updates.getNotes());
+        return rideRepository.save(existing);
+    }
+
+    @Operation(summary = "Cancel a ride")
+    @ApiResponse(responseCode = "200", description = "Ride cancelled")
+    @ApiResponse(responseCode = "400", description = "Ride cannot be cancelled")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PostMapping("/rides/{id}/cancel")
+    public Ride cancelRide(@PathVariable String id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot cancel a " + ride.getStatus() + " ride");
+        }
+        // Free the assigned driver
+        if (ride.getAssignedDriverId() != null) {
+            driverRepository.findById(ride.getAssignedDriverId()).ifPresent(driver -> {
+                driver.setAvailability(Availability.AVAILABLE);
+                driverRepository.save(driver);
+            });
+        }
+        ride.setStatus(RideStatus.CANCELLED);
+        return rideRepository.save(ride);
+    }
+
     @Operation(summary = "Complete a ride")
     @ApiResponse(responseCode = "200", description = "Ride completed")
     @ApiResponse(responseCode = "400", description = "Ride not in ASSIGNED status or missing fields")

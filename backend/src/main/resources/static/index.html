@@ -287,6 +287,7 @@
                         <input type="text" id="r-notes" placeholder="VIP client, extra luggage" autocomplete="off">
                     </div>
                     <button class="btn" type="submit" id="ride-submit-btn">Book Ride</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-ride-edit-btn" style="display:none" onclick="cancelRideEdit()">Cancel</button>
                 </form>
                 <div class="form-feedback" id="ride-fb"></div>
             </div>
@@ -853,8 +854,8 @@
                             ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
-                <td>${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button>` :
-                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}</td>
+                <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
+                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}</td>
             </tr>`).join('')}</tbody>
         </table>`;
     }
@@ -906,21 +907,25 @@
             if (basePrice) body.basePrice = Number(basePrice);
             if (notes) body.notes = notes;
 
-            const r = await fetch('/api/rides', {
-                method: 'POST',
+            const url = editingRideId ? `/api/rides/${editingRideId}` : '/api/rides';
+            const method = editingRideId ? 'PUT' : 'POST';
+            const r = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
             if (!r.ok) throw new Error();
-            ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-notes'].forEach(id => document.getElementById(id).value = '');
+            const wasEdit = !!editingRideId;
+            cancelRideEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = '✓ Ride booked';
+            fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
             loadRides();
         } catch {
             fb.className = 'form-feedback fail';
-            fb.textContent = '✗ Booking failed — check server logs';
+            fb.textContent = '✗ Save failed — check server logs';
         } finally {
-            btn.disabled = false; btn.textContent = 'Book Ride';
+            btn.disabled = false;
+            btn.textContent = editingRideId ? 'Update Ride' : 'Book Ride';
         }
     });
 
@@ -931,6 +936,49 @@
             if (errEl) errEl.classList.remove('show');
         });
     });
+
+    /* ── Edit / Cancel ride ── */
+    let editingRideId = null;
+
+    window.editRide = function(id, clientId, pickupDateTime, pickupLocation, dropoffLocation, basePrice, notes) {
+        editingRideId = id;
+        document.getElementById('r-clientId').value = clientId;
+        const dt = new Date(pickupDateTime);
+        const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('r-pickupDateTime').value = local;
+        document.getElementById('r-pickupLocation').value = pickupLocation;
+        document.getElementById('r-dropoffLocation').value = dropoffLocation;
+        document.getElementById('r-basePrice').value = basePrice;
+        document.getElementById('r-notes').value = notes;
+        document.getElementById('ride-submit-btn').textContent = 'Update Ride';
+        document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Edit Ride';
+        document.getElementById('cancel-ride-edit-btn').style.display = 'inline-block';
+    };
+
+    window.cancelRideEdit = function() {
+        editingRideId = null;
+        ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-notes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('ride-submit-btn').textContent = 'Book Ride';
+        document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Book a Ride';
+        document.getElementById('cancel-ride-edit-btn').style.display = 'none';
+        document.getElementById('ride-fb').className = 'form-feedback';
+        document.getElementById('ride-fb').textContent = '';
+    };
+
+    window.cancelRide = async function(rideId) {
+        if (!confirm('Cancel this ride?')) return;
+        try {
+            const r = await fetch(`/api/rides/${rideId}/cancel`, { method: 'POST' });
+            if (!r.ok) {
+                const data = await r.json();
+                alert(data.message || 'Cannot cancel this ride');
+                return;
+            }
+            loadRides(); loadAvailableDrivers(); loadDrivers();
+        } catch {
+            alert('Cancel failed — check server logs');
+        }
+    };
 
     loadClientDropdown();
     loadAvailableDrivers();
