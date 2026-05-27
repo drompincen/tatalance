@@ -1429,8 +1429,24 @@
         return !!active.closest('#custom-tab-panes');
     }
 
+    function getActiveCustomTabId() {
+        const btn = document.querySelector('.tab-btn.custom-tab.active');
+        return btn ? btn.id.replace('btn-custom-', '') : null;
+    }
+
+    function restoreActiveCustomTab(tableId) {
+        if (!tableId) return;
+        const btn = document.getElementById(`btn-custom-${tableId}`);
+        const pane = document.getElementById(`tab-custom-${tableId}`);
+        if (btn) btn.classList.add('active');
+        if (pane) pane.classList.add('active');
+    }
+
     async function loadCustomTables() {
         try {
+            // Remember which custom tab is active before re-rendering
+            const activeTableId = getActiveCustomTabId();
+
             const r = await fetch('/api/tables');
             customTables = await r.json();
             renderCustomTabButtons();
@@ -1440,15 +1456,13 @@
                 customTableRows[t.id] = await rr.json();
             }));
             // Skip DOM re-render if user is typing in a custom table form
-            if (isUserEditingCustomTable()) return;
-            renderAllCustomPanes();
-            // Re-activate current tab if it's a custom one
-            const activeBtn = document.querySelector('.tab-btn.active');
-            if (activeBtn && activeBtn.id.startsWith('btn-custom-')) {
-                const tabName = activeBtn.id.replace('btn-', '');
-                const pane = document.getElementById(`tab-${tabName}`);
-                if (pane) pane.classList.add('active');
+            if (isUserEditingCustomTable()) {
+                // Still restore the tab button active state
+                restoreActiveCustomTab(activeTableId);
+                return;
             }
+            renderAllCustomPanes();
+            restoreActiveCustomTab(activeTableId);
         } catch { /* ignore */ }
     }
 
