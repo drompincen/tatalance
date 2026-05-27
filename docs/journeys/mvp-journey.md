@@ -270,6 +270,18 @@ These stories don't add new steps to the journey but improve quality and usabili
 
 ---
 
+## v2 Stories (UX evolution)
+
+These stories evolve Tatalance from a fixed-tab app into a flexible client management tool.
+
+| # | Story | Why | Issue |
+|---|---|---|---|
+| 1 | Remove payment processing | David manages clients — payment is between David and client directly. Invoices stay for record-keeping but "Pay" button removed. | #39 |
+| 2 | Custom tables ("+" button) | David may need to track things we haven't thought of (contacts, expenses, notes). Let him create custom tables with user-defined columns. | #40 |
+| 3 | Help page | First-time users need a quick tour of the UI. A "?" button with labeled slide panels. | #41 |
+
+---
+
 ## What's NOT in the MVP
 
 These are visible in the prototype but deferred to later iterations:

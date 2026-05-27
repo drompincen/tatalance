@@ -2,8 +2,8 @@
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
 status: in-progress
 created: 2026-04-27
-updated: 2026-05-24
-current_chapter: epic-2
+updated: 2026-05-27
+current_chapter: epic-3
 ---
 
 # Tatalance v1 Plan
@@ -35,7 +35,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
 | 1 | Phone validation (E.164) | completed | luciano | #5 |
-| 2 | Complete Client management | pending | — | #10 |
+| 2 | Complete Client management | completed | luciano | #10 |
 | 3 | Add Driver management | completed | luciano | #11 |
 | 4 | Create Ride | completed | luciano | #12 |
 | 5 | Assign Driver to Ride | completed | luciano | #13 |
@@ -45,11 +45,11 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 7 | User-friendly validation error messages | pending | — | #25 |
-| 8 | Edit and delete Clients | pending | — | #26 |
-| 9 | Edit and delete Drivers | pending | — | #27 |
-| 10 | Edit and cancel Rides | pending | — | #28 |
-| 11 | Inline ride completion form (replace popups) | pending | — | #29 |
+| 7 | User-friendly validation error messages | completed | luciano | #25 |
+| 8 | Edit and delete Clients | completed | luciano | #26 |
+| 9 | Edit and delete Drivers | completed | luciano | #27 |
+| 10 | Edit and cancel Rides | completed | luciano | #28 |
+| 11 | Inline ride completion form (replace popups) | completed | luciano | #29 |
 
 ## QA stories (Playwright E2E)
 
@@ -80,7 +80,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 2: David can invoice and get paid
-**Status:** in-progress (next up)
+**Status:** completed
 **Outcome:** David generates an invoice from a completed ride, sends it, and records payment.
 **Depends on:** Epic 1 (#14 Complete Ride) — done
 
@@ -88,8 +88,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | Generate Invoice | pending | — | #15 |
-| 2 | Record Payment | pending | — | #16 |
+| 1 | Generate Invoice | completed | luciano | #15 |
+| 2 | Record Payment | completed | luciano | #16 |
 
 ## QA stories (Playwright E2E)
 
@@ -102,6 +102,28 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ```
 #14 (Complete Ride) ✅ --> #15 (Invoice) --> #16 (Payment)
 #17 (Playwright) --> #22
+```
+
+---
+
+# Epic 3: UX evolution — flexible client management
+**Status:** pending
+**Outcome:** Tatalance becomes a flexible tool David can customize, not just a fixed-tab app.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Remove payment processing from UI | pending | — | #39 |
+| 2 | Custom tables ("+" button on nav bar) | pending | — | #40 |
+| 3 | Help page with UI guide panels | pending | — | #41 |
+
+## Dependencies
+
+```
+#39 (Remove payments) — independent, quick win
+#40 (Custom tables) — independent, largest story
+#41 (Help page) — depends on #40 (needs to document custom tables)
 ```
 
 ---
@@ -122,24 +144,27 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | Issue | Title | Epic | Type | Status |
 |---|---|---|---|---|
 | #5 | Phone validation | Epic 1 | feature | completed |
-| #10 | Complete Client management | Epic 1 | feature | pending |
+| #10 | Complete Client management | Epic 1 | feature | completed |
 | #11 | Add Driver management | Epic 1 | feature | completed |
 | #12 | Create Ride | Epic 1 | feature | completed |
 | #13 | Assign Driver to Ride | Epic 1 | feature | completed |
 | #14 | Complete Ride | Epic 1 | feature | completed |
-| #15 | Generate Invoice | Epic 2 | feature | pending |
-| #16 | Record Payment | Epic 2 | feature | pending |
+| #15 | Generate Invoice | Epic 2 | feature | completed |
+| #16 | Record Payment | Epic 2 | feature | completed |
 | #17 | Playwright setup | Epic 1 | qa | pending |
 | #18 | E2E: Add client | Epic 1 | qa | pending |
 | #19 | E2E: Add driver | Epic 1 | qa | pending |
 | #20 | E2E: Book ride + assign | Epic 1 | qa | pending |
 | #21 | E2E: Complete ride | Epic 1 | qa | pending |
 | #22 | E2E: Invoice + payment | Epic 2 | qa | pending |
-| #25 | User-friendly error messages | Epic 1 | polish | pending |
-| #26 | Edit and delete Clients | Epic 1 | polish | pending |
-| #27 | Edit and delete Drivers | Epic 1 | polish | pending |
-| #28 | Edit and cancel Rides | Epic 2 | polish | pending |
-| #29 | Inline ride completion form | Epic 2 | polish | pending |
+| #25 | User-friendly error messages | Epic 1 | polish | completed |
+| #26 | Edit and delete Clients | Epic 1 | polish | completed |
+| #27 | Edit and delete Drivers | Epic 1 | polish | completed |
+| #28 | Edit and cancel Rides | Epic 2 | polish | completed |
+| #29 | Inline ride completion form | Epic 2 | polish | completed |
+| #39 | Remove payment processing | Epic 3 | feature | pending |
+| #40 | Custom tables ("+" button) | Epic 3 | feature | pending |
+| #41 | Help page with UI guide | Epic 3 | feature | pending |
 
 ---
 
@@ -153,3 +178,4 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | Reports/analytics | Needs data volume |
 | i18n (EN/ES) | Port when UI is stable |
 | React/Vite | Plain HTML/JS works for MVP scope |
+| In-app payment processing | David collects payment directly from clients — app is for management, not transactions |
