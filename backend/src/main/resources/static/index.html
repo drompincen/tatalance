@@ -170,6 +170,47 @@
         .tab-btn.custom-tab { font-style: italic; }
         .tab-btn .del-tab { display: none; font-size: .7rem; margin-left: 4px; color: rgba(255,255,255,.4); }
         .tab-btn:hover .del-tab { display: inline; }
+
+        /* ── Help overlay ── */
+        .help-btn {
+            background: transparent; border: 1.5px solid rgba(255,255,255,.3); color: rgba(255,255,255,.5);
+            width: 28px; height: 28px; border-radius: 50%; font-size: .85rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all .15s; margin-left: 6px;
+        }
+        .help-btn:hover { border-color: rgba(255,255,255,.6); color: white; background: rgba(255,255,255,.08); }
+        .help-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center;
+        }
+        .help-overlay.open { display: flex; }
+        .help-card {
+            background: white; border-radius: 14px; width: 580px; max-height: 85vh;
+            box-shadow: 0 12px 40px rgba(0,0,0,.25); overflow: hidden; display: flex; flex-direction: column;
+        }
+        .help-header {
+            display: flex; align-items: center; padding: 18px 24px; border-bottom: 1px solid #f0f0f0;
+        }
+        .help-header h2 { font-size: 1rem; flex: 1; }
+        .help-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #999; padding: 4px; }
+        .help-close:hover { color: #333; }
+        .help-body { padding: 28px 32px; flex: 1; overflow-y: auto; }
+        .help-body h3 { font-size: .95rem; color: #1a1a2e; margin-bottom: 12px; }
+        .help-body p { font-size: .85rem; color: #555; line-height: 1.55; margin-bottom: 10px; }
+        .help-tip { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; padding: 8px 10px; background: #f8fafb; border-radius: 6px; }
+        .help-tip .tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+        .help-tip .tip-text { font-size: .83rem; color: #444; line-height: 1.5; }
+        .help-tip .tip-text strong { color: #1a1a2e; }
+        .help-dots { display: flex; justify-content: center; gap: 6px; padding: 12px 0; }
+        .help-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; cursor: pointer; border: none; padding: 0; }
+        .help-dot.active { background: #0f3460; }
+        .help-footer {
+            display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-top: 1px solid #f0f0f0;
+        }
+        .help-nav-btn { padding: 7px 18px; border-radius: 6px; font-size: .85rem; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #555; }
+        .help-nav-btn:hover { background: #f5f5f5; }
+        .help-nav-btn.primary { background: #0f3460; color: white; border-color: #0f3460; }
+        .help-nav-btn.primary:hover { background: #16213e; }
+        .help-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -186,6 +227,7 @@
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
         <span id="custom-tab-buttons"></span>
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
+        <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
 </header>
 
@@ -377,6 +419,22 @@
                 <div class="card-title">Endpoints</div>
                 <div id="api-endpoints"><div class="spec-loading">Loading spec…</div></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Help Overlay ── -->
+<div class="help-overlay" id="help-overlay" onclick="if(event.target===this)closeHelp()">
+    <div class="help-card">
+        <div class="help-header">
+            <h2 id="help-title">Quick Start Guide</h2>
+            <button class="help-close" onclick="closeHelp()">&times;</button>
+        </div>
+        <div class="help-body" id="help-body"></div>
+        <div class="help-footer">
+            <button class="help-nav-btn" id="help-prev" onclick="helpNav(-1)">Previous</button>
+            <div class="help-dots" id="help-dots"></div>
+            <button class="help-nav-btn primary" id="help-next" onclick="helpNav(1)">Next</button>
         </div>
     </div>
 </div>
@@ -1449,6 +1507,103 @@
 
     loadCustomTables();
     setInterval(loadCustomTables, 15000);
+
+    /* ── Help Overlay ── */
+    const helpPanels = [
+        {
+            title: 'Welcome to Tatalance',
+            content: `
+                <h3>Your chauffeur client management tool</h3>
+                <p>Tatalance helps you manage clients, drivers, rides, invoices, and any custom data you need — all in one place.</p>
+                <div class="help-tip"><span class="tip-icon">📋</span><div class="tip-text"><strong>Tabs at the top</strong> — switch between Clients, Drivers, Rides, Invoices, and any custom tables you create.</div></div>
+                <div class="help-tip"><span class="tip-icon">➕</span><div class="tip-text"><strong>The + button</strong> — create your own custom tables for anything (vehicles, expenses, notes, etc).</div></div>
+                <div class="help-tip"><span class="tip-icon">❓</span><div class="tip-text"><strong>The ? button</strong> — you're here! Come back anytime for a refresher.</div></div>
+            `
+        },
+        {
+            title: 'Clients',
+            content: `
+                <h3>Add and manage your clients</h3>
+                <div class="help-tip"><span class="tip-icon">👤</span><div class="tip-text"><strong>Add a client</strong> — fill in first name, last name, and phone (international format: +1 then digits). Email is optional.</div></div>
+                <div class="help-tip"><span class="tip-icon">✏️</span><div class="tip-text"><strong>Edit</strong> — click the Edit button on any row to update their info. The form switches to edit mode.</div></div>
+                <div class="help-tip"><span class="tip-icon">🗑️</span><div class="tip-text"><strong>Delete</strong> — click Del to remove a client. You can't delete a client who has active rides.</div></div>
+                <p>The list auto-refreshes every 10 seconds so you always see the latest data.</p>
+            `
+        },
+        {
+            title: 'Drivers',
+            content: `
+                <h3>Manage your driver roster</h3>
+                <div class="help-tip"><span class="tip-icon">🚗</span><div class="tip-text"><strong>Add a driver</strong> — name, phone, optional vehicle, and payout info (percentage or flat rate).</div></div>
+                <div class="help-tip"><span class="tip-icon">🟢</span><div class="tip-text"><strong>Availability</strong> — change a driver's status using the dropdown: Available, On Trip, or Off Duty.</div></div>
+                <div class="help-tip"><span class="tip-icon">💰</span><div class="tip-text"><strong>Payout</strong> — set to Percentage (e.g. 70%) or Flat (e.g. $50 per ride). This shows on invoices.</div></div>
+            `
+        },
+        {
+            title: 'Rides',
+            content: `
+                <h3>Book and manage rides</h3>
+                <div class="help-tip"><span class="tip-icon">📅</span><div class="tip-text"><strong>Book a ride</strong> — pick a client, set pickup date/time, locations, and optional base price.</div></div>
+                <div class="help-tip"><span class="tip-icon">🔗</span><div class="tip-text"><strong>Assign a driver</strong> — once booked, use the dropdown in the Driver column to assign an available driver.</div></div>
+                <div class="help-tip"><span class="tip-icon">✅</span><div class="tip-text"><strong>Complete</strong> — after assignment, click Complete. Fill in actual start/end times, tolls, and extras.</div></div>
+                <div class="help-tip"><span class="tip-icon">❌</span><div class="tip-text"><strong>Cancel</strong> — cancel a ride at any time before completion. The driver becomes available again.</div></div>
+            `
+        },
+        {
+            title: 'Invoices',
+            content: `
+                <h3>Generate and track invoices</h3>
+                <div class="help-tip"><span class="tip-icon">📄</span><div class="tip-text"><strong>Generate</strong> — after completing a ride, click the Invoice button on that ride. It calculates base + extras + tax.</div></div>
+                <div class="help-tip"><span class="tip-icon">💵</span><div class="tip-text"><strong>Mark Paid / Unpaid</strong> — toggle an invoice's status with one click. No complex payment processing needed.</div></div>
+                <p>Invoices show the breakdown: base charge, additional charges, tax, and total.</p>
+            `
+        },
+        {
+            title: 'Custom Tables',
+            content: `
+                <h3>Create your own data tables</h3>
+                <div class="help-tip"><span class="tip-icon">➕</span><div class="tip-text"><strong>Create a table</strong> — click the + button in the nav bar. Name your table and add columns with types: Text, Number, Yes/No, or Date.</div></div>
+                <div class="help-tip"><span class="tip-icon">📋</span><div class="tip-text"><strong>Use it</strong> — your table appears as a new tab. Add rows, edit them, delete them — just like Clients or Drivers.</div></div>
+                <div class="help-tip"><span class="tip-icon">🗑️</span><div class="tip-text"><strong>Delete a table</strong> — hover over the tab name and click the x. This removes the table and all its rows.</div></div>
+                <p>Ideas: Vehicles, Expenses, Fuel Logs, Client Notes, anything you need to track.</p>
+            `
+        }
+    ];
+
+    let helpIndex = 0;
+
+    function renderHelpPanel() {
+        const panel = helpPanels[helpIndex];
+        document.getElementById('help-title').textContent = panel.title;
+        document.getElementById('help-body').innerHTML = panel.content;
+        document.getElementById('help-prev').disabled = helpIndex === 0;
+        const nextBtn = document.getElementById('help-next');
+        nextBtn.textContent = helpIndex === helpPanels.length - 1 ? 'Done' : 'Next';
+        document.getElementById('help-dots').innerHTML = helpPanels.map((_, i) =>
+            `<button class="help-dot ${i === helpIndex ? 'active' : ''}" onclick="helpGoTo(${i})"></button>`
+        ).join('');
+    }
+
+    function openHelp() {
+        helpIndex = 0;
+        renderHelpPanel();
+        document.getElementById('help-overlay').classList.add('open');
+    }
+
+    function closeHelp() {
+        document.getElementById('help-overlay').classList.remove('open');
+    }
+
+    function helpNav(dir) {
+        if (dir === 1 && helpIndex === helpPanels.length - 1) { closeHelp(); return; }
+        helpIndex = Math.max(0, Math.min(helpPanels.length - 1, helpIndex + dir));
+        renderHelpPanel();
+    }
+
+    window.helpGoTo = function(i) {
+        helpIndex = i;
+        renderHelpPanel();
+    };
 </script>
 </body>
 </html>
