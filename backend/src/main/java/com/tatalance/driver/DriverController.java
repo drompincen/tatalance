@@ -1,5 +1,7 @@
 package com.tatalance.driver;
 
+import com.tatalance.ride.RideRepository;
+import com.tatalance.ride.RideStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,9 +20,11 @@ import java.util.Map;
 public class DriverController {
 
     private final DriverRepository repository;
+    private final RideRepository rideRepository;
 
-    public DriverController(DriverRepository repository) {
+    public DriverController(DriverRepository repository, RideRepository rideRepository) {
         this.repository = repository;
+        this.rideRepository = rideRepository;
     }
 
     @Operation(summary = "List all drivers")
@@ -46,6 +50,42 @@ public class DriverController {
     public Driver create(@Valid @RequestBody Driver driver) {
         driver.setCreatedAt(Instant.now());
         return repository.save(driver);
+    }
+
+    @Operation(summary = "Update a driver")
+    @ApiResponse(responseCode = "200", description = "Driver updated")
+    @ApiResponse(responseCode = "404", description = "Driver not found")
+    @PutMapping("/{id}")
+    public Driver update(@PathVariable String id, @Valid @RequestBody Driver updates) {
+        Driver existing = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
+        existing.setFirstName(updates.getFirstName());
+        existing.setLastName(updates.getLastName());
+        existing.setPhone(updates.getPhone());
+        existing.setEmail(updates.getEmail());
+        existing.setVehicle(updates.getVehicle());
+        existing.setPayoutType(updates.getPayoutType());
+        existing.setPayoutRate(updates.getPayoutRate());
+        return repository.save(existing);
+    }
+
+    @Operation(summary = "Delete a driver")
+    @ApiResponse(responseCode = "204", description = "Driver deleted")
+    @ApiResponse(responseCode = "400", description = "Driver has active rides")
+    @ApiResponse(responseCode = "404", description = "Driver not found")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String id) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
+        }
+        var activeRides = rideRepository.findByAssignedDriverIdAndStatusIn(id,
+                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
+        if (!activeRides.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot delete driver with active rides (" + activeRides.size() + " active)");
+        }
+        repository.deleteById(id);
     }
 
     @Operation(summary = "Update driver availability")

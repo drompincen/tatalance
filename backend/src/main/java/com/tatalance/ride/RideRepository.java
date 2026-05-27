@@ -8,4 +8,5 @@ import java.util.List;
 public interface RideRepository extends MongoRepository<Ride, String> {
     List<Ride> findByClientId(String clientId);
     List<Ride> findByClientIdAndStatusIn(String clientId, Collection<RideStatus> statuses);
+    List<Ride> findByAssignedDriverIdAndStatusIn(String driverId, Collection<RideStatus> statuses);
 }

@@ -232,6 +232,7 @@
                         <div class="err" id="de-payoutRate">Payout rate is required</div>
                     </div>
                     <button class="btn" type="submit" id="driver-submit-btn">Add Driver</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-driver-edit-btn" style="display:none" onclick="cancelDriverEdit()">Cancel</button>
                 </form>
                 <div class="form-feedback" id="driver-fb"></div>
             </div>
@@ -624,7 +625,7 @@
             return;
         }
         el.innerHTML = `<table>
-            <thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Payout</th><th>Status</th></tr></thead>
+            <thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Payout</th><th>Status</th><th></th></tr></thead>
             <tbody>${drivers.map(d => `<tr>
                 <td style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
                 <td>${esc2(d.phone)}</td>
@@ -637,6 +638,10 @@
                             `<option value="${a}" ${a === d.availability ? 'selected' : ''}>${a.replace('_',' ')}</option>`
                         ).join('')}
                     </select>
+                </td>
+                <td style="white-space:nowrap">
+                    <button class="btn-sm" onclick="editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
                 </td>
             </tr>`).join('')}</tbody>
         </table>`;
@@ -699,21 +704,25 @@
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
-            const r = await fetch('/api/drivers', {
-                method: 'POST',
+            const url = editingDriverId ? `/api/drivers/${editingDriverId}` : '/api/drivers';
+            const method = editingDriverId ? 'PUT' : 'POST';
+            const r = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, phone, email: email || null, vehicle: vehicle || null, payoutType, payoutRate: Number(payoutRate) })
             });
             if (!r.ok) throw new Error();
-            ['d-firstName','d-lastName','d-phone','d-email','d-vehicle','d-payoutRate'].forEach(id => document.getElementById(id).value = '');
+            const wasEdit = !!editingDriverId;
+            cancelDriverEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = `✓ ${firstName} ${lastName} added`;
+            fb.textContent = wasEdit ? `✓ ${firstName} ${lastName} updated` : `✓ ${firstName} ${lastName} added`;
             loadDrivers();
         } catch {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ Save failed — check server logs';
         } finally {
-            btn.disabled = false; btn.textContent = 'Add Driver';
+            btn.disabled = false;
+            btn.textContent = editingDriverId ? 'Update Driver' : 'Add Driver';
         }
     });
 
@@ -725,6 +734,49 @@
             if (errEl) errEl.classList.remove('show');
         });
     });
+
+    /* ── Edit / Delete driver ── */
+    let editingDriverId = null;
+
+    window.editDriver = function(id, firstName, lastName, phone, email, vehicle, payoutType, payoutRate) {
+        editingDriverId = id;
+        document.getElementById('d-firstName').value = firstName;
+        document.getElementById('d-lastName').value = lastName;
+        document.getElementById('d-phone').value = phone;
+        document.getElementById('d-email').value = email;
+        document.getElementById('d-vehicle').value = vehicle;
+        document.getElementById('d-payoutType').value = payoutType;
+        document.getElementById('d-payoutRate').value = payoutRate;
+        document.getElementById('driver-submit-btn').textContent = 'Update Driver';
+        document.querySelector('#driver-form').closest('.card').querySelector('.card-title').textContent = 'Edit Driver';
+        document.getElementById('cancel-driver-edit-btn').style.display = 'inline-block';
+    };
+
+    window.cancelDriverEdit = function() {
+        editingDriverId = null;
+        ['d-firstName','d-lastName','d-phone','d-email','d-vehicle','d-payoutRate'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('driver-submit-btn').textContent = 'Add Driver';
+        document.querySelector('#driver-form').closest('.card').querySelector('.card-title').textContent = 'Add Driver';
+        document.getElementById('cancel-driver-edit-btn').style.display = 'none';
+        document.getElementById('driver-fb').className = 'form-feedback';
+        document.getElementById('driver-fb').textContent = '';
+    };
+
+    window.deleteDriver = async function(id, name) {
+        if (!confirm(`Delete ${name}?`)) return;
+        try {
+            const r = await fetch(`/api/drivers/${id}`, { method: 'DELETE' });
+            if (r.status === 400) {
+                const data = await r.json();
+                alert(data.message || 'Cannot delete — driver has active rides');
+                return;
+            }
+            if (!r.ok) throw new Error();
+            loadDrivers();
+        } catch {
+            alert('Delete failed — check server logs');
+        }
+    };
 
     loadDrivers();
     setInterval(loadDrivers, 10000);

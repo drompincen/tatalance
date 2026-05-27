@@ -109,4 +109,40 @@ class DriverIntegrationTest {
         var response = restTemplate.postForEntity("/api/drivers", request, Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    void should_updateDriver() {
+        var request = Map.of("firstName", "Carlos", "lastName", "Mendez", "phone", "+13055551002",
+                "payoutType", "PERCENTAGE", "payoutRate", 70);
+        var created = restTemplate.postForEntity("/api/drivers", request, Map.class);
+        var id = (String) created.getBody().get("id");
+
+        var update = Map.of("firstName", "Carlos", "lastName", "Garcia", "phone", "+13055551002",
+                "vehicle", "2025 BMW 7", "payoutType", "FLAT", "payoutRate", 50);
+        var response = restTemplate.exchange("/api/drivers/" + id, HttpMethod.PUT,
+                new HttpEntity<>(update), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().get("lastName")).isEqualTo("Garcia");
+        assertThat(response.getBody().get("vehicle")).isEqualTo("2025 BMW 7");
+    }
+
+    @Test
+    void should_deleteDriver() {
+        var request = Map.of("firstName", "Carlos", "lastName", "Mendez", "phone", "+13055551002",
+                "payoutType", "PERCENTAGE", "payoutRate", 70);
+        var created = restTemplate.postForEntity("/api/drivers", request, Map.class);
+        var id = (String) created.getBody().get("id");
+
+        var response = restTemplate.exchange("/api/drivers/" + id, HttpMethod.DELETE, null, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        var list = restTemplate.getForEntity("/api/drivers", List.class);
+        assertThat(list.getBody()).isEmpty();
+    }
+
+    @Test
+    void should_return404_when_deletingNonexistentDriver() {
+        var response = restTemplate.exchange("/api/drivers/nonexistent", HttpMethod.DELETE, null, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }
