@@ -1423,6 +1423,12 @@
         container.innerHTML = customTables.map(t => renderCustomTablePane(t)).join('');
     }
 
+    function isUserEditingCustomTable() {
+        const active = document.activeElement;
+        if (!active || active === document.body) return false;
+        return !!active.closest('#custom-tab-panes');
+    }
+
     async function loadCustomTables() {
         try {
             const r = await fetch('/api/tables');
@@ -1433,6 +1439,8 @@
                 const rr = await fetch(`/api/tables/${t.id}/rows`);
                 customTableRows[t.id] = await rr.json();
             }));
+            // Skip DOM re-render if user is typing in a custom table form
+            if (isUserEditingCustomTable()) return;
             renderAllCustomPanes();
             // Re-activate current tab if it's a custom one
             const activeBtn = document.querySelector('.tab-btn.active');
