@@ -139,6 +139,37 @@
         .hidden { display: none; }
 
         .spec-loading { text-align: center; padding: 48px; color: #bbb; font-size: 0.9rem; }
+
+        /* ── Custom table "+" button ── */
+        .add-table-btn {
+            background: transparent; border: 1.5px dashed rgba(255,255,255,.3); color: rgba(255,255,255,.5);
+            width: 28px; height: 28px; border-radius: 6px; font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all .15s; margin-left: 2px;
+        }
+        .add-table-btn:hover { border-color: rgba(255,255,255,.6); color: white; background: rgba(255,255,255,.08); }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.4); z-index: 100; align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white; border-radius: 12px; padding: 28px; width: 420px; max-height: 80vh;
+            overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,.2);
+        }
+        .modal h2 { font-size: 1.05rem; margin-bottom: 18px; }
+        .modal .col-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .modal .col-row input { flex: 1; }
+        .modal .col-row select { width: 120px; padding: 9px 8px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: .85rem; background: #fafafa; }
+        .modal .col-row .remove-col { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 1.1rem; padding: 4px; }
+        .add-col-btn { font-size: .82rem; color: #3182ce; cursor: pointer; border: none; background: none; padding: 4px 0; margin-bottom: 14px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+        /* ── Custom table tab highlight ── */
+        .tab-btn.custom-tab { font-style: italic; }
+        .tab-btn .del-tab { display: none; font-size: .7rem; margin-left: 4px; color: rgba(255,255,255,.4); }
+        .tab-btn:hover .del-tab { display: inline; }
     </style>
 </head>
 <body>
@@ -153,6 +184,8 @@
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
         <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
+        <span id="custom-tab-buttons"></span>
+        <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
     </nav>
 </header>
 
@@ -348,6 +381,40 @@
     </div>
 </div>
 
+<!-- ── Dynamic custom table panes inserted here ── -->
+<div id="custom-tab-panes"></div>
+
+<!-- ── Create Table Modal ── -->
+<div class="modal-overlay" id="create-table-modal">
+    <div class="modal">
+        <h2>Create Custom Table</h2>
+        <div class="field">
+            <label>Table Name <span class="req">*</span></label>
+            <input type="text" id="ct-name" placeholder="e.g. Vehicles, Expenses…" autocomplete="off">
+            <div class="err" id="ct-err-name">Table name is required</div>
+        </div>
+        <label style="margin-bottom:8px">Columns <span class="req">*</span></label>
+        <div id="ct-columns">
+            <div class="col-row">
+                <input type="text" placeholder="Column name" class="ct-col-name">
+                <select class="ct-col-type">
+                    <option value="STRING">Text</option>
+                    <option value="INT">Number</option>
+                    <option value="BOOLEAN">Yes/No</option>
+                    <option value="DATE">Date</option>
+                </select>
+                <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
+            </div>
+        </div>
+        <button class="add-col-btn" onclick="addColumnRow()">+ Add column</button>
+        <div class="err" id="ct-err-cols" style="margin-bottom:8px">At least one column is required</div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeCreateTableModal()">Cancel</button>
+            <button class="btn" onclick="submitCreateTable()">Create Table</button>
+        </div>
+    </div>
+</div>
+
 <script>
     /* ── Helpers ── */
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
@@ -366,8 +433,10 @@
     function showTab(name) {
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`tab-${name}`).classList.add('active');
-        document.getElementById(`btn-${name}`).classList.add('active');
+        const pane = document.getElementById(`tab-${name}`);
+        const btn = document.getElementById(`btn-${name}`);
+        if (pane) pane.classList.add('active');
+        if (btn) btn.classList.add('active');
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -1141,6 +1210,245 @@
 
     loadInvoices();
     setInterval(loadInvoices, 10000);
+
+    /* ── Custom Tables ── */
+    let customTables = [];
+    let customTableRows = {};
+    let editingRowState = {}; // { tableId: rowId }
+
+    function openCreateTableModal() {
+        document.getElementById('create-table-modal').classList.add('open');
+        document.getElementById('ct-name').value = '';
+        document.getElementById('ct-err-name').classList.remove('show');
+        document.getElementById('ct-err-cols').classList.remove('show');
+        document.getElementById('ct-columns').innerHTML = `
+            <div class="col-row">
+                <input type="text" placeholder="Column name" class="ct-col-name">
+                <select class="ct-col-type">
+                    <option value="STRING">Text</option><option value="INT">Number</option>
+                    <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
+                </select>
+                <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
+            </div>`;
+    }
+
+    function closeCreateTableModal() {
+        document.getElementById('create-table-modal').classList.remove('open');
+    }
+
+    function addColumnRow() {
+        const div = document.createElement('div');
+        div.className = 'col-row';
+        div.innerHTML = `
+            <input type="text" placeholder="Column name" class="ct-col-name">
+            <select class="ct-col-type">
+                <option value="STRING">Text</option><option value="INT">Number</option>
+                <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
+            </select>
+            <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>`;
+        document.getElementById('ct-columns').appendChild(div);
+    }
+
+    async function submitCreateTable() {
+        const name = document.getElementById('ct-name').value.trim();
+        const colRows = document.querySelectorAll('#ct-columns .col-row');
+        const columns = [];
+        colRows.forEach(row => {
+            const n = row.querySelector('.ct-col-name').value.trim();
+            const t = row.querySelector('.ct-col-type').value;
+            if (n) columns.push({ name: n, type: t });
+        });
+
+        let valid = true;
+        document.getElementById('ct-err-name').classList.toggle('show', !name);
+        if (!name) valid = false;
+        document.getElementById('ct-err-cols').classList.toggle('show', !columns.length);
+        if (!columns.length) valid = false;
+        if (!valid) return;
+
+        try {
+            const r = await fetch('/api/tables', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, columns })
+            });
+            if (!r.ok) throw new Error();
+            closeCreateTableModal();
+            loadCustomTables();
+        } catch {
+            alert('Failed to create table');
+        }
+    }
+
+    function renderCustomTabButtons() {
+        const container = document.getElementById('custom-tab-buttons');
+        container.innerHTML = customTables.map(t =>
+            `<button class="tab-btn custom-tab" id="btn-custom-${t.id}" onclick="showTab('custom-${t.id}')">
+                ${esc(t.name)}
+                <span class="del-tab" onclick="event.stopPropagation();deleteCustomTable('${t.id}','${esc(t.name)}')">&times;</span>
+            </button>`
+        ).join('');
+    }
+
+    function inputForType(col, value) {
+        const id = `cr-${col.name.replace(/\s+/g, '_')}`;
+        switch (col.type) {
+            case 'INT': return `<input type="number" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
+            case 'BOOLEAN': return `<input type="checkbox" id="${id}" ${value ? 'checked' : ''} style="width:18px;height:18px">`;
+            case 'DATE': return `<input type="date" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
+            default: return `<input type="text" id="${id}" value="${esc(value ?? '')}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
+        }
+    }
+
+    function readFieldValue(col) {
+        const id = `cr-${col.name.replace(/\s+/g, '_')}`;
+        const el = document.getElementById(id);
+        if (!el) return undefined;
+        switch (col.type) {
+            case 'INT': return el.value ? Number(el.value) : null;
+            case 'BOOLEAN': return el.checked;
+            case 'DATE': return el.value || null;
+            default: return el.value.trim() || null;
+        }
+    }
+
+    function renderCustomTablePane(table) {
+        const rows = customTableRows[table.id] || [];
+        const editingRowId = editingRowState[table.id] || null;
+
+        return `<div id="tab-custom-${table.id}" class="tab-pane">
+            <div class="page">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">${editingRowId ? 'Edit Row' : 'Add Row'}</div>
+                        <form onsubmit="event.preventDefault();submitCustomRow('${table.id}')" novalidate>
+                            ${table.columns.map(col => `
+                                <div class="field">
+                                    <label>${esc(col.name)} <span class="schema-type">${col.type}</span></label>
+                                    ${inputForType(col, editingRowId ? (rows.find(r => r.id === editingRowId)?.data?.[col.name]) : null)}
+                                </div>
+                            `).join('')}
+                            <button class="btn" type="submit">${editingRowId ? 'Update Row' : 'Add Row'}</button>
+                            ${editingRowId ? `<button class="btn btn-cancel" type="button" onclick="cancelCustomRowEdit('${table.id}')">Cancel</button>` : ''}
+                        </form>
+                        <div class="form-feedback" id="ct-fb-${table.id}"></div>
+                    </div>
+                    <div class="card">
+                        <div class="list-header">
+                            <div class="card-title" style="margin-bottom:0">${esc(table.name)}</div>
+                            <span class="count">(${rows.length})</span>
+                        </div>
+                        ${!rows.length ? `<div class="empty-state"><div class="icon">📋</div><p>No rows yet</p></div>` :
+                        `<table>
+                            <thead><tr>${table.columns.map(c => `<th>${esc(c.name)}</th>`).join('')}<th></th></tr></thead>
+                            <tbody>${rows.map(r => `<tr>
+                                ${table.columns.map(c => {
+                                    const v = r.data?.[c.name];
+                                    if (c.type === 'BOOLEAN') return `<td>${v ? '✓' : '—'}</td>`;
+                                    return `<td>${v != null ? esc(String(v)) : '<span class="muted">—</span>'}</td>`;
+                                }).join('')}
+                                <td style="white-space:nowrap">
+                                    <button class="btn-sm" onclick="editCustomRow('${table.id}','${r.id}')">Edit</button>
+                                    <button class="btn-sm btn-danger" onclick="deleteCustomRow('${table.id}','${r.id}')">Del</button>
+                                </td>
+                            </tr>`).join('')}</tbody>
+                        </table>`}
+                        <div class="refresh-ts" id="ct-ts-${table.id}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderAllCustomPanes() {
+        const container = document.getElementById('custom-tab-panes');
+        container.innerHTML = customTables.map(t => renderCustomTablePane(t)).join('');
+    }
+
+    async function loadCustomTables() {
+        try {
+            const r = await fetch('/api/tables');
+            customTables = await r.json();
+            renderCustomTabButtons();
+            // Load rows for each table
+            await Promise.all(customTables.map(async t => {
+                const rr = await fetch(`/api/tables/${t.id}/rows`);
+                customTableRows[t.id] = await rr.json();
+            }));
+            renderAllCustomPanes();
+            // Re-activate current tab if it's a custom one
+            const activeBtn = document.querySelector('.tab-btn.active');
+            if (activeBtn && activeBtn.id.startsWith('btn-custom-')) {
+                const tabName = activeBtn.id.replace('btn-', '');
+                const pane = document.getElementById(`tab-${tabName}`);
+                if (pane) pane.classList.add('active');
+            }
+        } catch { /* ignore */ }
+    }
+
+    async function submitCustomRow(tableId) {
+        const table = customTables.find(t => t.id === tableId);
+        if (!table) return;
+        const data = {};
+        table.columns.forEach(col => { data[col.name] = readFieldValue(col); });
+
+        const editingRowId = editingRowState[tableId] || null;
+        const fb = document.getElementById(`ct-fb-${tableId}`);
+
+        try {
+            const url = editingRowId ? `/api/tables/${tableId}/rows/${editingRowId}` : `/api/tables/${tableId}/rows`;
+            const method = editingRowId ? 'PUT' : 'POST';
+            const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if (!r.ok) throw new Error();
+            editingRowState[tableId] = null;
+            if (fb) { fb.className = 'form-feedback ok'; fb.textContent = editingRowId ? '✓ Row updated' : '✓ Row added'; }
+            // Reload rows for this table
+            const rr = await fetch(`/api/tables/${tableId}/rows`);
+            customTableRows[tableId] = await rr.json();
+            renderAllCustomPanes();
+            // Keep this tab active
+            showTab(`custom-${tableId}`);
+        } catch {
+            if (fb) { fb.className = 'form-feedback fail'; fb.textContent = '✗ Save failed'; }
+        }
+    }
+
+    window.editCustomRow = function(tableId, rowId) {
+        editingRowState[tableId] = rowId;
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+    };
+
+    window.cancelCustomRowEdit = function(tableId) {
+        editingRowState[tableId] = null;
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+    };
+
+    window.deleteCustomRow = async function(tableId, rowId) {
+        if (!confirm('Delete this row?')) return;
+        try {
+            await fetch(`/api/tables/${tableId}/rows/${rowId}`, { method: 'DELETE' });
+            const rr = await fetch(`/api/tables/${tableId}/rows`);
+            customTableRows[tableId] = await rr.json();
+            renderAllCustomPanes();
+            showTab(`custom-${tableId}`);
+        } catch { alert('Delete failed'); }
+    };
+
+    window.deleteCustomTable = async function(tableId, name) {
+        if (!confirm(`Delete table "${name}" and all its rows?`)) return;
+        try {
+            await fetch(`/api/tables/${tableId}`, { method: 'DELETE' });
+            delete customTableRows[tableId];
+            delete editingRowState[tableId];
+            loadCustomTables();
+            showTab('clients');
+        } catch { alert('Delete failed'); }
+    };
+
+    loadCustomTables();
+    setInterval(loadCustomTables, 15000);
 </script>
 </body>
 </html>
