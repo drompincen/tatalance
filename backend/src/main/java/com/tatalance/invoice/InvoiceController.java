@@ -92,28 +92,18 @@ public class InvoiceController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
     }
 
-    @Operation(summary = "Record a payment against an invoice")
-    @ApiResponse(responseCode = "200", description = "Payment recorded")
-    @ApiResponse(responseCode = "400", description = "Invoice not outstanding or invalid payment")
+    @Operation(summary = "Toggle invoice paid/outstanding status")
+    @ApiResponse(responseCode = "200", description = "Status toggled")
     @ApiResponse(responseCode = "404", description = "Invoice not found")
-    @PostMapping("/{id}/payments")
-    public Invoice recordPayment(@PathVariable String id, @Valid @RequestBody Payment payment) {
+    @PostMapping("/{id}/mark-paid")
+    public Invoice markPaid(@PathVariable String id) {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
-        if (invoice.getStatus() != InvoiceStatus.OUTSTANDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invoice is already paid");
-        }
-
-        invoice.getPayments().add(payment);
-
-        // Check if total payments cover the invoice total
-        BigDecimal totalPaid = invoice.getPayments().stream()
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (totalPaid.compareTo(invoice.getTotal()) >= 0) {
+        if (invoice.getStatus() == InvoiceStatus.OUTSTANDING) {
             invoice.setStatus(InvoiceStatus.PAID);
+        } else {
+            invoice.setStatus(InvoiceStatus.OUTSTANDING);
         }
 
         return invoiceRepository.save(invoice);

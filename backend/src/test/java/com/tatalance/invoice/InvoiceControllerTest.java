@@ -182,90 +182,33 @@ class InvoiceControllerTest {
     }
 
     @Test
-    void should_recordPayment_and_markPaid() throws Exception {
+    void should_markOutstandingAsPaid() throws Exception {
         var invoice = sampleInvoice();
-        invoice.setTotal(new BigDecimal("145.80"));
         when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(invoice));
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        mockMvc.perform(post("/api/invoices/inv001/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"date":"2026-06-02T10:00:00Z","amount":145.80,"method":"ZELLE","reference":"ref123"}
-                                """))
+        mockMvc.perform(post("/api/invoices/inv001/mark-paid"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PAID"))
-                .andExpect(jsonPath("$.payments", hasSize(1)))
-                .andExpect(jsonPath("$.payments[0].method").value("ZELLE"))
-                .andExpect(jsonPath("$.payments[0].amount").value(145.80));
+                .andExpect(jsonPath("$.status").value("PAID"));
     }
 
     @Test
-    void should_remainOutstanding_when_partialPayment() throws Exception {
-        var invoice = sampleInvoice();
-        invoice.setTotal(new BigDecimal("145.80"));
-        when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(invoice));
-        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        mockMvc.perform(post("/api/invoices/inv001/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"date":"2026-06-02T10:00:00Z","amount":50.00,"method":"CASH"}
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("OUTSTANDING"))
-                .andExpect(jsonPath("$.payments", hasSize(1)));
-    }
-
-    @Test
-    void should_return400_when_invoiceAlreadyPaid() throws Exception {
+    void should_togglePaidBackToOutstanding() throws Exception {
         var invoice = sampleInvoice();
         invoice.setStatus(InvoiceStatus.PAID);
         when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        mockMvc.perform(post("/api/invoices/inv001/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"date":"2026-06-02T10:00:00Z","amount":50.00,"method":"CASH"}
-                                """))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/invoices/inv001/mark-paid"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OUTSTANDING"));
     }
 
     @Test
-    void should_return400_when_amountMissing() throws Exception {
-        var invoice = sampleInvoice();
-        when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(invoice));
-
-        mockMvc.perform(post("/api/invoices/inv001/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"date":"2026-06-02T10:00:00Z","method":"CASH"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void should_return400_when_methodMissing() throws Exception {
-        var invoice = sampleInvoice();
-        when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(invoice));
-
-        mockMvc.perform(post("/api/invoices/inv001/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"date":"2026-06-02T10:00:00Z","amount":50.00}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void should_return404_when_invoiceNotFound_forPayment() throws Exception {
+    void should_return404_when_markingNonexistentInvoice() throws Exception {
         when(invoiceRepository.findById("unknown")).thenReturn(Optional.empty());
 
-        mockMvc.perform(post("/api/invoices/unknown/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"date":"2026-06-02T10:00:00Z","amount":50.00,"method":"CASH"}
-                                """))
+        mockMvc.perform(post("/api/invoices/unknown/mark-paid"))
                 .andExpect(status().isNotFound());
     }
 }

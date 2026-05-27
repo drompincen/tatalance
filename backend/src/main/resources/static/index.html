@@ -1092,26 +1092,13 @@
 
     const invStatusColors = { OUTSTANDING: '#d97706', PAID: '#38a169' };
 
-    function recordPayment(invoiceId, total) {
-        const method = prompt('Payment method (CASH, CARD, TRANSFER, ZELLE, VENMO, CHECK):', 'ZELLE');
-        if (!method) return;
-        const amount = prompt('Amount ($):', String(total));
-        if (!amount) return;
-        const reference = prompt('Reference (optional):', '') || null;
-
-        fetch(`/api/invoices/${invoiceId}/payments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                date: new Date().toISOString(),
-                amount: Number(amount),
-                method: method.toUpperCase(),
-                reference
-            })
+    function markPaid(invoiceId) {
+        fetch(`/api/invoices/${invoiceId}/mark-paid`, {
+            method: 'POST'
         }).then(r => {
             if (!r.ok) return r.json().then(e => { throw new Error(e.message || 'Failed'); });
             loadInvoices();
-        }).catch(e => alert('Payment failed: ' + e.message));
+        }).catch(e => alert('Failed: ' + e.message));
     }
 
     function renderInvoices(invoices) {
@@ -1131,8 +1118,9 @@
                 <td>$${i.tax}</td>
                 <td style="font-weight:700">$${i.total}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${i.status}</span></td>
-                <td>${i.status === 'OUTSTANDING' ? `<button onclick="recordPayment('${i.id}',${i.total})" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Pay</button>` :
-                    (i.payments && i.payments.length ? `<span style="font-size:.72rem;color:#888">${i.payments.length} payment${i.payments.length>1?'s':''}</span>` : '')}</td>
+                <td>${i.status === 'OUTSTANDING' ?
+                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">Mark Paid</button>` :
+                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">Mark Unpaid</button>`}</td>
             </tr>`).join('')}</tbody>
         </table>`;
     }
