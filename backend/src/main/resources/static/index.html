@@ -72,6 +72,20 @@
         .btn-sm:hover { background: #f0f0f0; }
         .btn-danger { color: #e53e3e; border-color: #e53e3e; }
         .btn-danger:hover { background: #fff5f5; }
+        .complete-panel { background: #f8fafb; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-top: 6px; }
+        .complete-panel .panel-header { font-size: .82rem; color: #555; margin-bottom: 10px; }
+        .complete-panel .panel-header strong { color: #1a1a2e; }
+        .complete-panel .field-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .complete-panel .field-row > div { flex: 1; }
+        .complete-panel label { display: block; font-size: .75rem; font-weight: 600; color: #555; margin-bottom: 3px; }
+        .complete-panel input { width: 100%; padding: 6px 8px; font-size: .82rem; border: 1px solid #e2e8f0; border-radius: 5px; }
+        .complete-panel .extras-toggle { font-size: .78rem; color: #3182ce; cursor: pointer; border: none; background: none; padding: 0; margin-bottom: 8px; }
+        .complete-panel .extras { display: none; }
+        .complete-panel .extras.open { display: block; }
+        .complete-panel .total-line { font-size: .85rem; font-weight: 600; color: #1a1a2e; margin: 10px 0 8px; }
+        .complete-panel .panel-actions { display: flex; gap: 8px; }
+        .complete-panel .err-inline { font-size: .75rem; color: #e53e3e; margin-top: 2px; display: none; }
+        .complete-panel .err-inline.show { display: block; }
         .form-feedback { margin-top: 12px; font-size: 0.82rem; min-height: 18px; text-align: center; }
         .form-feedback.ok { color: #38a169; }
         .form-feedback.fail { color: #e53e3e; }
@@ -810,30 +824,73 @@
         }).then(() => { loadRides(); loadAvailableDrivers(); loadDrivers(); });
     }
 
-    function completeRide(rideId) {
-        const now = new Date().toISOString();
-        const start = prompt('Actual start time (ISO):', now);
-        if (!start) return;
-        const end = prompt('Actual end time (ISO):', now);
-        if (!end) return;
-        const tolls = prompt('Tolls ($):', '0') || '0';
-        const parking = prompt('Parking ($):', '0') || '0';
-        const additional = prompt('Additional charges ($):', '0') || '0';
-        const desc = prompt('Charge description (optional):', '') || null;
+    let completingRideId = null;
 
-        fetch(`/api/rides/${rideId}/complete`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                actualStart: start, actualEnd: end,
-                tolls: Number(tolls), parking: Number(parking),
-                additionalCharges: Number(additional),
-                chargeDescription: desc
-            })
-        }).then(() => { loadRides(); loadAvailableDrivers(); loadDrivers(); });
+    function completeRide(rideId) {
+        if (completingRideId === rideId) return;
+        completingRideId = rideId;
+        renderRides(lastRidesCache);
     }
 
+    window.cancelComplete = function() {
+        completingRideId = null;
+        renderRides(lastRidesCache);
+    };
+
+    window.toggleExtras = function() {
+        document.getElementById('cp-extras').classList.toggle('open');
+        const btn = document.getElementById('cp-extras-toggle');
+        btn.textContent = document.getElementById('cp-extras').classList.contains('open') ? '▾ Hide extras' : '▸ More details (tolls, extras)';
+    };
+
+    window.updateCompleteTotal = function(basePrice) {
+        const tolls = Number(document.getElementById('cp-tolls').value) || 0;
+        const additional = Number(document.getElementById('cp-additional').value) || 0;
+        const total = (basePrice || 0) + tolls + additional;
+        document.getElementById('cp-total').textContent = `Total: $${total.toFixed(2)}`;
+    };
+
+    window.submitComplete = async function(rideId, basePrice) {
+        const actualStart = document.getElementById('cp-start').value;
+        const actualEnd = document.getElementById('cp-end').value;
+        let valid = true;
+        document.getElementById('cp-err-start').classList.toggle('show', !actualStart);
+        document.getElementById('cp-err-end').classList.toggle('show', !actualEnd);
+        if (!actualStart) valid = false;
+        if (!actualEnd) valid = false;
+        if (!valid) return;
+
+        const tolls = Number(document.getElementById('cp-tolls').value) || 0;
+        const additional = Number(document.getElementById('cp-additional').value) || 0;
+        const desc = document.getElementById('cp-desc').value.trim() || null;
+
+        const btn = document.getElementById('cp-submit-btn');
+        btn.disabled = true; btn.textContent = 'Completing…';
+        try {
+            const r = await fetch(`/api/rides/${rideId}/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actualStart: new Date(actualStart).toISOString(),
+                    actualEnd: new Date(actualEnd).toISOString(),
+                    tolls: tolls || null,
+                    additionalCharges: additional || null,
+                    chargeDescription: desc
+                })
+            });
+            if (!r.ok) throw new Error();
+            completingRideId = null;
+            loadRides(); loadAvailableDrivers(); loadDrivers();
+        } catch {
+            btn.disabled = false; btn.textContent = 'Confirm Complete';
+            alert('Complete failed — check server logs');
+        }
+    };
+
+    let lastRidesCache = [];
+
     function renderRides(rides) {
+        lastRidesCache = rides;
         document.getElementById('ride-count').textContent = `(${rides.length})`;
         const el = document.getElementById('ride-list');
         if (!rides.length) {
@@ -856,7 +913,38 @@
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
                 <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
                     (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}</td>
-            </tr>`).join('')}</tbody>
+            </tr>${completingRideId === r.id ? `<tr><td colspan="7" style="padding:0">
+                <div class="complete-panel">
+                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · Base: $${r.basePrice || 0}</div>
+                    <div class="field-row">
+                        <div>
+                            <label>Actual Start *</label>
+                            <input type="datetime-local" id="cp-start" onchange="document.getElementById('cp-err-start').classList.remove('show')">
+                            <div class="err-inline" id="cp-err-start">Required</div>
+                        </div>
+                        <div>
+                            <label>Actual End *</label>
+                            <input type="datetime-local" id="cp-end" onchange="document.getElementById('cp-err-end').classList.remove('show')">
+                            <div class="err-inline" id="cp-err-end">Required</div>
+                        </div>
+                    </div>
+                    <button id="cp-extras-toggle" class="extras-toggle" onclick="toggleExtras()">▸ More details (tolls, extras)</button>
+                    <div class="extras" id="cp-extras">
+                        <div class="field-row">
+                            <div><label>Tolls ($)</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
+                            <div><label>Additional ($)</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
+                        </div>
+                        <div class="field-row">
+                            <div><label>Description</label><input type="text" id="cp-desc" placeholder="Extra stop, waiting, etc."></div>
+                        </div>
+                    </div>
+                    <div class="total-line" id="cp-total">Total: $${(r.basePrice || 0).toFixed ? Number(r.basePrice || 0).toFixed(2) : '0.00'}</div>
+                    <div class="panel-actions">
+                        <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">Confirm Complete</button>
+                        <button class="btn-sm" onclick="cancelComplete()">Cancel</button>
+                    </div>
+                </div>
+            </td></tr>` : ''}`).join('')}</tbody>
         </table>`;
     }
 
