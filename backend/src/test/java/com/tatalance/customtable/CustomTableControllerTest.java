@@ -350,4 +350,17 @@ class CustomTableControllerTest {
         mockMvc.perform(delete("/api/tables/tbl001/columns/Missing"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void should_return400_when_blankTrueLabel() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+
+        mockMvc.perform(post("/api/tables/tbl001/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Active","type":"BOOLEAN","trueLabel":"  ","falseLabel":"No"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
 }

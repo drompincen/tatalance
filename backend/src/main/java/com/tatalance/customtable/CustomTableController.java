@@ -83,6 +83,7 @@ public class CustomTableController {
     @ApiResponse(responseCode = "400", description = "Invalid column or duplicate name")
     @PostMapping("/{id}/columns")
     public CustomTable addColumn(@PathVariable String id, @Valid @RequestBody ColumnDef column) {
+        validateLabels(column);
         CustomTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
         boolean duplicate = table.getColumns().stream()
@@ -94,6 +95,15 @@ public class CustomTableController {
         cols.add(column);
         table.setColumns(cols);
         return tableRepository.save(table);
+    }
+
+    private void validateLabels(ColumnDef column) {
+        if (column.getTrueLabel() != null && column.getTrueLabel().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "trueLabel must not be blank");
+        }
+        if (column.getFalseLabel() != null && column.getFalseLabel().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "falseLabel must not be blank");
+        }
     }
 
     @Operation(summary = "Update a column (rename or change labels)")

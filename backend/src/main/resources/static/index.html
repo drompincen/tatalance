@@ -1300,20 +1300,27 @@
     let editingRowState = {}; // { tableId: rowId }
     let editingColumnState = {}; // { tableId: { mode: 'add'|'edit', name: '...' } }
 
+    function colRowHtml() {
+        return `<div class="col-row" style="flex-wrap:wrap">
+            <input type="text" placeholder="Column name" class="ct-col-name">
+            <select class="ct-col-type" onchange="this.closest('.col-row').querySelector('.ct-bool-labels').style.display=this.value==='BOOLEAN'?'flex':'none'">
+                <option value="STRING">Text</option><option value="INT">Number</option>
+                <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
+            </select>
+            <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
+            <div class="ct-bool-labels" style="display:none;gap:6px;width:100%;margin-top:4px">
+                <input type="text" placeholder="True label (e.g. Paid)" class="ct-true-label" style="flex:1">
+                <input type="text" placeholder="False label (e.g. Unpaid)" class="ct-false-label" style="flex:1">
+            </div>
+        </div>`;
+    }
+
     function openCreateTableModal() {
         document.getElementById('create-table-modal').classList.add('open');
         document.getElementById('ct-name').value = '';
         document.getElementById('ct-err-name').classList.remove('show');
         document.getElementById('ct-err-cols').classList.remove('show');
-        document.getElementById('ct-columns').innerHTML = `
-            <div class="col-row">
-                <input type="text" placeholder="Column name" class="ct-col-name">
-                <select class="ct-col-type">
-                    <option value="STRING">Text</option><option value="INT">Number</option>
-                    <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
-                </select>
-                <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
-            </div>`;
+        document.getElementById('ct-columns').innerHTML = colRowHtml();
     }
 
     function closeCreateTableModal() {
@@ -1321,16 +1328,8 @@
     }
 
     function addColumnRow() {
-        const div = document.createElement('div');
-        div.className = 'col-row';
-        div.innerHTML = `
-            <input type="text" placeholder="Column name" class="ct-col-name">
-            <select class="ct-col-type">
-                <option value="STRING">Text</option><option value="INT">Number</option>
-                <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
-            </select>
-            <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>`;
-        document.getElementById('ct-columns').appendChild(div);
+        const container = document.getElementById('ct-columns');
+        container.insertAdjacentHTML('beforeend', colRowHtml());
     }
 
     async function submitCreateTable() {
@@ -1340,7 +1339,15 @@
         colRows.forEach(row => {
             const n = row.querySelector('.ct-col-name').value.trim();
             const t = row.querySelector('.ct-col-type').value;
-            if (n) columns.push({ name: n, type: t });
+            if (!n) return;
+            const col = { name: n, type: t };
+            if (t === 'BOOLEAN') {
+                const tl = row.querySelector('.ct-true-label')?.value.trim();
+                const fl = row.querySelector('.ct-false-label')?.value.trim();
+                if (tl) col.trueLabel = tl;
+                if (fl) col.falseLabel = fl;
+            }
+            columns.push(col);
         });
 
         let valid = true;
@@ -1378,7 +1385,7 @@
         const id = `cr-${col.name.replace(/\s+/g, '_')}`;
         switch (col.type) {
             case 'INT': return `<input type="number" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
-            case 'BOOLEAN': return `<input type="checkbox" id="${id}" ${value ? 'checked' : ''} style="width:18px;height:18px">`;
+            case 'BOOLEAN': return `<label style="display:flex;align-items:center;gap:8px;font-weight:400;color:#555"><input type="checkbox" id="${id}" ${value ? 'checked' : ''} style="width:18px;height:18px"><span style="font-size:.83rem">${esc(col.trueLabel || 'Yes')} / ${esc(col.falseLabel || 'No')}</span></label>`;
             case 'DATE': return `<input type="date" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
             default: return `<input type="text" id="${id}" value="${esc(value ?? '')}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
         }
