@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tatalance — POC</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -244,15 +244,62 @@
         .help-nav-btn.primary { background: #0f3460; color: white; border-color: #0f3460; }
         .help-nav-btn.primary:hover { background: #16213e; }
         .help-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        /* ── Hamburger menu ── */
+        .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
+        .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
+        .nav-overlay.open { display: block; }
+
+        /* ── Mobile responsive ── */
+        @media (max-width: 768px) {
+            body { min-height: 100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+            header { padding: 0 12px; position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); }
+            .hamburger { display: flex; align-items: center; }
+            header .badge { display: none; }
+            nav {
+                display: none; position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+                background: #1a1a2e; flex-direction: column; padding: 20px 0; z-index: 100;
+                gap: 0; margin-left: 0; overflow-y: auto; padding-top: calc(20px + env(safe-area-inset-top));
+            }
+            nav.open { display: flex; }
+            nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; }
+            nav .tab-btn.active { background: rgba(255,255,255,.12); }
+            nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
+            nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            nav #custom-tab-buttons { display: contents; }
+            .page { margin: 16px auto; padding: 0 12px; }
+            .grid-2 { grid-template-columns: 1fr; gap: 16px; }
+            .api-grid { grid-template-columns: 1fr; }
+            .card { padding: 16px; border-radius: 10px; }
+            input, select { font-size: 16px !important; }
+            .btn { width: 100%; padding: 12px; font-size: 1rem; }
+            .btn-cancel { width: auto; }
+            .complete-panel .field-row { flex-direction: column; gap: 8px; }
+        }
+
+        @media (max-width: 640px) {
+            table { display: block; }
+            thead { display: none; }
+            tbody { display: block; }
+            tr { display: block; padding: 12px; margin-bottom: 8px; border: 1px solid #f0f0f0; border-radius: 8px; background: #fff; }
+            tr:hover td { background: transparent; }
+            td { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: none !important; font-size: .85rem; }
+            td::before { content: attr(data-label); font-weight: 600; color: #6b7280; font-size: .75rem; text-transform: uppercase; letter-spacing: .3px; margin-right: 8px; flex-shrink: 0; }
+            td:last-child { justify-content: flex-end; gap: 6px; margin-top: 6px; }
+            .filter-btn { padding: 6px 14px; font-size: .82rem; }
+            #ride-date-filter input[type="date"] { flex: 1; min-width: 0; }
+        }
     </style>
 </head>
 <body>
 
 <header>
+    <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
     <h1>Tatalance</h1>
     <span class="badge badge-poc">POC</span>
     <span class="badge badge-mongo"><span class="dot"></span>MongoDB in-memory</span>
-    <nav>
+    <nav id="main-nav">
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
@@ -263,6 +310,7 @@
         <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
 </header>
+<div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
 <!-- ── Clients tab ── -->
 <div id="tab-clients" class="tab-pane active">
@@ -570,6 +618,16 @@
         return obj;
     }
 
+    /* ── Mobile nav ── */
+    function toggleNav() {
+        document.getElementById('main-nav').classList.toggle('open');
+        document.getElementById('nav-overlay').classList.toggle('open');
+    }
+    function closeNav() {
+        document.getElementById('main-nav').classList.remove('open');
+        document.getElementById('nav-overlay').classList.remove('open');
+    }
+
     /* ── Tab switching ── */
     function showTab(name) {
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -578,6 +636,7 @@
         const btn = document.getElementById(`btn-${name}`);
         if (pane) pane.classList.add('active');
         if (btn) btn.classList.add('active');
+        closeNav();
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -730,11 +789,11 @@
         el.innerHTML = `<table>
             <thead><tr><th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
             <tbody>${sorted.map(c => `<tr>
-                <td style="font-weight:600">${esc(c.firstName)}</td>
-                <td>${esc(c.lastName)}</td>
-                <td>${esc2(c.phone)}</td>
-                <td>${esc2(c.email)}</td>
-                <td class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
+                <td data-label="First Name" style="font-weight:600">${esc(c.firstName)}</td>
+                <td data-label="Last Name">${esc(c.lastName)}</td>
+                <td data-label="Phone">${esc2(c.phone)}</td>
+                <td data-label="Email">${esc2(c.email)}</td>
+                <td data-label="Added" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
                 <td style="white-space:nowrap">
                     <button class="btn-sm" onclick="editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
@@ -876,10 +935,10 @@
         el.innerHTML = `<table>
             <thead><tr><th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
             <tbody>${sorted.map(d => `<tr>
-                <td style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
-                <td>${esc2(d.phone)}</td>
-                <td>${esc2(d.vehicle)}</td>
-                <td>${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
+                <td data-label="Name" style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
+                <td data-label="Phone">${esc2(d.phone)}</td>
+                <td data-label="Vehicle">${esc2(d.vehicle)}</td>
+                <td data-label="Payout">${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
                 <td>
                     <select onchange="updateAvailability('${d.id}', this.value)"
                         style="font-size:.8rem;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;color:${availColors[d.availability] || '#555'}">
@@ -1175,10 +1234,10 @@
         el.innerHTML = `<table>
             <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th></th></tr></thead>
             <tbody>${sorted.map(r => `<tr>
-                <td style="font-weight:600">${esc(r.clientName)}</td>
-                <td style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
-                <td>${esc2(r.pickupLocation)}</td>
-                <td>${esc2(r.dropoffLocation)}</td>
+                <td data-label="Client" style="font-weight:600">${esc(r.clientName)}</td>
+                <td data-label="Pickup" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
+                <td data-label="From">${esc2(r.pickupLocation)}</td>
+                <td data-label="To">${esc2(r.dropoffLocation)}</td>
                 <td>${r.assignedDriverName ? esc(r.assignedDriverName) :
                     (r.status === 'SCHEDULED' && availableDriversCache.length ?
                         `<select onchange="if(this.value)assignDriver('${r.id}',this.value)" style="font-size:.78rem;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">
@@ -1406,11 +1465,11 @@
         el.innerHTML = `<table>
             <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Base</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
             <tbody>${sorted.map(i => `<tr>
-                <td style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
-                <td>${esc(i.clientName)}</td>
-                <td>$${i.baseCharge}</td>
-                <td>$${i.additionalCharges}</td>
-                <td>$${i.tax}</td>
+                <td data-label="Invoice #" style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
+                <td data-label="Client">${esc(i.clientName)}</td>
+                <td data-label="Base">$${i.baseCharge}</td>
+                <td data-label="Extras">$${i.additionalCharges}</td>
+                <td data-label="Tax">$${i.tax}</td>
                 <td style="font-weight:700">$${i.total}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${i.status}</span></td>
                 <td>${i.status === 'OUTSTANDING' ?
