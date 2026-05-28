@@ -75,6 +75,11 @@
         .filter-btn { padding: 4px 12px; font-size: 0.78rem; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; cursor: pointer; color: #6b7280; font-weight: 500; transition: all .15s; }
         .filter-btn:hover { background: #f7fafc; border-color: #cbd5e0; }
         .filter-btn.active { background: #2d3748; color: #fff; border-color: #2d3748; }
+        th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        th.sortable:hover { background: #f7fafc; }
+        th.sortable::after { content: ' ⇅'; font-size: .7rem; color: #cbd5e0; }
+        th.sortable.asc::after { content: ' ▲'; color: #2d3748; }
+        th.sortable.desc::after { content: ' ▼'; color: #2d3748; }
         .complete-panel { background: #f8fafb; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-top: 6px; }
         .complete-panel .panel-header { font-size: .82rem; color: #555; margin-bottom: 10px; }
         .complete-panel .panel-header strong { color: #1a1a2e; }
@@ -416,12 +421,21 @@
                     <div class="card-title" style="margin-bottom:0">Rides</div>
                     <span class="count" id="ride-count"></span>
                 </div>
-                <div id="ride-status-filter" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+                <div id="ride-status-filter" style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;">
                     <button class="filter-btn active" onclick="setRideFilter('ALL')">All</button>
                     <button class="filter-btn" onclick="setRideFilter('SCHEDULED')">Scheduled</button>
                     <button class="filter-btn" onclick="setRideFilter('ASSIGNED')">Assigned</button>
                     <button class="filter-btn" onclick="setRideFilter('COMPLETED')">Completed</button>
                     <button class="filter-btn" onclick="setRideFilter('CANCELLED')">Cancelled</button>
+                </div>
+                <div id="ride-date-filter" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input type="date" id="ride-date-from" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.82rem;" onchange="applyRideFilter()">
+                    <span style="color:#6b7280;font-size:.82rem;">to</span>
+                    <input type="date" id="ride-date-to" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.82rem;" onchange="applyRideFilter()">
+                    <button class="filter-btn" onclick="setRideDatePreset('today')">Today</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('week')">This Week</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('month')">This Month</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('clear')" title="Clear dates">Clear</button>
                 </div>
                 <div id="ride-list"></div>
                 <div class="refresh-ts" id="ride-ts"></div>
@@ -519,6 +533,33 @@
     /* ── Helpers ── */
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    /* ── Sort state ── */
+    const sortState = {};
+    function toggleSort(table, field) {
+        const s = sortState[table] || {};
+        if (s.field === field) s.dir = s.dir === 'asc' ? 'desc' : 'asc';
+        else { s.field = field; s.dir = 'asc'; }
+        sortState[table] = s;
+    }
+    function sortedData(table, data) {
+        const s = sortState[table];
+        if (!s || !s.field) return data;
+        const copy = [...data];
+        const dir = s.dir === 'desc' ? -1 : 1;
+        copy.sort((a, b) => {
+            let va = a[s.field], vb = b[s.field];
+            if (va == null) va = ''; if (vb == null) vb = '';
+            if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+            return String(va).localeCompare(String(vb)) * dir;
+        });
+        return copy;
+    }
+    function sortClass(table, field) {
+        const s = sortState[table];
+        if (!s || s.field !== field) return 'sortable';
+        return `sortable ${s.dir}`;
+    }
 
     function resolveRef(spec, obj) {
         if (!obj) return null;
@@ -673,6 +714,8 @@
 
     document.getElementById('client-search').addEventListener('input', filterClients);
 
+    window.sortClients = function(field) { toggleSort('clients', field); filterClients(); };
+
     function render(clients) {
         document.getElementById('count').textContent = `(${clients.length})`;
         const el = document.getElementById('list');
@@ -683,9 +726,10 @@
                 : `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
             return;
         }
+        const sorted = sortedData('clients', clients);
         el.innerHTML = `<table>
-            <thead><tr><th>First Name</th><th>Last Name</th><th>Phone</th><th>Email</th><th>Added</th><th></th></tr></thead>
-            <tbody>${clients.map(c => `<tr>
+            <thead><tr><th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
+            <tbody>${sorted.map(c => `<tr>
                 <td style="font-weight:600">${esc(c.firstName)}</td>
                 <td>${esc(c.lastName)}</td>
                 <td>${esc2(c.phone)}</td>
@@ -819,6 +863,8 @@
     /* ── Driver list ── */
     const availColors = { AVAILABLE: '#38a169', ON_TRIP: '#d97706', OFF_DUTY: '#999' };
 
+    window.sortDrivers = function(field) { toggleSort('drivers', field); loadDrivers(); };
+
     function renderDrivers(drivers) {
         document.getElementById('driver-count').textContent = `(${drivers.length})`;
         const el = document.getElementById('driver-list');
@@ -826,9 +872,10 @@
             el.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>No drivers yet — add the first one!</p></div>`;
             return;
         }
+        const sorted = sortedData('drivers', drivers);
         el.innerHTML = `<table>
-            <thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Payout</th><th>Status</th><th></th></tr></thead>
-            <tbody>${drivers.map(d => `<tr>
+            <thead><tr><th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
+            <tbody>${sorted.map(d => `<tr>
                 <td style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
                 <td>${esc2(d.phone)}</td>
                 <td>${esc2(d.vehicle)}</td>
@@ -1086,8 +1133,30 @@
         applyRideFilter();
     };
 
+    window.setRideDatePreset = function(preset) {
+        const from = document.getElementById('ride-date-from');
+        const to = document.getElementById('ride-date-to');
+        const today = new Date();
+        const fmt = d => d.toISOString().slice(0, 10);
+        if (preset === 'clear') { from.value = ''; to.value = ''; }
+        else if (preset === 'today') { from.value = fmt(today); to.value = fmt(today); }
+        else if (preset === 'week') {
+            const mon = new Date(today); mon.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+            const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+            from.value = fmt(mon); to.value = fmt(sun);
+        } else if (preset === 'month') {
+            from.value = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+            to.value = fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+        }
+        applyRideFilter();
+    };
+
     function applyRideFilter() {
-        const filtered = rideStatusFilter === 'ALL' ? allRidesCache : allRidesCache.filter(r => r.status === rideStatusFilter);
+        let filtered = rideStatusFilter === 'ALL' ? allRidesCache : allRidesCache.filter(r => r.status === rideStatusFilter);
+        const fromVal = document.getElementById('ride-date-from').value;
+        const toVal = document.getElementById('ride-date-to').value;
+        if (fromVal) { const d = new Date(fromVal + 'T00:00:00'); filtered = filtered.filter(r => r.pickupDateTime && new Date(r.pickupDateTime) >= d); }
+        if (toVal) { const d = new Date(toVal + 'T23:59:59'); filtered = filtered.filter(r => r.pickupDateTime && new Date(r.pickupDateTime) <= d); }
         renderRides(filtered);
     }
 
@@ -1101,9 +1170,11 @@
                 : `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
             return;
         }
+        window.sortRides = function(field) { toggleSort('rides', field); applyRideFilter(); };
+        const sorted = sortedData('rides', rides);
         el.innerHTML = `<table>
-            <thead><tr><th>Client</th><th>Pickup</th><th>From</th><th>To</th><th>Driver</th><th>Status</th><th></th></tr></thead>
-            <tbody>${rides.map(r => `<tr>
+            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th></th></tr></thead>
+            <tbody>${sorted.map(r => `<tr>
                 <td style="font-weight:600">${esc(r.clientName)}</td>
                 <td style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
                 <td>${esc2(r.pickupLocation)}</td>
@@ -1330,9 +1401,11 @@
                 : `<div class="empty-state"><div class="icon">📄</div><p>No invoices yet — complete a ride and generate one!</p></div>`;
             return;
         }
+        window.sortInvoices = function(field) { toggleSort('invoices', field); applyInvoiceFilter(); };
+        const sorted = sortedData('invoices', invoices);
         el.innerHTML = `<table>
-            <thead><tr><th>Invoice #</th><th>Client</th><th>Base</th><th>Extras</th><th>Tax</th><th>Total</th><th>Status</th><th></th></tr></thead>
-            <tbody>${invoices.map(i => `<tr>
+            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Base</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
+            <tbody>${sorted.map(i => `<tr>
                 <td style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
                 <td>${esc(i.clientName)}</td>
                 <td>$${i.baseCharge}</td>
