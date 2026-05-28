@@ -57,9 +57,9 @@ David can add clients, book rides, and get paid — end to end in the browser.
 |---|---|---|---|---|
 | 12 | Set up Playwright infrastructure | completed | luciano | #17 |
 | 13 | E2E: Add client and verify in list | completed | luciano | #18 |
-| 14 | E2E: Add driver and toggle availability | pending | — | #19 |
-| 15 | E2E: Book ride and assign driver | pending | — | #20 |
-| 16 | E2E: Complete ride | pending | — | #21 |
+| 14 | E2E: Add driver and toggle availability | completed | luciano | #19 |
+| 15 | E2E: Book ride and assign driver | completed | luciano | #20 |
+| 16 | E2E: Complete ride | completed | luciano | #21 |
 
 ## Dependencies
 
@@ -95,7 +95,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 3 | E2E: Invoice and record payment | pending | — | #22 |
+| 3 | E2E: Invoice and record payment | completed | luciano | #22 |
 
 ## Dependencies
 
@@ -161,10 +161,10 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #16 | Record Payment | Epic 2 | feature | completed |
 | #17 | Playwright setup | Epic 1 | qa | completed |
 | #18 | E2E: Add client | Epic 1 | qa | completed |
-| #19 | E2E: Add driver | Epic 1 | qa | pending |
-| #20 | E2E: Book ride + assign | Epic 1 | qa | pending |
-| #21 | E2E: Complete ride | Epic 1 | qa | pending |
-| #22 | E2E: Invoice + payment | Epic 2 | qa | pending |
+| #19 | E2E: Add driver | Epic 1 | qa | completed |
+| #20 | E2E: Book ride + assign | Epic 1 | qa | completed |
+| #21 | E2E: Complete ride | Epic 1 | qa | completed |
+| #22 | E2E: Invoice + payment | Epic 2 | qa | completed |
 | #25 | User-friendly error messages | Epic 1 | polish | completed |
 | #26 | Edit and delete Clients | Epic 1 | polish | completed |
 | #27 | Edit and delete Drivers | Epic 1 | polish | completed |
