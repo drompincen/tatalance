@@ -112,6 +112,28 @@
         .empty-state p { font-size: 0.85rem; }
         .refresh-ts { font-size: 0.72rem; color: #6b7280; margin-top: 12px; text-align: right; }
 
+        /* ── Delete mode ── */
+        .delete-mode-btn {
+            padding: 4px 10px; font-size: 0.75rem; border: 1px solid #e53e3e; border-radius: 4px;
+            background: #fff; color: #e53e3e; cursor: pointer; font-weight: 500; transition: all .15s;
+        }
+        .delete-mode-btn:hover { background: #fff5f5; }
+        .delete-mode-btn.active { background: #e53e3e; color: white; }
+        .row-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #e53e3e; }
+        tr.selected > td { background: #fff5f5 !important; }
+        .bulk-bar {
+            display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-bottom: 8px;
+            background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; font-size: .82rem;
+        }
+        .bulk-bar .bulk-count { font-weight: 600; color: #c53030; }
+        .bulk-bar .bulk-delete-btn {
+            padding: 5px 14px; background: #e53e3e; color: white; border: none; border-radius: 6px;
+            font-size: .8rem; font-weight: 600; cursor: pointer;
+        }
+        .bulk-bar .bulk-delete-btn:hover { background: #c53030; }
+        .bulk-bar .bulk-clear { background: none; border: none; color: #6b7280; cursor: pointer; font-size: .78rem; margin-left: auto; }
+        .bulk-bar .bulk-clear:hover { color: #1a1a2e; }
+
         /* ── API tab ── */
         .api-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
 
@@ -351,9 +373,11 @@
                 <div class="list-header">
                     <div class="card-title" style="margin-bottom:0">Clients</div>
                     <span class="count" id="count"></span>
+                    <button class="delete-mode-btn" id="client-delete-mode-btn" onclick="toggleDeleteMode('clients', () => filterClients())" style="margin-left:auto">Select</button>
                 </div>
                 <input type="text" id="client-search" placeholder="Search by name or phone…" autocomplete="off"
                     style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.85rem;margin-bottom:10px;box-sizing:border-box;">
+                <div id="client-bulk-bar"></div>
                 <div id="list"></div>
                 <div class="refresh-ts" id="ts"></div>
             </div>
@@ -413,7 +437,9 @@
                 <div class="list-header">
                     <div class="card-title" style="margin-bottom:0">Drivers</div>
                     <span class="count" id="driver-count"></span>
+                    <button class="delete-mode-btn" id="driver-delete-mode-btn" onclick="toggleDeleteMode('drivers', loadDrivers)" style="margin-left:auto">Select</button>
                 </div>
+                <div id="driver-bulk-bar"></div>
                 <div id="driver-list"></div>
                 <div class="refresh-ts" id="driver-ts"></div>
             </div>
@@ -618,6 +644,50 @@
         return obj;
     }
 
+    /* ── Delete mode ── */
+    const deleteModeState = {};   // key: tableKey ('clients','drivers','custom-{id}'), value: boolean
+    const selectedItems = {};     // key: tableKey, value: Set of IDs
+    const lastClickedIdx = {};    // key: tableKey, value: last clicked row index (for shift-click)
+
+    function isDeleteMode(tableKey) { return !!deleteModeState[tableKey]; }
+
+    function toggleDeleteMode(tableKey, renderFn) {
+        deleteModeState[tableKey] = !deleteModeState[tableKey];
+        if (!deleteModeState[tableKey]) selectedItems[tableKey] = new Set();
+        lastClickedIdx[tableKey] = null;
+        renderFn();
+    }
+
+    function toggleSelectItem(tableKey, id, idx, allIds, event, renderFn) {
+        if (!selectedItems[tableKey]) selectedItems[tableKey] = new Set();
+        const sel = selectedItems[tableKey];
+        if (event.shiftKey && lastClickedIdx[tableKey] != null) {
+            const start = Math.min(lastClickedIdx[tableKey], idx);
+            const end = Math.max(lastClickedIdx[tableKey], idx);
+            for (let i = start; i <= end; i++) sel.add(allIds[i]);
+        } else {
+            if (sel.has(id)) sel.delete(id); else sel.add(id);
+        }
+        lastClickedIdx[tableKey] = idx;
+        renderFn();
+    }
+
+    function clearSelection(tableKey, renderFn) {
+        selectedItems[tableKey] = new Set();
+        lastClickedIdx[tableKey] = null;
+        renderFn();
+    }
+
+    function bulkBarHtml(tableKey, renderFn, deleteFnName) {
+        const sel = selectedItems[tableKey];
+        if (!sel || !sel.size) return '';
+        return `<div class="bulk-bar">
+            <span class="bulk-count">${sel.size} selected</span>
+            <button class="bulk-delete-btn" onclick="${deleteFnName}('${tableKey}')">Delete ${sel.size}</button>
+            <button class="bulk-clear" onclick="clearSelection('${tableKey}', ${renderFn})">Clear</button>
+        </div>`;
+    }
+
     /* ── Mobile nav ── */
     function toggleNav() {
         document.getElementById('main-nav').classList.toggle('open');
@@ -779,6 +849,25 @@
         document.getElementById('count').textContent = `(${clients.length})`;
         const el = document.getElementById('list');
         const hasSearch = document.getElementById('client-search').value.trim().length > 0;
+        const dm = isDeleteMode('clients');
+        const sel = selectedItems['clients'] || new Set();
+
+        // Update toggle button state
+        const dmBtn = document.getElementById('client-delete-mode-btn');
+        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = dm ? 'Cancel' : 'Select'; }
+
+        // Bulk action bar
+        const bulkEl = document.getElementById('client-bulk-bar');
+        if (bulkEl) {
+            if (dm && sel.size) {
+                bulkEl.innerHTML = `<div class="bulk-bar">
+                    <span class="bulk-count">${sel.size} selected</span>
+                    <button class="bulk-delete-btn" onclick="bulkDeleteClients()">Delete ${sel.size}</button>
+                    <button class="bulk-clear" onclick="clearSelection('clients', () => filterClients())">Clear</button>
+                </div>`;
+            } else { bulkEl.innerHTML = ''; }
+        }
+
         if (!clients.length) {
             el.innerHTML = hasSearch
                 ? `<div class="empty-state"><div class="icon">🔍</div><p>No matches</p></div>`
@@ -786,17 +875,19 @@
             return;
         }
         const sorted = sortedData('clients', clients);
+        const allIds = sorted.map(c => c.id);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
-            <tbody>${sorted.map(c => `<tr>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
+            <tbody>${sorted.map((c, idx) => `<tr class="${dm && sel.has(c.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())" style="cursor:pointer"` : ''}>
+                ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())"></td>` : ''}
                 <td data-label="First Name" style="font-weight:600">${esc(c.firstName)}</td>
                 <td data-label="Last Name">${esc(c.lastName)}</td>
                 <td data-label="Phone">${esc2(c.phone)}</td>
                 <td data-label="Email">${esc2(c.email)}</td>
                 <td data-label="Added" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
                 <td style="white-space:nowrap">
-                    <button class="btn-sm" onclick="editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}')">Edit</button>
-                    <button class="btn-sm btn-danger" onclick="deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
+                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}')">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
                 </td>
             </tr>`).join('')}</tbody>
         </table>`;
@@ -916,6 +1007,26 @@
         }
     };
 
+    window.bulkDeleteClients = async function() {
+        const sel = selectedItems['clients'];
+        if (!sel || !sel.size) return;
+        if (!confirm(`Delete ${sel.size} client(s)?`)) return;
+        const errors = [];
+        for (const id of sel) {
+            try {
+                const r = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+                if (r.status === 400) {
+                    const data = await r.json();
+                    errors.push(data.message || `Cannot delete client ${id}`);
+                } else if (!r.ok) { errors.push(`Failed to delete client ${id}`); }
+            } catch { errors.push(`Failed to delete client ${id}`); }
+        }
+        selectedItems['clients'] = new Set();
+        deleteModeState['clients'] = false;
+        load();
+        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
+    };
+
     load();
     setInterval(load, 10000);
 
@@ -927,20 +1038,39 @@
     function renderDrivers(drivers) {
         document.getElementById('driver-count').textContent = `(${drivers.length})`;
         const el = document.getElementById('driver-list');
+        const dm = isDeleteMode('drivers');
+        const sel = selectedItems['drivers'] || new Set();
+
+        const dmBtn = document.getElementById('driver-delete-mode-btn');
+        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = dm ? 'Cancel' : 'Select'; }
+
+        const bulkEl = document.getElementById('driver-bulk-bar');
+        if (bulkEl) {
+            if (dm && sel.size) {
+                bulkEl.innerHTML = `<div class="bulk-bar">
+                    <span class="bulk-count">${sel.size} selected</span>
+                    <button class="bulk-delete-btn" onclick="bulkDeleteDrivers()">Delete ${sel.size}</button>
+                    <button class="bulk-clear" onclick="clearSelection('drivers', loadDrivers)">Clear</button>
+                </div>`;
+            } else { bulkEl.innerHTML = ''; }
+        }
+
         if (!drivers.length) {
             el.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>No drivers yet — add the first one!</p></div>`;
             return;
         }
         const sorted = sortedData('drivers', drivers);
+        const allIds = sorted.map(d => d.id);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
-            <tbody>${sorted.map(d => `<tr>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
+            <tbody>${sorted.map((d, idx) => `<tr class="${dm && sel.has(d.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)" style="cursor:pointer"` : ''}>
+                ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(d.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)"></td>` : ''}
                 <td data-label="Name" style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
                 <td data-label="Phone">${esc2(d.phone)}</td>
                 <td data-label="Vehicle">${esc2(d.vehicle)}</td>
                 <td data-label="Payout">${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
                 <td>
-                    <select onchange="updateAvailability('${d.id}', this.value)"
+                    <select onclick="event.stopPropagation()" onchange="updateAvailability('${d.id}', this.value)"
                         style="font-size:.8rem;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;color:${availColors[d.availability] || '#555'}">
                         ${['AVAILABLE','ON_TRIP','OFF_DUTY'].map(a =>
                             `<option value="${a}" ${a === d.availability ? 'selected' : ''}>${a.replace('_',' ')}</option>`
@@ -948,8 +1078,8 @@
                     </select>
                 </td>
                 <td style="white-space:nowrap">
-                    <button class="btn-sm" onclick="editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
-                    <button class="btn-sm btn-danger" onclick="deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
+                    <button class="btn-sm" onclick="event.stopPropagation();editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
                 </td>
             </tr>`).join('')}</tbody>
         </table>`;
@@ -1084,6 +1214,26 @@
         } catch {
             alert('Delete failed — check server logs');
         }
+    };
+
+    window.bulkDeleteDrivers = async function() {
+        const sel = selectedItems['drivers'];
+        if (!sel || !sel.size) return;
+        if (!confirm(`Delete ${sel.size} driver(s)?`)) return;
+        const errors = [];
+        for (const id of sel) {
+            try {
+                const r = await fetch(`/api/drivers/${id}`, { method: 'DELETE' });
+                if (r.status === 400) {
+                    const data = await r.json();
+                    errors.push(data.message || `Cannot delete driver ${id}`);
+                } else if (!r.ok) { errors.push(`Failed to delete driver ${id}`); }
+            } catch { errors.push(`Failed to delete driver ${id}`); }
+        }
+        selectedItems['drivers'] = new Set();
+        deleteModeState['drivers'] = false;
+        loadDrivers();
+        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
     };
 
     loadDrivers();
@@ -1579,7 +1729,7 @@
             });
             if (!r.ok) throw new Error();
             closeCreateTableModal();
-            loadCustomTables();
+            loadCustomTables(true);
         } catch {
             alert('Failed to create table');
         }
@@ -1699,18 +1849,28 @@
                         <div class="list-header">
                             <div class="card-title" style="margin-bottom:0">${esc(table.name)}</div>
                             <span class="count">(${rows.length})</span>
+                            <button class="delete-mode-btn ${isDeleteMode('custom-'+table.id) ? 'active' : ''}" onclick="toggleDeleteMode('custom-${table.id}', () => { renderAllCustomPanes(); showTab('custom-${table.id}'); })" style="margin-left:auto">${isDeleteMode('custom-'+table.id) ? 'Cancel' : 'Select'}</button>
                         </div>
+                        ${(() => { const ctSel = selectedItems['custom-'+table.id]; const ctDm = isDeleteMode('custom-'+table.id);
+                            return ctDm && ctSel && ctSel.size ? `<div class="bulk-bar">
+                                <span class="bulk-count">${ctSel.size} selected</span>
+                                <button class="bulk-delete-btn" onclick="bulkDeleteCustomRows('${table.id}')">Delete ${ctSel.size}</button>
+                                <button class="bulk-clear" onclick="clearSelection('custom-${table.id}', () => { renderAllCustomPanes(); showTab('custom-${table.id}'); })">Clear</button>
+                            </div>` : '';
+                        })()}
                         ${colEditForm}
                         <table>
-                            <thead><tr>${table.columns.map(c => `<th class="col-header" onclick="toggleColMenu(event,'${table.id}','${esc(c.name)}')">
+                            <thead><tr>${isDeleteMode('custom-'+table.id) ? '<th style="width:32px"></th>' : ''}${table.columns.map(c => `<th class="col-header" onclick="toggleColMenu(event,'${table.id}','${esc(c.name)}')">
                                 ${esc(c.name)} <span class="col-menu-btn">▾</span>
                                 <div class="col-menu" id="colmenu-${table.id}-${esc(c.name)}">
                                     <button class="col-menu-item" onclick="event.stopPropagation();startEditColumn('${table.id}','${esc(c.name)}')">Edit</button>
                                     ${table.columns.length > 1 ? `<button class="col-menu-item danger" onclick="event.stopPropagation();deleteColumn('${table.id}','${esc(c.name)}')">Delete</button>` : ''}
                                 </div>
                             </th>`).join('')}<th class="add-col-header" onclick="startAddColumn('${table.id}')" title="Add column">+</th></tr></thead>
-                            ${!rows.length ? `<tbody><tr><td colspan="${table.columns.length + 1}" style="text-align:center;padding:32px;color:#6b7280">No rows yet</td></tr></tbody>` :
-                            `<tbody>${rows.map(r => `<tr>
+                            ${(() => { const ctDm = isDeleteMode('custom-'+table.id); const ctSel = selectedItems['custom-'+table.id] || new Set(); const ctAllIds = rows.map(r => r.id);
+                            return !rows.length ? `<tbody><tr><td colspan="${table.columns.length + (ctDm ? 2 : 1)}" style="text-align:center;padding:32px;color:#6b7280">No rows yet</td></tr></tbody>` :
+                            `<tbody>${rows.map((r, idx) => `<tr class="${ctDm && ctSel.has(r.id) ? 'selected' : ''}" ${ctDm ? `onclick="toggleSelectItem('custom-${table.id}','${r.id}',${idx},${JSON.stringify(ctAllIds).replace(/"/g,'&quot;')},event,()=>{renderAllCustomPanes();showTab('custom-${table.id}')})" style="cursor:pointer"` : ''}>
+                                ${ctDm ? `<td><input type="checkbox" class="row-checkbox" ${ctSel.has(r.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('custom-${table.id}','${r.id}',${idx},${JSON.stringify(ctAllIds).replace(/"/g,'&quot;')},event,()=>{renderAllCustomPanes();showTab('custom-${table.id}')})"></td>` : ''}
                                 ${table.columns.map(c => {
                                     const v = r.data?.[c.name];
                                     if (c.type === 'BOOLEAN') return `<td>${boolDisplay(c, v)}</td>`;
@@ -1721,10 +1881,10 @@
                                     return `<td>${v != null ? esc(String(v)) : '<span class="muted">—</span>'}</td>`;
                                 }).join('')}
                                 <td style="white-space:nowrap">
-                                    <button class="btn-sm" onclick="editCustomRow('${table.id}','${r.id}')">Edit</button>
-                                    <button class="btn-sm btn-danger" onclick="deleteCustomRow('${table.id}','${r.id}')">Del</button>
+                                    <button class="btn-sm" onclick="event.stopPropagation();editCustomRow('${table.id}','${r.id}')">Edit</button>
+                                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteCustomRow('${table.id}','${r.id}')">Del</button>
                                 </td>
-                            </tr>`).join('')}</tbody>`}
+                            </tr>`).join('')}</tbody>`; })()}
                         </table>
                         <div class="refresh-ts" id="ct-ts-${table.id}"></div>
                     </div>
@@ -1823,7 +1983,7 @@
                 if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Failed'); }
             }
             editingColumnState[tableId] = null;
-            await loadCustomTables();
+            await loadCustomTables(true);
             showTab(`custom-${tableId}`);
         } catch (e) { alert('Failed: ' + e.message); }
     };
@@ -1834,7 +1994,7 @@
             const r = await fetch(`/api/tables/${tableId}/columns/${encodeURIComponent(colName)}`, { method: 'DELETE' });
             if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Failed'); }
             editingColumnState[tableId] = null;
-            await loadCustomTables();
+            await loadCustomTables(true);
             showTab(`custom-${tableId}`);
         } catch (e) { alert('Failed: ' + e.message); }
     };
@@ -1858,7 +2018,7 @@
         if (pane) pane.classList.add('active');
     }
 
-    async function loadCustomTables() {
+    async function loadCustomTables(forceRender = false) {
         try {
             // Remember which custom tab is active before re-rendering
             const activeTableId = getActiveCustomTabId();
@@ -1871,8 +2031,8 @@
                 const rr = await fetch(`/api/tables/${t.id}/rows`);
                 customTableRows[t.id] = await rr.json();
             }));
-            // Skip DOM re-render if user is typing in a custom table form
-            if (isUserEditingCustomTable()) {
+            // Skip DOM re-render if user is typing in a custom table form (unless forced)
+            if (!forceRender && isUserEditingCustomTable()) {
                 // Still restore the tab button active state
                 restoreActiveCustomTab(activeTableId);
                 return;
@@ -1930,6 +2090,27 @@
             renderAllCustomPanes();
             showTab(`custom-${tableId}`);
         } catch { alert('Delete failed'); }
+    };
+
+    window.bulkDeleteCustomRows = async function(tableId) {
+        const key = 'custom-' + tableId;
+        const sel = selectedItems[key];
+        if (!sel || !sel.size) return;
+        if (!confirm(`Delete ${sel.size} row(s)?`)) return;
+        const errors = [];
+        for (const rowId of sel) {
+            try {
+                const r = await fetch(`/api/tables/${tableId}/rows/${rowId}`, { method: 'DELETE' });
+                if (!r.ok) errors.push(`Failed to delete row ${rowId}`);
+            } catch { errors.push(`Failed to delete row ${rowId}`); }
+        }
+        selectedItems[key] = new Set();
+        deleteModeState[key] = false;
+        const rr = await fetch(`/api/tables/${tableId}/rows`);
+        customTableRows[tableId] = await rr.json();
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
     };
 
     window.deleteCustomTable = async function(tableId, name) {
