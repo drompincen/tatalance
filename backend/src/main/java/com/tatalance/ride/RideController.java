@@ -69,6 +69,19 @@ public class RideController {
         return rideRepository.findByClientId(clientId);
     }
 
+    @Operation(summary = "List rides assigned to a driver")
+    @ApiResponse(responseCode = "200", description = "Driver rides")
+    @GetMapping("/drivers/{driverId}/rides")
+    public List<Ride> listByDriver(@PathVariable String driverId,
+                                   @RequestParam(required = false) List<String> status) {
+        if (status != null && !status.isEmpty()) {
+            List<RideStatus> statuses = status.stream().map(RideStatus::valueOf).toList();
+            return rideRepository.findByAssignedDriverIdAndStatusIn(driverId, statuses);
+        }
+        return rideRepository.findByAssignedDriverIdAndStatusIn(driverId,
+                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS, RideStatus.SCHEDULED));
+    }
+
     @Operation(summary = "Assign a driver to a ride")
     @ApiResponse(responseCode = "200", description = "Driver assigned")
     @ApiResponse(responseCode = "400", description = "Driver not available or not found")
@@ -155,6 +168,22 @@ public class RideController {
         return rideRepository.save(ride);
     }
 
+    @Operation(summary = "Start a ride (ASSIGNED → IN_PROGRESS)")
+    @ApiResponse(responseCode = "200", description = "Ride started")
+    @ApiResponse(responseCode = "400", description = "Ride not in ASSIGNED status")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PostMapping("/rides/{id}/start")
+    public Ride startRide(@PathVariable String id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (ride.getStatus() != RideStatus.ASSIGNED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be in ASSIGNED status to start");
+        }
+        ride.setStatus(RideStatus.IN_PROGRESS);
+        ride.setActualStart(Instant.now());
+        return rideRepository.save(ride);
+    }
+
     @Operation(summary = "Complete a ride")
     @ApiResponse(responseCode = "200", description = "Ride completed")
     @ApiResponse(responseCode = "400", description = "Ride not in ASSIGNED status or missing fields")
@@ -164,8 +193,8 @@ public class RideController {
         Ride ride = rideRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
 
-        if (ride.getStatus() != RideStatus.ASSIGNED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be in ASSIGNED status to complete");
+        if (ride.getStatus() != RideStatus.ASSIGNED && ride.getStatus() != RideStatus.IN_PROGRESS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be in ASSIGNED or IN_PROGRESS status to complete");
         }
 
         ride.setActualStart(req.getActualStart());
