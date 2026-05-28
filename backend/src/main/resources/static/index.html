@@ -296,6 +296,8 @@
                     <div class="card-title" style="margin-bottom:0">Clients</div>
                     <span class="count" id="count"></span>
                 </div>
+                <input type="text" id="client-search" placeholder="Search by name or phone…" autocomplete="off"
+                    style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.85rem;margin-bottom:10px;box-sizing:border-box;">
                 <div id="list"></div>
                 <div class="refresh-ts" id="ts"></div>
             </div>
@@ -641,12 +643,29 @@
 
     /* ── Client list ── */
     const esc2 = s => esc(s) || '<span class="muted">—</span>';
+    let allClientsCache = [];
+
+    function filterClients() {
+        const q = document.getElementById('client-search').value.toLowerCase().trim();
+        if (!q) { render(allClientsCache); return; }
+        const filtered = allClientsCache.filter(c =>
+            (c.firstName || '').toLowerCase().includes(q) ||
+            (c.lastName || '').toLowerCase().includes(q) ||
+            (c.phone || '').toLowerCase().includes(q)
+        );
+        render(filtered);
+    }
+
+    document.getElementById('client-search').addEventListener('input', filterClients);
 
     function render(clients) {
         document.getElementById('count').textContent = `(${clients.length})`;
         const el = document.getElementById('list');
+        const hasSearch = document.getElementById('client-search').value.trim().length > 0;
         if (!clients.length) {
-            el.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
+            el.innerHTML = hasSearch
+                ? `<div class="empty-state"><div class="icon">🔍</div><p>No matches</p></div>`
+                : `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
             return;
         }
         el.innerHTML = `<table>
@@ -669,7 +688,8 @@
         fetch('/api/clients')
             .then(r => r.json())
             .then(data => {
-                render(data);
+                allClientsCache = data;
+                filterClients();
                 document.getElementById('ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
