@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +41,7 @@ class CustomTableControllerTest {
         var col2 = new ColumnDef();
         col2.setName("Age");
         col2.setType(ColumnType.INT);
-        table.setColumns(List.of(col1, col2));
+        table.setColumns(new ArrayList<>(List.of(col1, col2)));
         table.setCreatedAt(Instant.now());
         return table;
     }
@@ -224,6 +225,129 @@ class CustomTableControllerTest {
         when(rowRepository.findById("row001")).thenReturn(Optional.of(row));
 
         mockMvc.perform(delete("/api/tables/tbl001/rows/row001"))
+                .andExpect(status().isNotFound());
+    }
+
+    // ── Column CRUD tests ──
+
+    @Test
+    void should_addColumn() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/tables/tbl001/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Email","type":"STRING"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.columns", hasSize(3)))
+                .andExpect(jsonPath("$.columns[2].name").value("Email"));
+    }
+
+    @Test
+    void should_return400_when_duplicateColumnName() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+
+        mockMvc.perform(post("/api/tables/tbl001/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Name","type":"STRING"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_addingColumnToNonexistentTable() throws Exception {
+        when(tableRepository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/tables/unknown/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"X","type":"STRING"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_renameColumn() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/tables/tbl001/columns/Name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Full Name"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.columns[0].name").value("Full Name"));
+    }
+
+    @Test
+    void should_updateColumnLabels() throws Exception {
+        var table = sampleTable();
+        // Add a boolean column
+        var boolCol = new ColumnDef();
+        boolCol.setName("Active");
+        boolCol.setType(ColumnType.BOOLEAN);
+        table.getColumns().add(boolCol);
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/tables/tbl001/columns/Active")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"trueLabel":"Paid","falseLabel":"Unpaid"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.columns[2].trueLabel").value("Paid"))
+                .andExpect(jsonPath("$.columns[2].falseLabel").value("Unpaid"));
+    }
+
+    @Test
+    void should_return404_when_updatingNonexistentColumn() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+
+        mockMvc.perform(put("/api/tables/tbl001/columns/Missing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"X"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_deleteColumn() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(delete("/api/tables/tbl001/columns/Age"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.columns", hasSize(1)))
+                .andExpect(jsonPath("$.columns[0].name").value("Name"));
+    }
+
+    @Test
+    void should_return400_when_deletingLastColumn() throws Exception {
+        var table = sampleTable();
+        table.setColumns(new ArrayList<>(List.of(table.getColumns().get(0))));
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+
+        mockMvc.perform(delete("/api/tables/tbl001/columns/Name"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_deletingNonexistentColumn() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+
+        mockMvc.perform(delete("/api/tables/tbl001/columns/Missing"))
                 .andExpect(status().isNotFound());
     }
 }

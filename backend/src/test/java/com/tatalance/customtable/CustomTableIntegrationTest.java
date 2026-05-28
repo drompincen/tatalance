@@ -118,4 +118,49 @@ class CustomTableIntegrationTest {
         var tables = restTemplate.getForEntity("/api/tables", List.class);
         assertThat(tables.getBody()).isEmpty();
     }
+
+    @Test
+    void should_addColumn() {
+        var tableId = createTable();
+
+        var col = Map.of("name", "Email", "type", "STRING");
+        var response = restTemplate.postForEntity("/api/tables/" + tableId + "/columns", col, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat((List) response.getBody().get("columns")).hasSize(4);
+    }
+
+    @Test
+    void should_renameColumn() {
+        var tableId = createTable();
+
+        var update = Map.of("name", "Full Name");
+        var response = restTemplate.exchange("/api/tables/" + tableId + "/columns/Name",
+                HttpMethod.PUT, new HttpEntity<>(update), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var cols = (List<Map>) response.getBody().get("columns");
+        assertThat(cols.get(0).get("name")).isEqualTo("Full Name");
+    }
+
+    @Test
+    void should_deleteColumn() {
+        var tableId = createTable();
+
+        var response = restTemplate.exchange("/api/tables/" + tableId + "/columns/Age",
+                HttpMethod.DELETE, null, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat((List) response.getBody().get("columns")).hasSize(2);
+    }
+
+    @Test
+    void should_addColumnWithLabels() {
+        var tableId = createTable();
+
+        var col = Map.of("name", "Paid", "type", "BOOLEAN", "trueLabel", "Paid", "falseLabel", "Unpaid");
+        var response = restTemplate.postForEntity("/api/tables/" + tableId + "/columns", col, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var cols = (List<Map>) response.getBody().get("columns");
+        var lastCol = cols.get(cols.size() - 1);
+        assertThat(lastCol.get("trueLabel")).isEqualTo("Paid");
+        assertThat(lastCol.get("falseLabel")).isEqualTo("Unpaid");
+    }
 }

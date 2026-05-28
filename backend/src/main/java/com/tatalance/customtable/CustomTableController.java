@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -74,6 +75,72 @@ public class CustomTableController {
         }
         rowRepository.deleteByTableId(id);
         tableRepository.deleteById(id);
+    }
+
+    @Operation(summary = "Add a column to a custom table")
+    @ApiResponse(responseCode = "200", description = "Column added")
+    @ApiResponse(responseCode = "404", description = "Table not found")
+    @ApiResponse(responseCode = "400", description = "Invalid column or duplicate name")
+    @PostMapping("/{id}/columns")
+    public CustomTable addColumn(@PathVariable String id, @Valid @RequestBody ColumnDef column) {
+        CustomTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+        boolean duplicate = table.getColumns().stream()
+                .anyMatch(c -> c.getName().equalsIgnoreCase(column.getName()));
+        if (duplicate) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Column name already exists");
+        }
+        List<ColumnDef> cols = new ArrayList<>(table.getColumns());
+        cols.add(column);
+        table.setColumns(cols);
+        return tableRepository.save(table);
+    }
+
+    @Operation(summary = "Update a column (rename or change labels)")
+    @ApiResponse(responseCode = "200", description = "Column updated")
+    @ApiResponse(responseCode = "404", description = "Table or column not found")
+    @PutMapping("/{id}/columns/{columnName}")
+    public CustomTable updateColumn(@PathVariable String id, @PathVariable String columnName,
+                                    @RequestBody Map<String, String> body) {
+        CustomTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+        ColumnDef col = table.getColumns().stream()
+                .filter(c -> c.getName().equals(columnName))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Column not found"));
+
+        String newName = body.get("name");
+        if (newName != null && !newName.isBlank() && !newName.equals(columnName)) {
+            boolean duplicate = table.getColumns().stream()
+                    .anyMatch(c -> c.getName().equalsIgnoreCase(newName) && !c.getName().equals(columnName));
+            if (duplicate) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Column name already exists");
+            }
+            col.setName(newName);
+        }
+        if (body.containsKey("trueLabel")) col.setTrueLabel(body.get("trueLabel"));
+        if (body.containsKey("falseLabel")) col.setFalseLabel(body.get("falseLabel"));
+        return tableRepository.save(table);
+    }
+
+    @Operation(summary = "Delete a column from a custom table")
+    @ApiResponse(responseCode = "200", description = "Column deleted")
+    @ApiResponse(responseCode = "404", description = "Table or column not found")
+    @ApiResponse(responseCode = "400", description = "Cannot delete last column")
+    @DeleteMapping("/{id}/columns/{columnName}")
+    public CustomTable deleteColumn(@PathVariable String id, @PathVariable String columnName) {
+        CustomTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+        if (table.getColumns().size() <= 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete the last column");
+        }
+        List<ColumnDef> cols = new ArrayList<>(table.getColumns());
+        boolean removed = cols.removeIf(c -> c.getName().equals(columnName));
+        if (!removed) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Column not found");
+        }
+        table.setColumns(cols);
+        return tableRepository.save(table);
     }
 
     @Operation(summary = "Add a row to a custom table")
