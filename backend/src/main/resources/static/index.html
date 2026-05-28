@@ -50,14 +50,14 @@
         .page { max-width: 1020px; margin: 32px auto; padding: 0 24px; }
         .grid-2 { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
         .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-        .card-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin-bottom: 20px; }
+        .card-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 20px; }
 
         /* ── Form ── */
         .field { margin-bottom: 14px; }
         label { display: block; font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
         .req { color: #e53e3e; }
-        .opt { color: #bbb; font-weight: 400; }
-        .schema-type { margin-left: auto; font-size: 0.7rem; font-weight: 400; color: #bbb; font-family: monospace; background: #f5f5f5; padding: 1px 6px; border-radius: 4px; }
+        .opt { color: #6b7280; font-weight: 400; }
+        .schema-type { margin-left: auto; font-size: 0.7rem; font-weight: 400; color: #6b7280; font-family: monospace; background: #f5f5f5; padding: 1px 6px; border-radius: 4px; }
         input { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; transition: border-color .15s, box-shadow .15s; background: #fafafa; }
         input:focus { outline: none; border-color: #0f3460; background: white; box-shadow: 0 0 0 3px rgba(15,52,96,.08); }
         input.invalid { border-color: #e53e3e; }
@@ -92,17 +92,17 @@
 
         /* ── Client list ── */
         .list-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
-        .count { font-size: 0.8rem; color: #bbb; font-weight: 400; }
+        .count { font-size: 0.8rem; color: #6b7280; font-weight: 400; }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        th { text-align: left; padding: 8px 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #aaa; border-bottom: 2px solid #f0f0f0; }
+        th { text-align: left; padding: 8px 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #6b7280; border-bottom: 2px solid #f0f0f0; }
         td { padding: 11px 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: #fafafa; }
-        .muted { color: #bbb; }
-        .empty-state { text-align: center; padding: 48px 24px; color: #ccc; }
+        .muted { color: #6b7280; }
+        .empty-state { text-align: center; padding: 48px 24px; color: #6b7280; }
         .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
         .empty-state p { font-size: 0.85rem; }
-        .refresh-ts { font-size: 0.72rem; color: #ddd; margin-top: 12px; text-align: right; }
+        .refresh-ts { font-size: 0.72rem; color: #6b7280; margin-top: 12px; text-align: right; }
 
         /* ── API tab ── */
         .api-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
@@ -110,7 +110,7 @@
         .api-meta { margin-bottom: 16px; }
         .api-meta h2 { font-size: 1.1rem; font-weight: 700; }
         .api-meta .ver { display: inline-block; font-size: 0.72rem; background: #eef; color: #4477cc; border-radius: 4px; padding: 2px 8px; margin-left: 8px; font-family: monospace; }
-        .api-desc { font-size: 0.85rem; color: #777; margin-top: 4px; margin-bottom: 16px; }
+        .api-desc { font-size: 0.85rem; color: #6b7280; margin-top: 4px; margin-bottom: 16px; }
         .swagger-link { display: inline-block; font-size: 0.82rem; color: #0f3460; text-decoration: none; border: 1px solid #0f3460; border-radius: 6px; padding: 6px 14px; transition: background .15s; }
         .swagger-link:hover { background: #0f3460; color: white; }
 
@@ -128,17 +128,17 @@
         .endpoint-body { padding: 0 16px 14px; border-top: 1px solid #f0f0f0; background: #fafafa; }
         .endpoint-body p { font-size: 0.82rem; color: #666; margin-top: 10px; }
         .schema-block { margin-top: 10px; }
-        .schema-block h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; margin-bottom: 6px; }
+        .schema-block h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 6px; }
         .schema-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        .schema-table th { text-align: left; padding: 4px 8px; color: #aaa; border-bottom: 1px solid #eee; font-weight: 600; font-size: 0.7rem; }
+        .schema-table th { text-align: left; padding: 4px 8px; color: #6b7280; border-bottom: 1px solid #eee; font-weight: 600; font-size: 0.7rem; }
         .schema-table td { padding: 5px 8px; border-bottom: 1px solid #f5f5f5; }
         .schema-table tr:last-child td { border-bottom: none; }
         .prop-name { font-family: monospace; color: #0f3460; }
-        .prop-type { color: #888; font-family: monospace; font-size: 0.76rem; }
+        .prop-type { color: #6b7280; font-family: monospace; font-size: 0.76rem; }
         .prop-req  { color: #e53e3e; font-size: 0.7rem; }
         .hidden { display: none; }
 
-        .spec-loading { text-align: center; padding: 48px; color: #bbb; font-size: 0.9rem; }
+        .spec-loading { text-align: center; padding: 48px; color: #6b7280; font-size: 0.9rem; }
 
         /* ── Custom table "+" button ── */
         .add-table-btn {
@@ -174,7 +174,7 @@
         /* ── Column header controls ── */
         .col-header { position: relative; cursor: pointer; white-space: nowrap; }
         .col-header:hover { color: #555; }
-        .col-header .col-menu-btn { display: none; font-size: .65rem; margin-left: 3px; color: #bbb; }
+        .col-header .col-menu-btn { display: none; font-size: .65rem; margin-left: 3px; color: #6b7280; }
         .col-header:hover .col-menu-btn { display: inline; }
         .col-menu {
             display: none; position: absolute; top: 100%; left: 0; z-index: 50;
@@ -186,7 +186,7 @@
         .col-menu-item:hover { background: #f5f5f5; }
         .col-menu-item.danger { color: #e53e3e; }
         .col-menu-item.danger:hover { background: #fff5f5; }
-        .add-col-header { cursor: pointer; color: #bbb; font-size: .85rem; font-weight: 400; text-transform: none; letter-spacing: 0; }
+        .add-col-header { cursor: pointer; color: #6b7280; font-size: .85rem; font-weight: 400; text-transform: none; letter-spacing: 0; }
         .add-col-header:hover { color: #555; }
 
         /* ── Inline column edit form ── */
@@ -216,7 +216,7 @@
             display: flex; align-items: center; padding: 18px 24px; border-bottom: 1px solid #f0f0f0;
         }
         .help-header h2 { font-size: 1rem; flex: 1; }
-        .help-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #999; padding: 4px; }
+        .help-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #6b7280; padding: 4px; }
         .help-close:hover { color: #333; }
         .help-body { padding: 28px 32px; flex: 1; overflow-y: auto; }
         .help-body h3 { font-size: .95rem; color: #1a1a2e; margin-bottom: 12px; }
@@ -542,7 +542,7 @@
                 <a href="/swagger-ui/index.html" target="_blank" class="swagger-link">Open Swagger UI ↗</a>
             </div>
             <hr style="border:none;border-top:1px solid #f0f0f0;margin:16px 0">
-            <div style="font-size:.8rem;color:#aaa">
+            <div style="font-size:.8rem;color:#6b7280">
                 <div>Spec: <a href="/v3/api-docs" target="_blank" style="color:#0f3460">/v3/api-docs</a></div>
                 <div style="margin-top:4px">OpenAPI ${esc(spec.openapi ?? '')}</div>
             </div>`;
@@ -1506,7 +1506,7 @@
                                     ${table.columns.length > 1 ? `<button class="col-menu-item danger" onclick="event.stopPropagation();deleteColumn('${table.id}','${esc(c.name)}')">Delete</button>` : ''}
                                 </div>
                             </th>`).join('')}<th class="add-col-header" onclick="startAddColumn('${table.id}')" title="Add column">+</th></tr></thead>
-                            ${!rows.length ? `<tbody><tr><td colspan="${table.columns.length + 1}" style="text-align:center;padding:32px;color:#ccc">No rows yet</td></tr></tbody>` :
+                            ${!rows.length ? `<tbody><tr><td colspan="${table.columns.length + 1}" style="text-align:center;padding:32px;color:#6b7280">No rows yet</td></tr></tbody>` :
                             `<tbody>${rows.map(r => `<tr>
                                 ${table.columns.map(c => {
                                     const v = r.data?.[c.name];
