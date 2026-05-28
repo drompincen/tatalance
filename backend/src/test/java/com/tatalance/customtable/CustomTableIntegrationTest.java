@@ -163,4 +163,22 @@ class CustomTableIntegrationTest {
         assertThat(lastCol.get("trueLabel")).isEqualTo("Paid");
         assertThat(lastCol.get("falseLabel")).isEqualTo("Unpaid");
     }
+
+    @Test
+    void should_addLinkColumn() {
+        var tableId = createTable();
+        // Create a second table to link to
+        var table2 = Map.of("name", "Vehicles",
+                "columns", List.of(Map.of("name", "Make", "type", "STRING")));
+        var t2Response = restTemplate.postForEntity("/api/tables", table2, Map.class);
+        var table2Id = (String) t2Response.getBody().get("id");
+
+        var col = Map.of("name", "Vehicle", "type", "LINK", "linkedTableId", table2Id);
+        var response = restTemplate.postForEntity("/api/tables/" + tableId + "/columns", col, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var cols = (List<Map>) response.getBody().get("columns");
+        var lastCol = cols.get(cols.size() - 1);
+        assertThat(lastCol.get("type")).isEqualTo("LINK");
+        assertThat(lastCol.get("linkedTableId")).isEqualTo(table2Id);
+    }
 }

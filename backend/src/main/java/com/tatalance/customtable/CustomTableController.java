@@ -86,6 +86,17 @@ public class CustomTableController {
         validateLabels(column);
         CustomTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+        if (column.getType() == ColumnType.LINK) {
+            if (column.getLinkedTableId() == null || column.getLinkedTableId().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "linkedTableId is required for LINK columns");
+            }
+            if (column.getLinkedTableId().equals(id)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot link a table to itself");
+            }
+            if (!tableRepository.existsById(column.getLinkedTableId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Linked table not found");
+            }
+        }
         boolean duplicate = table.getColumns().stream()
                 .anyMatch(c -> c.getName().equalsIgnoreCase(column.getName()));
         if (duplicate) {

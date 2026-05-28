@@ -363,4 +363,62 @@ class CustomTableControllerTest {
                                 """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void should_addLinkColumn() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.existsById("tbl002")).thenReturn(true);
+        when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/tables/tbl001/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Vehicle","type":"LINK","linkedTableId":"tbl002"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.columns", hasSize(3)))
+                .andExpect(jsonPath("$.columns[2].type").value("LINK"))
+                .andExpect(jsonPath("$.columns[2].linkedTableId").value("tbl002"));
+    }
+
+    @Test
+    void should_return400_when_linkMissingTableId() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+
+        mockMvc.perform(post("/api/tables/tbl001/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Vehicle","type":"LINK"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_linkToSelf() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+
+        mockMvc.perform(post("/api/tables/tbl001/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Self","type":"LINK","linkedTableId":"tbl001"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_linkToNonexistentTable() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.existsById("missing")).thenReturn(false);
+
+        mockMvc.perform(post("/api/tables/tbl001/columns")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Ref","type":"LINK","linkedTableId":"missing"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
 }

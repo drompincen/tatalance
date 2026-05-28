@@ -10,6 +10,7 @@ public class ColumnDef {
     private ColumnType type;
     private String trueLabel;
     private String falseLabel;
+    private String linkedTableId;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -19,4 +20,6 @@ public class ColumnDef {
     public void setTrueLabel(String trueLabel) { this.trueLabel = trueLabel; }
     public String getFalseLabel() { return falseLabel; }
     public void setFalseLabel(String falseLabel) { this.falseLabel = falseLabel; }
+    public String getLinkedTableId() { return linkedTableId; }
+    public void setLinkedTableId(String linkedTableId) { this.linkedTableId = linkedTableId; }
 }

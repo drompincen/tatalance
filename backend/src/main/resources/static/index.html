@@ -1301,16 +1301,23 @@
     let editingColumnState = {}; // { tableId: { mode: 'add'|'edit', name: '...' } }
 
     function colRowHtml() {
+        const tableOpts = customTables.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
         return `<div class="col-row" style="flex-wrap:wrap">
             <input type="text" placeholder="Column name" class="ct-col-name">
-            <select class="ct-col-type" onchange="this.closest('.col-row').querySelector('.ct-bool-labels').style.display=this.value==='BOOLEAN'?'flex':'none'">
+            <select class="ct-col-type" onchange="const r=this.closest('.col-row');r.querySelector('.ct-bool-labels').style.display=this.value==='BOOLEAN'?'flex':'none';r.querySelector('.ct-link-table').style.display=this.value==='LINK'?'flex':'none'">
                 <option value="STRING">Text</option><option value="INT">Number</option>
                 <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
+                <option value="LINK">Link</option>
             </select>
             <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
             <div class="ct-bool-labels" style="display:none;gap:6px;width:100%;margin-top:4px">
                 <input type="text" placeholder="True label (e.g. Paid)" class="ct-true-label" style="flex:1">
                 <input type="text" placeholder="False label (e.g. Unpaid)" class="ct-false-label" style="flex:1">
+            </div>
+            <div class="ct-link-table" style="display:none;width:100%;margin-top:4px">
+                <select class="ct-linked-table" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">
+                    <option value="">Select table to link…</option>${tableOpts}
+                </select>
             </div>
         </div>`;
     }
@@ -1347,6 +1354,10 @@
                 if (tl) col.trueLabel = tl;
                 if (fl) col.falseLabel = fl;
             }
+            if (t === 'LINK') {
+                const ltid = row.querySelector('.ct-linked-table')?.value;
+                if (ltid) col.linkedTableId = ltid;
+            }
             columns.push(col);
         });
 
@@ -1381,12 +1392,32 @@
         ).join('');
     }
 
+    function linkedRowSummary(linkedTableId, rowId) {
+        const rows = customTableRows[linkedTableId] || [];
+        const linkedTable = customTables.find(t => t.id === linkedTableId);
+        const row = rows.find(r => r.id === rowId);
+        if (!row) return null;
+        // Use first STRING column value as summary
+        const textCol = linkedTable?.columns?.find(c => c.type === 'STRING');
+        return textCol ? (row.data?.[textCol.name] || rowId) : rowId;
+    }
+
     function inputForType(col, value) {
         const id = `cr-${col.name.replace(/\s+/g, '_')}`;
         switch (col.type) {
             case 'INT': return `<input type="number" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
             case 'BOOLEAN': return `<label style="display:flex;align-items:center;gap:8px;font-weight:400;color:#555"><input type="checkbox" id="${id}" ${value ? 'checked' : ''} style="width:18px;height:18px"><span style="font-size:.83rem">${esc(col.trueLabel || 'Yes')} / ${esc(col.falseLabel || 'No')}</span></label>`;
             case 'DATE': return `<input type="date" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
+            case 'LINK': {
+                const rows = customTableRows[col.linkedTableId] || [];
+                const linkedTable = customTables.find(t => t.id === col.linkedTableId);
+                const textCol = linkedTable?.columns?.find(c => c.type === 'STRING');
+                const opts = rows.map(r => {
+                    const label = textCol ? (r.data?.[textCol.name] || r.id) : r.id;
+                    return `<option value="${r.id}" ${r.id === value ? 'selected' : ''}>${esc(String(label))}</option>`;
+                }).join('');
+                return `<select id="${id}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa"><option value="">Select…</option>${opts}</select>`;
+            }
             default: return `<input type="text" id="${id}" value="${esc(value ?? '')}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
         }
     }
@@ -1399,6 +1430,7 @@
             case 'INT': return el.value ? Number(el.value) : null;
             case 'BOOLEAN': return el.checked;
             case 'DATE': return el.value || null;
+            case 'LINK': return el.value || null;
             default: return el.value.trim() || null;
         }
     }
@@ -1413,6 +1445,7 @@
         const editingRowId = editingRowState[table.id] || null;
         const editingCol = editingColumnState[table.id] || null; // { mode: 'add' | 'edit', name: '...' }
 
+        const linkableTableOpts = customTables.filter(t => t.id !== table.id).map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
         const colEditForm = editingCol ? `
             <div class="col-edit-inline">
                 <div style="font-size:.82rem;font-weight:600;margin-bottom:8px">${editingCol.mode === 'add' ? 'Add Column' : 'Edit Column'}</div>
@@ -1421,12 +1454,19 @@
                     ${editingCol.mode === 'add' ? `<div><label>Type</label><select id="ce-type-${table.id}">
                         <option value="STRING">Text</option><option value="INT">Number</option>
                         <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
+                        <option value="LINK">Link</option>
                     </select></div>` : ''}
                 </div>
                 ${(editingCol.mode === 'add' || (editingCol.mode === 'edit' && table.columns.find(c => c.name === editingCol.name)?.type === 'BOOLEAN')) ? `
                 <div class="field-row" id="ce-labels-${table.id}" ${editingCol.mode === 'add' ? 'style="display:none"' : ''}>
                     <div><label>True label</label><input type="text" id="ce-true-${table.id}" value="${editingCol.mode === 'edit' ? esc(table.columns.find(c => c.name === editingCol.name)?.trueLabel || '') : ''}" placeholder="Yes"></div>
                     <div><label>False label</label><input type="text" id="ce-false-${table.id}" value="${editingCol.mode === 'edit' ? esc(table.columns.find(c => c.name === editingCol.name)?.falseLabel || '') : ''}" placeholder="No"></div>
+                </div>` : ''}
+                ${editingCol.mode === 'add' ? `
+                <div class="field-row" id="ce-link-${table.id}" style="display:none">
+                    <div style="flex:1"><label>Link to table</label><select id="ce-linked-table-${table.id}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:.84rem;background:#fff">
+                        <option value="">Select table…</option>${linkableTableOpts}
+                    </select></div>
                 </div>` : ''}
                 <div class="col-edit-actions">
                     <button class="btn-sm" style="background:#0f3460;color:white;border-color:#0f3460;padding:5px 14px" onclick="submitColumnEdit('${table.id}')">${editingCol.mode === 'add' ? 'Add' : 'Save'}</button>
@@ -1471,6 +1511,10 @@
                                 ${table.columns.map(c => {
                                     const v = r.data?.[c.name];
                                     if (c.type === 'BOOLEAN') return `<td>${boolDisplay(c, v)}</td>`;
+                                    if (c.type === 'LINK' && v) {
+                                        const summary = linkedRowSummary(c.linkedTableId, v);
+                                        return `<td>${summary ? esc(String(summary)) : '<span class="muted">—</span>'}</td>`;
+                                    }
                                     return `<td>${v != null ? esc(String(v)) : '<span class="muted">—</span>'}</td>`;
                                 }).join('')}
                                 <td style="white-space:nowrap">
@@ -1512,13 +1556,15 @@
         editingColumnState[tableId] = { mode: 'add' };
         renderAllCustomPanes();
         showTab(`custom-${tableId}`);
-        // Show/hide boolean labels based on type selection
+        // Show/hide boolean labels and link picker based on type selection
         setTimeout(() => {
             const typeSelect = document.getElementById(`ce-type-${tableId}`);
             const labelsDiv = document.getElementById(`ce-labels-${tableId}`);
-            if (typeSelect && labelsDiv) {
+            const linkDiv = document.getElementById(`ce-link-${tableId}`);
+            if (typeSelect) {
                 typeSelect.addEventListener('change', () => {
-                    labelsDiv.style.display = typeSelect.value === 'BOOLEAN' ? '' : 'none';
+                    if (labelsDiv) labelsDiv.style.display = typeSelect.value === 'BOOLEAN' ? '' : 'none';
+                    if (linkDiv) linkDiv.style.display = typeSelect.value === 'LINK' ? '' : 'none';
                 });
             }
         }, 0);
@@ -1551,6 +1597,11 @@
                     const fl = document.getElementById(`ce-false-${tableId}`)?.value.trim();
                     if (tl) body.trueLabel = tl;
                     if (fl) body.falseLabel = fl;
+                }
+                if (type === 'LINK') {
+                    const ltid = document.getElementById(`ce-linked-table-${tableId}`)?.value;
+                    if (!ltid) { alert('Please select a table to link to'); return; }
+                    body.linkedTableId = ltid;
                 }
                 const r = await fetch(`/api/tables/${tableId}/columns`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
