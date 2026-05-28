@@ -72,6 +72,9 @@
         .btn-sm:hover { background: #f0f0f0; }
         .btn-danger { color: #e53e3e; border-color: #e53e3e; }
         .btn-danger:hover { background: #fff5f5; }
+        .filter-btn { padding: 4px 12px; font-size: 0.78rem; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; cursor: pointer; color: #6b7280; font-weight: 500; transition: all .15s; }
+        .filter-btn:hover { background: #f7fafc; border-color: #cbd5e0; }
+        .filter-btn.active { background: #2d3748; color: #fff; border-color: #2d3748; }
         .complete-panel { background: #f8fafb; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-top: 6px; }
         .complete-panel .panel-header { font-size: .82rem; color: #555; margin-bottom: 10px; }
         .complete-panel .panel-header strong { color: #1a1a2e; }
@@ -413,6 +416,13 @@
                     <div class="card-title" style="margin-bottom:0">Rides</div>
                     <span class="count" id="ride-count"></span>
                 </div>
+                <div id="ride-status-filter" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="filter-btn active" onclick="setRideFilter('ALL')">All</button>
+                    <button class="filter-btn" onclick="setRideFilter('SCHEDULED')">Scheduled</button>
+                    <button class="filter-btn" onclick="setRideFilter('ASSIGNED')">Assigned</button>
+                    <button class="filter-btn" onclick="setRideFilter('COMPLETED')">Completed</button>
+                    <button class="filter-btn" onclick="setRideFilter('CANCELLED')">Cancelled</button>
+                </div>
                 <div id="ride-list"></div>
                 <div class="refresh-ts" id="ride-ts"></div>
             </div>
@@ -427,6 +437,11 @@
             <div class="list-header">
                 <div class="card-title" style="margin-bottom:0">Invoices</div>
                 <span class="count" id="invoice-count"></span>
+            </div>
+            <div id="invoice-status-filter" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="filter-btn active" onclick="setInvoiceFilter('ALL')">All</button>
+                <button class="filter-btn" onclick="setInvoiceFilter('OUTSTANDING')">Outstanding</button>
+                <button class="filter-btn" onclick="setInvoiceFilter('PAID')">Paid</button>
             </div>
             <div id="invoice-list"></div>
             <div class="refresh-ts" id="invoice-ts"></div>
@@ -1060,13 +1075,30 @@
     };
 
     let lastRidesCache = [];
+    let allRidesCache = [];
+    let rideStatusFilter = 'ALL';
+
+    window.setRideFilter = function(status) {
+        rideStatusFilter = status;
+        document.querySelectorAll('#ride-status-filter .filter-btn').forEach(b =>
+            b.classList.toggle('active', b.textContent.toUpperCase().replace(' ','') === status || (status === 'ALL' && b.textContent === 'All'))
+        );
+        applyRideFilter();
+    };
+
+    function applyRideFilter() {
+        const filtered = rideStatusFilter === 'ALL' ? allRidesCache : allRidesCache.filter(r => r.status === rideStatusFilter);
+        renderRides(filtered);
+    }
 
     function renderRides(rides) {
         lastRidesCache = rides;
         document.getElementById('ride-count').textContent = `(${rides.length})`;
         const el = document.getElementById('ride-list');
         if (!rides.length) {
-            el.innerHTML = `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
+            el.innerHTML = rideStatusFilter !== 'ALL'
+                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${rideStatusFilter.toLowerCase().replace('_',' ')} rides</p></div>`
+                : `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
             return;
         }
         el.innerHTML = `<table>
@@ -1124,7 +1156,8 @@
         fetch('/api/rides')
             .then(r => r.json())
             .then(data => {
-                renderRides(data);
+                allRidesCache = data;
+                applyRideFilter();
                 document.getElementById('ride-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -1263,6 +1296,21 @@
     }
 
     const invStatusColors = { OUTSTANDING: '#d97706', PAID: '#38a169' };
+    let allInvoicesCache = [];
+    let invoiceStatusFilter = 'ALL';
+
+    window.setInvoiceFilter = function(status) {
+        invoiceStatusFilter = status;
+        document.querySelectorAll('#invoice-status-filter .filter-btn').forEach(b =>
+            b.classList.toggle('active', b.textContent.toUpperCase() === status || (status === 'ALL' && b.textContent === 'All'))
+        );
+        applyInvoiceFilter();
+    };
+
+    function applyInvoiceFilter() {
+        const filtered = invoiceStatusFilter === 'ALL' ? allInvoicesCache : allInvoicesCache.filter(i => i.status === invoiceStatusFilter);
+        renderInvoices(filtered);
+    }
 
     function markPaid(invoiceId) {
         fetch(`/api/invoices/${invoiceId}/mark-paid`, {
@@ -1277,7 +1325,9 @@
         document.getElementById('invoice-count').textContent = `(${invoices.length})`;
         const el = document.getElementById('invoice-list');
         if (!invoices.length) {
-            el.innerHTML = `<div class="empty-state"><div class="icon">📄</div><p>No invoices yet — complete a ride and generate one!</p></div>`;
+            el.innerHTML = invoiceStatusFilter !== 'ALL'
+                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${invoiceStatusFilter.toLowerCase()} invoices</p></div>`
+                : `<div class="empty-state"><div class="icon">📄</div><p>No invoices yet — complete a ride and generate one!</p></div>`;
             return;
         }
         el.innerHTML = `<table>
@@ -1301,7 +1351,8 @@
         fetch('/api/invoices')
             .then(r => r.json())
             .then(data => {
-                renderInvoices(data);
+                allInvoicesCache = data;
+                applyInvoiceFilter();
                 document.getElementById('invoice-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
