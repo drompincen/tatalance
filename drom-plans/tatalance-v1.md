@@ -55,8 +55,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 12 | Set up Playwright infrastructure | pending | — | #17 |
-| 13 | E2E: Add client and verify in list | pending | — | #18 |
+| 12 | Set up Playwright infrastructure | completed | luciano | #17 |
+| 13 | E2E: Add client and verify in list | completed | luciano | #18 |
 | 14 | E2E: Add driver and toggle availability | pending | — | #19 |
 | 15 | E2E: Book ride and assign driver | pending | — | #20 |
 | 16 | E2E: Complete ride | pending | — | #21 |
@@ -107,16 +107,20 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 3: UX evolution — flexible client management
-**Status:** pending
+**Status:** completed
 **Outcome:** Tatalance becomes a flexible tool David can customize, not just a fixed-tab app.
 
 ## Feature stories
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | Remove payment processing from UI | pending | — | #39 |
-| 2 | Custom tables ("+" button on nav bar) | pending | — | #40 |
-| 3 | Help page with UI guide panels | pending | — | #41 |
+| 1 | Remove payment processing from UI | completed | luciano | #39 |
+| 2 | Custom tables ("+" button on nav bar) | completed | luciano | #40 |
+| 3 | Help page with UI guide panels | completed | luciano | #41 |
+| 4 | Column CRUD on existing tables | completed | luciano | #42 |
+| 5 | Inline column management (+ on header) | completed | luciano | #43 |
+| 6 | Boolean columns with custom labels | completed | luciano | #44 |
+| 7 | Linked columns (reference another table) | completed | luciano | #45 |
 
 ## Dependencies
 
@@ -124,6 +128,10 @@ David can add clients, book rides, and get paid — end to end in the browser.
 #39 (Remove payments) — independent, quick win
 #40 (Custom tables) — independent, largest story
 #41 (Help page) — depends on #40 (needs to document custom tables)
+#42 (Column CRUD) — depends on #40
+#43 (Inline columns) — depends on #42
+#44 (Boolean labels) — depends on #42, #43
+#45 (Linked columns) — depends on #42, #43
 ```
 
 ---
@@ -151,8 +159,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #14 | Complete Ride | Epic 1 | feature | completed |
 | #15 | Generate Invoice | Epic 2 | feature | completed |
 | #16 | Record Payment | Epic 2 | feature | completed |
-| #17 | Playwright setup | Epic 1 | qa | pending |
-| #18 | E2E: Add client | Epic 1 | qa | pending |
+| #17 | Playwright setup | Epic 1 | qa | completed |
+| #18 | E2E: Add client | Epic 1 | qa | completed |
 | #19 | E2E: Add driver | Epic 1 | qa | pending |
 | #20 | E2E: Book ride + assign | Epic 1 | qa | pending |
 | #21 | E2E: Complete ride | Epic 1 | qa | pending |
