@@ -170,9 +170,34 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #27 | Edit and delete Drivers | Epic 1 | polish | completed |
 | #28 | Edit and cancel Rides | Epic 2 | polish | completed |
 | #29 | Inline ride completion form | Epic 2 | polish | completed |
-| #39 | Remove payment processing | Epic 3 | feature | pending |
-| #40 | Custom tables ("+" button) | Epic 3 | feature | pending |
-| #41 | Help page with UI guide | Epic 3 | feature | pending |
+| #39 | Remove payment processing | Epic 3 | feature | completed |
+| #40 | Custom tables ("+" button) | Epic 3 | feature | completed |
+| #41 | Help page with UI guide | Epic 3 | feature | completed |
+| #42 | Column CRUD | Epic 3 | feature | completed |
+| #43 | Inline column management | Epic 3 | feature | completed |
+| #44 | Boolean columns with labels | Epic 3 | feature | completed |
+| #45 | Linked columns | Epic 3 | feature | completed |
+| #46 | Search/filter clients | Epic 4 | feature | completed |
+| #47 | Filter rides by status | Epic 4 | feature | completed |
+| #48 | Filter rides by date range | Epic 4 | feature | completed |
+| #49 | Filter invoices by status | Epic 4 | feature | completed |
+| #50 | Sort tables by column | Epic 4 | feature | completed |
+
+---
+
+# Epic 4: David finds things fast
+**Status:** completed
+**Outcome:** David can search clients, filter rides by status and date, filter invoices, and sort any table.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Search/filter clients by name or phone | completed | luciano | #46 |
+| 2 | Filter rides by status | completed | luciano | #47 |
+| 3 | Filter rides by date range | completed | luciano | #48 |
+| 4 | Filter invoices by status | completed | luciano | #49 |
+| 5 | Sort tables by column headers | completed | luciano | #50 |
 
 ---
 
