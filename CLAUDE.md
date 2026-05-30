@@ -1,4 +1,4 @@
-# Tatalance — Project Context for Claude
+# drom-flow — Project Configuration
 
 ## Team
 
