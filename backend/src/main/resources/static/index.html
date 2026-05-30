@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tatalance — POC</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -119,6 +119,47 @@
         .hidden { display: none; }
 
         .spec-loading { text-align: center; padding: 48px; color: #bbb; font-size: 0.9rem; }
+
+        /* ── Mobile (iPhone Safari etc, ≤ 768px) — see docs/journeys/mobile-iphone-journey.md ── */
+        @media (max-width: 768px) {
+            /* Confine wide tables to scroll inside their card so the page itself
+               doesn't overflow horizontally on iPhone SE. */
+            .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 100%; }
+            body { min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
+            header {
+                padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+                height: auto;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            header h1 { font-size: 1.05rem; }
+            nav {
+                margin-left: 0;
+                width: 100%;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                gap: 4px;
+            }
+            .tab-btn {
+                font-size: 16px;
+                padding: 11px 14px;
+                min-height: 44px;
+                flex-shrink: 0;
+            }
+            .page { padding: 0 16px; margin: 16px auto; }
+            .grid-2, .api-grid { grid-template-columns: 1fr; gap: 16px; }
+            .card { padding: 16px; }
+            input, select, textarea { font-size: 16px !important; padding: 12px; }
+            .btn {
+                font-size: 16px;
+                padding: 12px 16px;
+                min-height: 44px;
+            }
+            table { font-size: 0.95rem; }
+            th, td { padding: 8px 6px; }
+        }
     </style>
 </head>
 <body>
@@ -126,7 +167,7 @@
 <header>
     <h1>Tatalance</h1>
     <span class="badge badge-poc">POC</span>
-    <span class="badge badge-mongo"><span class="dot"></span>MongoDB in-memory</span>
+    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB</span></span>
     <nav>
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
@@ -249,6 +290,9 @@
                 <form id="ride-form" novalidate>
                     <div class="field">
                         <label>Client <span class="req">*</span></label>
+                        <input type="search" id="r-clientSearch" placeholder="Search by name…"
+                               autocomplete="off" autocapitalize="off" spellcheck="false"
+                               style="margin-bottom:6px">
                         <select id="r-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;">
                             <option value="">Select a client…</option>
                         </select>
@@ -330,6 +374,11 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`tab-${name}`).classList.add('active');
         document.getElementById(`btn-${name}`).classList.add('active');
+        // Always fetch fresh client list when entering Rides — David may have
+        // just added a client and expects to book a ride for them.
+        if (name === 'rides' && typeof loadClientDropdown === 'function') {
+            loadClientDropdown();
+        }
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -435,6 +484,15 @@
             });
         } catch (e) { /* non-critical */ }
     }
+
+    /* ── DB type badge ── */
+    fetch('/api/info')
+        .then(r => r.json())
+        .then(info => {
+            const el = document.getElementById('db-badge');
+            if (el) el.textContent = info.dbType === 'atlas' ? 'MongoDB Atlas' : 'MongoDB in-memory';
+        })
+        .catch(() => {});
 
     /* ── Load OpenAPI spec ── */
     fetch('/v3/api-docs')
@@ -667,8 +725,25 @@
             sel.innerHTML = '<option value="">Select a client…</option>' +
                 clients.map(c => `<option value="${c.id}">${esc(c.firstName)} ${esc(c.lastName)}</option>`).join('');
             if (current) sel.value = current;
+            applyClientSearchFilter();
         }).catch(() => {});
     }
+
+    function applyClientSearchFilter() {
+        const q = (document.getElementById('r-clientSearch')?.value || '').trim().toLowerCase();
+        const sel = document.getElementById('r-clientId');
+        if (!sel) return;
+        Array.from(sel.options).forEach(opt => {
+            if (!opt.value) return; // keep the placeholder
+            const match = !q || opt.textContent.toLowerCase().includes(q);
+            opt.hidden = !match;
+            opt.style.display = match ? '' : 'none';
+        });
+        // If the currently selected option got filtered out, reset
+        if (sel.selectedOptions[0]?.hidden) sel.value = '';
+    }
+
+    document.getElementById('r-clientSearch').addEventListener('input', applyClientSearchFilter);
 
     function renderRides(rides) {
         document.getElementById('ride-count').textContent = `(${rides.length})`;

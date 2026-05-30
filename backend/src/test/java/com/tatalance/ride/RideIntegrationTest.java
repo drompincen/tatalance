@@ -26,6 +26,7 @@ class RideIntegrationTest {
     void cleanUp() {
         mongoTemplate.dropCollection("rides");
         mongoTemplate.dropCollection("clients");
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
     private String createClient() {
@@ -110,5 +111,52 @@ class RideIntegrationTest {
         );
         var response = restTemplate.postForEntity("/api/rides", ride, Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void should_listRidesByDriver_sortedByPickupTime() {
+        // M3 (#33) — driver queue endpoint
+        var clientId = createClient();
+
+        // Two rides, one earlier, one later. Both assigned to the same driver.
+        var laterId = createRide(clientId, "2026-08-01T18:00:00Z", "Bayfront", "Wynwood", "drv-q-test");
+        var earlierId = createRide(clientId, "2026-08-01T08:00:00Z", "MIA", "Downtown", "drv-q-test");
+        createRide(clientId, "2026-08-01T10:00:00Z", "Brickell", "South Beach", "other-driver");
+
+        var response = restTemplate.getForEntity("/api/drivers/drv-q-test/rides", List.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).hasSize(2);
+        assertThat(((Map) response.getBody().get(0)).get("id")).isEqualTo(earlierId);
+        assertThat(((Map) response.getBody().get(1)).get("id")).isEqualTo(laterId);
+    }
+
+    @Test
+    void should_returnEmptyList_when_driverHasNoRides() {
+        var response = restTemplate.getForEntity("/api/drivers/no-such-driver/rides", List.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEmpty();
+    }
+
+    /**
+     * Helper that posts a ride and back-fills assignedDriverId via Mongo, since
+     * the assignment endpoint is not yet built (Story 4 still pending).
+     */
+    private String createRide(String clientId, String pickupTime, String from, String to, String driverId) {
+        var ride = Map.of(
+                "clientId", clientId,
+                "pickupDateTime", pickupTime,
+                "pickupLocation", from,
+                "dropoffLocation", to
+        );
+        var resp = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = resp.getBody().get("id").toString();
+        if (driverId != null) {
+            mongoTemplate.updateFirst(
+                    org.springframework.data.mongodb.core.query.Query.query(
+                            org.springframework.data.mongodb.core.query.Criteria.where("_id").is(rideId)),
+                    org.springframework.data.mongodb.core.query.Update.update("assignedDriverId", driverId),
+                    "rides");
+        }
+        return rideId;
     }
 }
