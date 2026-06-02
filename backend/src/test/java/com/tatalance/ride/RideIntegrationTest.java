@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -26,6 +28,7 @@ class RideIntegrationTest {
     void cleanUp() {
         mongoTemplate.dropCollection("rides");
         mongoTemplate.dropCollection("clients");
+        mongoTemplate.dropCollection("drivers");
         this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
@@ -113,6 +116,186 @@ class RideIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    private String createDriver() {
+        var driver = Map.of(
+                "firstName", "Carlos",
+                "lastName", "Mendez",
+                "phone", "+13055551002",
+                "payoutType", "PERCENTAGE",
+                "payoutRate", 70
+        );
+        var response = restTemplate.postForEntity("/api/drivers", driver, Map.class);
+        return response.getBody().get("id").toString();
+    }
+
+    @Test
+    void should_assignDriverToRide() {
+        var clientId = createClient();
+        var driverId = createDriver();
+
+        var ride = Map.of(
+                "clientId", clientId,
+                "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA",
+                "dropoffLocation", "FLL"
+        );
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var assignResponse = restTemplate.postForEntity(
+                "/api/rides/" + rideId + "/assign",
+                Map.of("driverId", driverId), Map.class);
+        assertThat(assignResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(assignResponse.getBody().get("status")).isEqualTo("ASSIGNED");
+        assertThat(assignResponse.getBody().get("assignedDriverId")).isEqualTo(driverId);
+        assertThat(assignResponse.getBody().get("assignedDriverName")).isEqualTo("Carlos Mendez");
+
+        // Verify driver is now ON_TRIP
+        var driverResponse = restTemplate.getForEntity("/api/drivers/" + driverId, Map.class);
+        assertThat(driverResponse.getBody().get("availability")).isEqualTo("ON_TRIP");
+    }
+
+    @Test
+    void should_return400_when_driverNotAvailable() {
+        var clientId = createClient();
+        var driverId = createDriver();
+
+        // Create and assign first ride to make driver ON_TRIP
+        var ride1 = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "A", "dropoffLocation", "B");
+        var created1 = restTemplate.postForEntity("/api/rides", ride1, Map.class);
+        restTemplate.postForEntity("/api/rides/" + created1.getBody().get("id") + "/assign",
+                Map.of("driverId", driverId), Map.class);
+
+        // Try to assign same driver to second ride
+        var ride2 = Map.of("clientId", clientId, "pickupDateTime", "2026-06-02T14:00:00Z",
+                "pickupLocation", "C", "dropoffLocation", "D");
+        var created2 = restTemplate.postForEntity("/api/rides", ride2, Map.class);
+        var assignResponse = restTemplate.postForEntity(
+                "/api/rides/" + created2.getBody().get("id") + "/assign",
+                Map.of("driverId", driverId), Map.class);
+        assertThat(assignResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void should_startThenCompleteRide_andCalculateBillable() {
+        var clientId = createClient();
+        var driverId = createDriver();
+
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL", "basePrice", 85);
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        // Assign → Start → Complete (complete requires IN_PROGRESS)
+        restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
+                Map.of("driverId", driverId), Map.class);
+        restTemplate.postForEntity("/api/rides/" + rideId + "/start", null, Map.class);
+
+        var completeBody = Map.of(
+                "tolls", 5.50,
+                "parking", 10.00
+        );
+        var completeResponse = restTemplate.postForEntity(
+                "/api/rides/" + rideId + "/complete", completeBody, Map.class);
+        assertThat(completeResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(completeResponse.getBody().get("status")).isEqualTo("COMPLETED");
+        // billableAmount = basePrice(85) + tolls(5.50) + parking(10.00) = 100.50
+        assertThat(((Number) completeResponse.getBody().get("billableAmount")).doubleValue()).isEqualTo(100.50);
+    }
+
+    @Test
+    void should_return409_when_completingScheduledRide() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var response = restTemplate.postForEntity("/api/rides/" + rideId + "/complete", Map.of(), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void should_reassignDriver_beforeRideStarts() {
+        var clientId = createClient();
+        var driver1Id = createDriver();
+
+        // Create second driver
+        var driver2 = Map.of("firstName", "Mike", "lastName", "Johnson",
+                "phone", "+19545551003", "payoutType", "FLAT", "payoutRate", 35);
+        var driver2Response = restTemplate.postForEntity("/api/drivers", driver2, Map.class);
+        var driver2Id = driver2Response.getBody().get("id").toString();
+
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        // Assign first driver
+        restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
+                Map.of("driverId", driver1Id), Map.class);
+
+        // Reassign to second driver — the first driver should be freed when reassigned
+        var reassignResponse = restTemplate.postForEntity(
+                "/api/rides/" + rideId + "/assign",
+                Map.of("driverId", driver2Id), Map.class);
+        assertThat(reassignResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(reassignResponse.getBody().get("assignedDriverName")).isEqualTo("Mike Johnson");
+    }
+
+    @Test
+    void should_updateScheduledRide() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL", "basePrice", 85);
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var update = Map.of("clientId", clientId, "pickupDateTime", "2026-06-02T10:00:00Z",
+                "pickupLocation", "Brickell", "dropoffLocation", "Wynwood", "basePrice", 60);
+        var response = restTemplate.exchange("/api/rides/" + rideId, HttpMethod.PUT,
+                new HttpEntity<>(update), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().get("pickupLocation")).isEqualTo("Brickell");
+        assertThat(response.getBody().get("dropoffLocation")).isEqualTo("Wynwood");
+    }
+
+    @Test
+    void should_cancelScheduledRide() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var response = restTemplate.postForEntity("/api/rides/" + rideId + "/cancel", null, Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().get("status")).isEqualTo("CANCELLED");
+    }
+
+    @Test
+    void should_cancelAssignedRide_and_freeDriver() {
+        var clientId = createClient();
+        var driverId = createDriver();
+
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
+                Map.of("driverId", driverId), Map.class);
+
+        var cancelResponse = restTemplate.postForEntity("/api/rides/" + rideId + "/cancel", null, Map.class);
+        assertThat(cancelResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(cancelResponse.getBody().get("status")).isEqualTo("CANCELLED");
+
+        // Verify driver is back to AVAILABLE (cancel frees the driver)
+        var driverResponse = restTemplate.getForEntity("/api/drivers/" + driverId, Map.class);
+        assertThat(driverResponse.getBody().get("availability")).isEqualTo("AVAILABLE");
+    }
+
     @Test
     void should_listRidesByDriver_sortedByPickupTime() {
         // M3 (#33) — driver queue endpoint
@@ -138,8 +321,8 @@ class RideIntegrationTest {
     }
 
     /**
-     * Helper that posts a ride and back-fills assignedDriverId via Mongo, since
-     * the assignment endpoint is not yet built (Story 4 still pending).
+     * Helper that posts a ride and back-fills assignedDriverId via Mongo to set up
+     * driver-queue scenarios without going through the assignment flow.
      */
     private String createRide(String clientId, String pickupTime, String from, String to, String driverId) {
         var ride = Map.of(

@@ -16,8 +16,9 @@ import AxeBuilder from '@axe-core/playwright';
 test.describe('M1 — Responsive shell on iPhone SE', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    // Tatalance loads the API spec async — wait until the tabs are interactive.
-    await expect(page.locator('#btn-clients')).toBeVisible();
+    // On the mobile viewport the tab nav is collapsed behind the hamburger
+    // (issue #31 responsive shell) — wait for the shell to render.
+    await expect(page.locator('#hamburger')).toBeVisible();
   });
 
   test('viewport meta declares viewport-fit=cover', async ({ page }) => {
@@ -51,6 +52,8 @@ test.describe('M1 — Responsive shell on iPhone SE', () => {
   });
 
   test('tab bar fits within viewport width', async ({ page }) => {
+    // The mobile nav is a drawer behind the hamburger — open it to measure.
+    await page.locator('#hamburger').click();
     const nav = page.locator('header nav');
     await expect(nav).toBeVisible();
     const box = await nav.boundingBox();

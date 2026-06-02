@@ -50,39 +50,89 @@
         .page { max-width: 1020px; margin: 32px auto; padding: 0 24px; }
         .grid-2 { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
         .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-        .card-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #999; margin-bottom: 20px; }
+        .card-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 20px; }
 
         /* ── Form ── */
         .field { margin-bottom: 14px; }
         label { display: block; font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
         .req { color: #e53e3e; }
-        .opt { color: #bbb; font-weight: 400; }
-        .schema-type { margin-left: auto; font-size: 0.7rem; font-weight: 400; color: #bbb; font-family: monospace; background: #f5f5f5; padding: 1px 6px; border-radius: 4px; }
+        .opt { color: #6b7280; font-weight: 400; }
+        .schema-type { margin-left: auto; font-size: 0.7rem; font-weight: 400; color: #6b7280; font-family: monospace; background: #f5f5f5; padding: 1px 6px; border-radius: 4px; }
         input { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; transition: border-color .15s, box-shadow .15s; background: #fafafa; }
         input:focus { outline: none; border-color: #0f3460; background: white; box-shadow: 0 0 0 3px rgba(15,52,96,.08); }
         input.invalid { border-color: #e53e3e; }
         .err { color: #e53e3e; font-size: 0.76rem; margin-top: 4px; display: none; }
         .err.show { display: block; }
-        .btn { width: 100%; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 4px; transition: background .15s, opacity .15s; }
+        .btn { padding: 10px 20px; background: #0f3460; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 4px; transition: background .15s, opacity .15s; }
         .btn:hover { background: #16213e; }
         .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-cancel { width: auto; display: inline-block; background: #666; margin-left: 8px; padding: 10px 18px; }
+        .btn-cancel:hover { background: #888; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; font-weight: 500; }
+        .btn-sm:hover { background: #f0f0f0; }
+        .btn-danger { color: #e53e3e; border-color: #e53e3e; }
+        .btn-danger:hover { background: #fff5f5; }
+        .filter-btn { padding: 4px 12px; font-size: 0.78rem; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; cursor: pointer; color: #6b7280; font-weight: 500; transition: all .15s; }
+        .filter-btn:hover { background: #f7fafc; border-color: #cbd5e0; }
+        .filter-btn.active { background: #2d3748; color: #fff; border-color: #2d3748; }
+        th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        th.sortable:hover { background: #f7fafc; }
+        th.sortable::after { content: ' ⇅'; font-size: .7rem; color: #cbd5e0; }
+        th.sortable.asc::after { content: ' ▲'; color: #2d3748; }
+        th.sortable.desc::after { content: ' ▼'; color: #2d3748; }
+        .complete-panel { background: #f8fafb; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-top: 6px; }
+        .complete-panel .panel-header { font-size: .82rem; color: #555; margin-bottom: 10px; }
+        .complete-panel .panel-header strong { color: #1a1a2e; }
+        .complete-panel .field-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .complete-panel .field-row > div { flex: 1; }
+        .complete-panel label { display: block; font-size: .75rem; font-weight: 600; color: #555; margin-bottom: 3px; }
+        .complete-panel input { width: 100%; padding: 6px 8px; font-size: .82rem; border: 1px solid #e2e8f0; border-radius: 5px; }
+        .complete-panel .extras-toggle { font-size: .78rem; color: #3182ce; cursor: pointer; border: none; background: none; padding: 0; margin-bottom: 8px; }
+        .complete-panel .extras { display: none; }
+        .complete-panel .extras.open { display: block; }
+        .complete-panel .total-line { font-size: .85rem; font-weight: 600; color: #1a1a2e; margin: 10px 0 8px; }
+        .complete-panel .panel-actions { display: flex; gap: 8px; }
+        .complete-panel .err-inline { font-size: .75rem; color: #e53e3e; margin-top: 2px; display: none; }
+        .complete-panel .err-inline.show { display: block; }
         .form-feedback { margin-top: 12px; font-size: 0.82rem; min-height: 18px; text-align: center; }
         .form-feedback.ok { color: #38a169; }
         .form-feedback.fail { color: #e53e3e; }
 
         /* ── Client list ── */
         .list-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
-        .count { font-size: 0.8rem; color: #bbb; font-weight: 400; }
+        .count { font-size: 0.8rem; color: #6b7280; font-weight: 400; }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        th { text-align: left; padding: 8px 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #aaa; border-bottom: 2px solid #f0f0f0; }
+        th { text-align: left; padding: 8px 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #6b7280; border-bottom: 2px solid #f0f0f0; }
         td { padding: 11px 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: #fafafa; }
-        .muted { color: #bbb; }
-        .empty-state { text-align: center; padding: 48px 24px; color: #ccc; }
+        .muted { color: #6b7280; }
+        .empty-state { text-align: center; padding: 48px 24px; color: #6b7280; }
         .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
         .empty-state p { font-size: 0.85rem; }
-        .refresh-ts { font-size: 0.72rem; color: #ddd; margin-top: 12px; text-align: right; }
+        .refresh-ts { font-size: 0.72rem; color: #6b7280; margin-top: 12px; text-align: right; }
+
+        /* ── Delete mode ── */
+        .delete-mode-btn {
+            padding: 4px 10px; font-size: 0.75rem; border: 1px solid #e53e3e; border-radius: 4px;
+            background: #fff; color: #e53e3e; cursor: pointer; font-weight: 500; transition: all .15s;
+        }
+        .delete-mode-btn:hover { background: #fff5f5; }
+        .delete-mode-btn.active { background: #e53e3e; color: white; }
+        .row-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #e53e3e; }
+        tr.selected > td { background: #fff5f5 !important; }
+        .bulk-bar {
+            display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-bottom: 8px;
+            background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; font-size: .82rem;
+        }
+        .bulk-bar .bulk-count { font-weight: 600; color: #c53030; }
+        .bulk-bar .bulk-delete-btn {
+            padding: 5px 14px; background: #e53e3e; color: white; border: none; border-radius: 6px;
+            font-size: .8rem; font-weight: 600; cursor: pointer;
+        }
+        .bulk-bar .bulk-delete-btn:hover { background: #c53030; }
+        .bulk-bar .bulk-clear { background: none; border: none; color: #6b7280; cursor: pointer; font-size: .78rem; margin-left: auto; }
+        .bulk-bar .bulk-clear:hover { color: #1a1a2e; }
 
         /* ── API tab ── */
         .api-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
@@ -90,7 +140,7 @@
         .api-meta { margin-bottom: 16px; }
         .api-meta h2 { font-size: 1.1rem; font-weight: 700; }
         .api-meta .ver { display: inline-block; font-size: 0.72rem; background: #eef; color: #4477cc; border-radius: 4px; padding: 2px 8px; margin-left: 8px; font-family: monospace; }
-        .api-desc { font-size: 0.85rem; color: #777; margin-top: 4px; margin-bottom: 16px; }
+        .api-desc { font-size: 0.85rem; color: #6b7280; margin-top: 4px; margin-bottom: 16px; }
         .swagger-link { display: inline-block; font-size: 0.82rem; color: #0f3460; text-decoration: none; border: 1px solid #0f3460; border-radius: 6px; padding: 6px 14px; transition: background .15s; }
         .swagger-link:hover { background: #0f3460; color: white; }
 
@@ -108,73 +158,181 @@
         .endpoint-body { padding: 0 16px 14px; border-top: 1px solid #f0f0f0; background: #fafafa; }
         .endpoint-body p { font-size: 0.82rem; color: #666; margin-top: 10px; }
         .schema-block { margin-top: 10px; }
-        .schema-block h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; margin-bottom: 6px; }
+        .schema-block h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 6px; }
         .schema-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        .schema-table th { text-align: left; padding: 4px 8px; color: #aaa; border-bottom: 1px solid #eee; font-weight: 600; font-size: 0.7rem; }
+        .schema-table th { text-align: left; padding: 4px 8px; color: #6b7280; border-bottom: 1px solid #eee; font-weight: 600; font-size: 0.7rem; }
         .schema-table td { padding: 5px 8px; border-bottom: 1px solid #f5f5f5; }
         .schema-table tr:last-child td { border-bottom: none; }
         .prop-name { font-family: monospace; color: #0f3460; }
-        .prop-type { color: #888; font-family: monospace; font-size: 0.76rem; }
+        .prop-type { color: #6b7280; font-family: monospace; font-size: 0.76rem; }
         .prop-req  { color: #e53e3e; font-size: 0.7rem; }
         .hidden { display: none; }
 
-        .spec-loading { text-align: center; padding: 48px; color: #bbb; font-size: 0.9rem; }
+        .spec-loading { text-align: center; padding: 48px; color: #6b7280; font-size: 0.9rem; }
 
-        /* ── Mobile (iPhone Safari etc, ≤ 768px) — see docs/journeys/mobile-iphone-journey.md ── */
+        /* ── Custom table "+" button ── */
+        .add-table-btn {
+            background: transparent; border: 1.5px dashed rgba(255,255,255,.3); color: rgba(255,255,255,.5);
+            width: 28px; height: 28px; border-radius: 6px; font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all .15s; margin-left: 2px;
+        }
+        .add-table-btn:hover { border-color: rgba(255,255,255,.6); color: white; background: rgba(255,255,255,.08); }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.4); z-index: 100; align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white; border-radius: 12px; padding: 28px; width: 420px; max-height: 80vh;
+            overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,.2);
+        }
+        .modal h2 { font-size: 1.05rem; margin-bottom: 18px; }
+        .modal .col-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .modal .col-row input { flex: 1; }
+        .modal .col-row select { width: 120px; padding: 9px 8px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: .85rem; background: #fafafa; }
+        .modal .col-row .remove-col { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 1.1rem; padding: 4px; }
+        .add-col-btn { font-size: .82rem; color: #3182ce; cursor: pointer; border: none; background: none; padding: 4px 0; margin-bottom: 14px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+        /* ── Custom table tab highlight ── */
+        .tab-btn.custom-tab { font-style: italic; }
+        .tab-btn .del-tab { display: none; font-size: .7rem; margin-left: 4px; color: rgba(255,255,255,.4); }
+        .tab-btn:hover .del-tab { display: inline; }
+
+        /* ── Column header controls ── */
+        .col-header { position: relative; cursor: pointer; white-space: nowrap; }
+        .col-header:hover { color: #555; }
+        .col-header .col-menu-btn { display: none; font-size: .65rem; margin-left: 3px; color: #6b7280; }
+        .col-header:hover .col-menu-btn { display: inline; }
+        .col-menu {
+            display: none; position: absolute; top: 100%; left: 0; z-index: 50;
+            background: white; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.1);
+            min-width: 140px; padding: 4px 0; font-size: .82rem; font-weight: 400; text-transform: none; letter-spacing: 0;
+        }
+        .col-menu.open { display: block; }
+        .col-menu-item { display: block; width: 100%; padding: 7px 14px; border: none; background: none; text-align: left; cursor: pointer; font-size: .82rem; color: #333; }
+        .col-menu-item:hover { background: #f5f5f5; }
+        .col-menu-item.danger { color: #e53e3e; }
+        .col-menu-item.danger:hover { background: #fff5f5; }
+        .add-col-header { cursor: pointer; color: #6b7280; font-size: .85rem; font-weight: 400; text-transform: none; letter-spacing: 0; }
+        .add-col-header:hover { color: #555; }
+
+        /* ── Inline column edit form ── */
+        .col-edit-inline { padding: 12px; background: #f8fafb; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 16px; }
+        .col-edit-inline .field-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+        .col-edit-inline label { font-size: .75rem; font-weight: 600; color: #555; margin-bottom: 3px; display: block; }
+        .col-edit-inline input, .col-edit-inline select { padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px; font-size: .84rem; background: #fff; }
+        .col-edit-inline .col-edit-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+        /* ── Help overlay ── */
+        .help-btn {
+            background: transparent; border: 1.5px solid rgba(255,255,255,.3); color: rgba(255,255,255,.5);
+            width: 28px; height: 28px; border-radius: 50%; font-size: .85rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all .15s; margin-left: 6px;
+        }
+        .help-btn:hover { border-color: rgba(255,255,255,.6); color: white; background: rgba(255,255,255,.08); }
+        .help-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center;
+        }
+        .help-overlay.open { display: flex; }
+        .help-card {
+            background: white; border-radius: 14px; width: 580px; max-height: 85vh;
+            box-shadow: 0 12px 40px rgba(0,0,0,.25); overflow: hidden; display: flex; flex-direction: column;
+        }
+        .help-header {
+            display: flex; align-items: center; padding: 18px 24px; border-bottom: 1px solid #f0f0f0;
+        }
+        .help-header h2 { font-size: 1rem; flex: 1; }
+        .help-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #6b7280; padding: 4px; }
+        .help-close:hover { color: #333; }
+        .help-body { padding: 28px 32px; flex: 1; overflow-y: auto; }
+        .help-body h3 { font-size: .95rem; color: #1a1a2e; margin-bottom: 12px; }
+        .help-body p { font-size: .85rem; color: #555; line-height: 1.55; margin-bottom: 10px; }
+        .help-tip { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; padding: 8px 10px; background: #f8fafb; border-radius: 6px; }
+        .help-tip .tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+        .help-tip .tip-text { font-size: .83rem; color: #444; line-height: 1.5; }
+        .help-tip .tip-text strong { color: #1a1a2e; }
+        .help-dots { display: flex; justify-content: center; gap: 6px; padding: 12px 0; }
+        .help-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; cursor: pointer; border: none; padding: 0; }
+        .help-dot.active { background: #0f3460; }
+        .help-footer {
+            display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-top: 1px solid #f0f0f0;
+        }
+        .help-nav-btn { padding: 7px 18px; border-radius: 6px; font-size: .85rem; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #555; }
+        .help-nav-btn:hover { background: #f5f5f5; }
+        .help-nav-btn.primary { background: #0f3460; color: white; border-color: #0f3460; }
+        .help-nav-btn.primary:hover { background: #16213e; }
+        .help-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        /* ── Hamburger menu ── */
+        .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
+        .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
+        .nav-overlay.open { display: block; }
+
+        /* ── Mobile responsive ── */
         @media (max-width: 768px) {
-            /* Confine wide tables to scroll inside their card so the page itself
-               doesn't overflow horizontally on iPhone SE. */
-            .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            table { min-width: 100%; }
-            body { min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
-            header {
-                padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
-                height: auto;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            header h1 { font-size: 1.05rem; }
+            body { min-height: 100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+            header { padding: 0 12px; position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); }
+            .hamburger { display: flex; align-items: center; }
+            header .badge { display: none; }
             nav {
-                margin-left: 0;
-                width: 100%;
-                overflow-x: auto;
-                flex-wrap: nowrap;
-                -webkit-overflow-scrolling: touch;
-                gap: 4px;
+                display: none; position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+                background: #1a1a2e; flex-direction: column; padding: 20px 0; z-index: 100;
+                gap: 0; margin-left: 0; overflow-y: auto; padding-top: calc(20px + env(safe-area-inset-top));
             }
-            .tab-btn {
-                font-size: 16px;
-                padding: 11px 14px;
-                min-height: 44px;
-                flex-shrink: 0;
-            }
-            .page { padding: 0 16px; margin: 16px auto; }
-            .grid-2, .api-grid { grid-template-columns: 1fr; gap: 16px; }
-            .card { padding: 16px; }
-            input, select, textarea { font-size: 16px !important; padding: 12px; }
-            .btn {
-                font-size: 16px;
-                padding: 12px 16px;
-                min-height: 44px;
-            }
-            table { font-size: 0.95rem; }
-            th, td { padding: 8px 6px; }
+            nav.open { display: flex; }
+            nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; }
+            nav .tab-btn.active { background: rgba(255,255,255,.12); }
+            nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
+            nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            nav #custom-tab-buttons { display: contents; }
+            .page { margin: 16px auto; padding: 0 12px; }
+            .grid-2 { grid-template-columns: 1fr; gap: 16px; }
+            .api-grid { grid-template-columns: 1fr; }
+            .card { padding: 16px; border-radius: 10px; }
+            input, select { font-size: 16px !important; }
+            .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
+            .btn-cancel { width: auto; position: static; box-shadow: none; }
+            .complete-panel .field-row { flex-direction: column; gap: 8px; }
+        }
+
+        @media (max-width: 640px) {
+            table { display: block; }
+            thead { display: none; }
+            tbody { display: block; }
+            tr { display: block; padding: 12px; margin-bottom: 8px; border: 1px solid #f0f0f0; border-radius: 8px; background: #fff; }
+            tr:hover td { background: transparent; }
+            td { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: none !important; font-size: .85rem; }
+            td::before { content: attr(data-label); font-weight: 600; color: #6b7280; font-size: .75rem; text-transform: uppercase; letter-spacing: .3px; margin-right: 8px; flex-shrink: 0; }
+            td:last-child { justify-content: flex-end; gap: 6px; margin-top: 6px; }
+            .filter-btn { padding: 6px 14px; font-size: .82rem; }
+            #ride-date-filter input[type="date"] { flex: 1; min-width: 0; }
         }
     </style>
 </head>
 <body>
 
 <header>
+    <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
     <h1>Tatalance</h1>
     <span class="badge badge-poc">POC</span>
-    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB</span></span>
-    <nav>
+    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
+    <nav id="main-nav">
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
+        <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
+        <span id="custom-tab-buttons"></span>
+        <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
+        <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
 </header>
+<div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
 <!-- ── Clients tab ── -->
 <div id="tab-clients" class="tab-pane active">
@@ -206,6 +364,7 @@
                         </div>
                     </div>
                     <button class="btn" type="submit" id="submit-btn">Add Client</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancel</button>
                 </form>
                 <div class="form-feedback" id="fb"></div>
             </div>
@@ -214,7 +373,11 @@
                 <div class="list-header">
                     <div class="card-title" style="margin-bottom:0">Clients</div>
                     <span class="count" id="count"></span>
+                    <button class="delete-mode-btn" id="client-delete-mode-btn" onclick="toggleDeleteMode('clients', () => filterClients())" style="margin-left:auto">Select</button>
                 </div>
+                <input type="text" id="client-search" placeholder="Search by name or phone…" autocomplete="off"
+                    style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.85rem;margin-bottom:10px;box-sizing:border-box;">
+                <div id="client-bulk-bar"></div>
                 <div id="list"></div>
                 <div class="refresh-ts" id="ts"></div>
             </div>
@@ -265,6 +428,7 @@
                         <div class="err" id="de-payoutRate">Payout rate is required</div>
                     </div>
                     <button class="btn" type="submit" id="driver-submit-btn">Add Driver</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-driver-edit-btn" style="display:none" onclick="cancelDriverEdit()">Cancel</button>
                 </form>
                 <div class="form-feedback" id="driver-fb"></div>
             </div>
@@ -273,7 +437,9 @@
                 <div class="list-header">
                     <div class="card-title" style="margin-bottom:0">Drivers</div>
                     <span class="count" id="driver-count"></span>
+                    <button class="delete-mode-btn" id="driver-delete-mode-btn" onclick="toggleDeleteMode('drivers', loadDrivers)" style="margin-left:auto">Select</button>
                 </div>
+                <div id="driver-bulk-bar"></div>
                 <div id="driver-list"></div>
                 <div class="refresh-ts" id="driver-ts"></div>
             </div>
@@ -292,8 +458,8 @@
                         <label>Client <span class="req">*</span></label>
                         <input type="search" id="r-clientSearch" placeholder="Search by name…"
                                autocomplete="off" autocapitalize="off" spellcheck="false"
-                               style="margin-bottom:6px">
-                        <select id="r-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;">
+                               style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;margin-bottom:6px">
+                        <select id="r-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px;line-height:normal;">
                             <option value="">Select a client…</option>
                         </select>
                         <div class="err" id="re-clientId">Client is required</div>
@@ -322,6 +488,7 @@
                         <input type="text" id="r-notes" placeholder="VIP client, extra luggage" autocomplete="off">
                     </div>
                     <button class="btn" type="submit" id="ride-submit-btn">Book Ride</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-ride-edit-btn" style="display:none" onclick="cancelRideEdit()">Cancel</button>
                 </form>
                 <div class="form-feedback" id="ride-fb"></div>
             </div>
@@ -331,9 +498,44 @@
                     <div class="card-title" style="margin-bottom:0">Rides</div>
                     <span class="count" id="ride-count"></span>
                 </div>
+                <div id="ride-status-filter" style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="filter-btn active" onclick="setRideFilter('ALL')">All</button>
+                    <button class="filter-btn" onclick="setRideFilter('SCHEDULED')">Scheduled</button>
+                    <button class="filter-btn" onclick="setRideFilter('ASSIGNED')">Assigned</button>
+                    <button class="filter-btn" onclick="setRideFilter('COMPLETED')">Completed</button>
+                    <button class="filter-btn" onclick="setRideFilter('CANCELLED')">Cancelled</button>
+                </div>
+                <div id="ride-date-filter" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input type="date" id="ride-date-from" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.82rem;" onchange="applyRideFilter()">
+                    <span style="color:#6b7280;font-size:.82rem;">to</span>
+                    <input type="date" id="ride-date-to" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.82rem;" onchange="applyRideFilter()">
+                    <button class="filter-btn" onclick="setRideDatePreset('today')">Today</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('week')">This Week</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('month')">This Month</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('clear')" title="Clear dates">Clear</button>
+                </div>
                 <div id="ride-list"></div>
                 <div class="refresh-ts" id="ride-ts"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Invoices tab ── -->
+<div id="tab-invoices" class="tab-pane">
+    <div class="page">
+        <div class="card">
+            <div class="list-header">
+                <div class="card-title" style="margin-bottom:0">Invoices</div>
+                <span class="count" id="invoice-count"></span>
+            </div>
+            <div id="invoice-status-filter" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="filter-btn active" onclick="setInvoiceFilter('ALL')">All</button>
+                <button class="filter-btn" onclick="setInvoiceFilter('OUTSTANDING')">Outstanding</button>
+                <button class="filter-btn" onclick="setInvoiceFilter('PAID')">Paid</button>
+            </div>
+            <div id="invoice-list"></div>
+            <div class="refresh-ts" id="invoice-ts"></div>
         </div>
     </div>
 </div>
@@ -354,10 +556,87 @@
     </div>
 </div>
 
+<!-- ── Help Overlay ── -->
+<div class="help-overlay" id="help-overlay" onclick="if(event.target===this)closeHelp()">
+    <div class="help-card">
+        <div class="help-header">
+            <h2 id="help-title">Quick Start Guide</h2>
+            <button class="help-close" onclick="closeHelp()">&times;</button>
+        </div>
+        <div class="help-body" id="help-body"></div>
+        <div class="help-footer">
+            <button class="help-nav-btn" id="help-prev" onclick="helpNav(-1)">Previous</button>
+            <div class="help-dots" id="help-dots"></div>
+            <button class="help-nav-btn primary" id="help-next" onclick="helpNav(1)">Next</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Dynamic custom table panes inserted here ── -->
+<div id="custom-tab-panes"></div>
+
+<!-- ── Create Table Modal ── -->
+<div class="modal-overlay" id="create-table-modal">
+    <div class="modal">
+        <h2>Create Custom Table</h2>
+        <div class="field">
+            <label>Table Name <span class="req">*</span></label>
+            <input type="text" id="ct-name" placeholder="e.g. Vehicles, Expenses…" autocomplete="off">
+            <div class="err" id="ct-err-name">Table name is required</div>
+        </div>
+        <label style="margin-bottom:8px">Columns <span class="req">*</span></label>
+        <div id="ct-columns">
+            <div class="col-row">
+                <input type="text" placeholder="Column name" class="ct-col-name">
+                <select class="ct-col-type">
+                    <option value="STRING">Text</option>
+                    <option value="INT">Number</option>
+                    <option value="BOOLEAN">Yes/No</option>
+                    <option value="DATE">Date</option>
+                </select>
+                <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
+            </div>
+        </div>
+        <button class="add-col-btn" onclick="addColumnRow()">+ Add column</button>
+        <div class="err" id="ct-err-cols" style="margin-bottom:8px">At least one column is required</div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeCreateTableModal()">Cancel</button>
+            <button class="btn" onclick="submitCreateTable()">Create Table</button>
+        </div>
+    </div>
+</div>
+
 <script>
     /* ── Helpers ── */
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    /* ── Sort state ── */
+    const sortState = {};
+    function toggleSort(table, field) {
+        const s = sortState[table] || {};
+        if (s.field === field) s.dir = s.dir === 'asc' ? 'desc' : 'asc';
+        else { s.field = field; s.dir = 'asc'; }
+        sortState[table] = s;
+    }
+    function sortedData(table, data) {
+        const s = sortState[table];
+        if (!s || !s.field) return data;
+        const copy = [...data];
+        const dir = s.dir === 'desc' ? -1 : 1;
+        copy.sort((a, b) => {
+            let va = a[s.field], vb = b[s.field];
+            if (va == null) va = ''; if (vb == null) vb = '';
+            if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+            return String(va).localeCompare(String(vb)) * dir;
+        });
+        return copy;
+    }
+    function sortClass(table, field) {
+        const s = sortState[table];
+        if (!s || s.field !== field) return 'sortable';
+        return `sortable ${s.dir}`;
+    }
 
     function resolveRef(spec, obj) {
         if (!obj) return null;
@@ -368,17 +647,72 @@
         return obj;
     }
 
+    /* ── Delete mode ── */
+    const deleteModeState = {};   // key: tableKey ('clients','drivers','custom-{id}'), value: boolean
+    const selectedItems = {};     // key: tableKey, value: Set of IDs
+    const lastClickedIdx = {};    // key: tableKey, value: last clicked row index (for shift-click)
+
+    function isDeleteMode(tableKey) { return !!deleteModeState[tableKey]; }
+
+    function toggleDeleteMode(tableKey, renderFn) {
+        deleteModeState[tableKey] = !deleteModeState[tableKey];
+        if (!deleteModeState[tableKey]) selectedItems[tableKey] = new Set();
+        lastClickedIdx[tableKey] = null;
+        renderFn();
+    }
+
+    function toggleSelectItem(tableKey, id, idx, allIds, event, renderFn) {
+        if (!selectedItems[tableKey]) selectedItems[tableKey] = new Set();
+        const sel = selectedItems[tableKey];
+        if (event.shiftKey && lastClickedIdx[tableKey] != null) {
+            const start = Math.min(lastClickedIdx[tableKey], idx);
+            const end = Math.max(lastClickedIdx[tableKey], idx);
+            for (let i = start; i <= end; i++) sel.add(allIds[i]);
+        } else {
+            if (sel.has(id)) sel.delete(id); else sel.add(id);
+        }
+        lastClickedIdx[tableKey] = idx;
+        renderFn();
+    }
+
+    function clearSelection(tableKey, renderFn) {
+        selectedItems[tableKey] = new Set();
+        lastClickedIdx[tableKey] = null;
+        renderFn();
+    }
+
+    function bulkBarHtml(tableKey, renderFn, deleteFnName) {
+        const sel = selectedItems[tableKey];
+        if (!sel || !sel.size) return '';
+        return `<div class="bulk-bar">
+            <span class="bulk-count">${sel.size} selected</span>
+            <button class="bulk-delete-btn" onclick="${deleteFnName}('${tableKey}')">Delete ${sel.size}</button>
+            <button class="bulk-clear" onclick="clearSelection('${tableKey}', ${renderFn})">Clear</button>
+        </div>`;
+    }
+
+    /* ── Mobile nav ── */
+    function toggleNav() {
+        document.getElementById('main-nav').classList.toggle('open');
+        document.getElementById('nav-overlay').classList.toggle('open');
+    }
+    function closeNav() {
+        document.getElementById('main-nav').classList.remove('open');
+        document.getElementById('nav-overlay').classList.remove('open');
+    }
+
     /* ── Tab switching ── */
     function showTab(name) {
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`tab-${name}`).classList.add('active');
-        document.getElementById(`btn-${name}`).classList.add('active');
-        // Always fetch fresh client list when entering Rides — David may have
-        // just added a client and expects to book a ride for them.
-        if (name === 'rides' && typeof loadClientDropdown === 'function') {
-            loadClientDropdown();
-        }
+        const pane = document.getElementById(`tab-${name}`);
+        const btn = document.getElementById(`btn-${name}`);
+        if (pane) pane.classList.add('active');
+        if (btn) btn.classList.add('active');
+        // Refresh the client picker when opening the booking tab so newly
+        // added clients appear without waiting for the 10s poll.
+        if (name === 'rides') loadClientDropdown();
+        closeNav();
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -401,7 +735,7 @@
                 <a href="/swagger-ui/index.html" target="_blank" class="swagger-link">Open Swagger UI ↗</a>
             </div>
             <hr style="border:none;border-top:1px solid #f0f0f0;margin:16px 0">
-            <div style="font-size:.8rem;color:#aaa">
+            <div style="font-size:.8rem;color:#6b7280">
                 <div>Spec: <a href="/v3/api-docs" target="_blank" style="color:#0f3460">/v3/api-docs</a></div>
                 <div style="margin-top:4px">OpenAPI ${esc(spec.openapi ?? '')}</div>
             </div>`;
@@ -485,15 +819,6 @@
         } catch (e) { /* non-critical */ }
     }
 
-    /* ── DB type badge ── */
-    fetch('/api/info')
-        .then(r => r.json())
-        .then(info => {
-            const el = document.getElementById('db-badge');
-            if (el) el.textContent = info.dbType === 'atlas' ? 'MongoDB Atlas' : 'MongoDB in-memory';
-        })
-        .catch(() => {});
-
     /* ── Load OpenAPI spec ── */
     fetch('/v3/api-docs')
         .then(r => r.json())
@@ -509,22 +834,67 @@
 
     /* ── Client list ── */
     const esc2 = s => esc(s) || '<span class="muted">—</span>';
+    let allClientsCache = [];
+
+    function filterClients() {
+        const q = document.getElementById('client-search').value.toLowerCase().trim();
+        if (!q) { render(allClientsCache); return; }
+        const filtered = allClientsCache.filter(c =>
+            (c.firstName || '').toLowerCase().includes(q) ||
+            (c.lastName || '').toLowerCase().includes(q) ||
+            (c.phone || '').toLowerCase().includes(q)
+        );
+        render(filtered);
+    }
+
+    document.getElementById('client-search').addEventListener('input', filterClients);
+
+    window.sortClients = function(field) { toggleSort('clients', field); filterClients(); };
 
     function render(clients) {
         document.getElementById('count').textContent = `(${clients.length})`;
         const el = document.getElementById('list');
+        const hasSearch = document.getElementById('client-search').value.trim().length > 0;
+        const dm = isDeleteMode('clients');
+        const sel = selectedItems['clients'] || new Set();
+
+        // Update toggle button state
+        const dmBtn = document.getElementById('client-delete-mode-btn');
+        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = dm ? 'Cancel' : 'Select'; }
+
+        // Bulk action bar
+        const bulkEl = document.getElementById('client-bulk-bar');
+        if (bulkEl) {
+            if (dm && sel.size) {
+                bulkEl.innerHTML = `<div class="bulk-bar">
+                    <span class="bulk-count">${sel.size} selected</span>
+                    <button class="bulk-delete-btn" onclick="bulkDeleteClients()">Delete ${sel.size}</button>
+                    <button class="bulk-clear" onclick="clearSelection('clients', () => filterClients())">Clear</button>
+                </div>`;
+            } else { bulkEl.innerHTML = ''; }
+        }
+
         if (!clients.length) {
-            el.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
+            el.innerHTML = hasSearch
+                ? `<div class="empty-state"><div class="icon">🔍</div><p>No matches</p></div>`
+                : `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
             return;
         }
+        const sorted = sortedData('clients', clients);
+        const allIds = sorted.map(c => c.id);
         el.innerHTML = `<table>
-            <thead><tr><th>First Name</th><th>Last Name</th><th>Phone</th><th>Email</th><th>Added</th></tr></thead>
-            <tbody>${clients.map(c => `<tr>
-                <td style="font-weight:600">${esc(c.firstName)}</td>
-                <td>${esc(c.lastName)}</td>
-                <td>${esc2(c.phone)}</td>
-                <td>${esc2(c.email)}</td>
-                <td class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
+            <tbody>${sorted.map((c, idx) => `<tr class="${dm && sel.has(c.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())" style="cursor:pointer"` : ''}>
+                ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())"></td>` : ''}
+                <td data-label="First Name" style="font-weight:600">${esc(c.firstName)}</td>
+                <td data-label="Last Name">${esc(c.lastName)}</td>
+                <td data-label="Phone">${esc2(c.phone)}</td>
+                <td data-label="Email">${esc2(c.email)}</td>
+                <td data-label="Added" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
+                <td style="white-space:nowrap">
+                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}')">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
+                </td>
             </tr>`).join('')}</tbody>
         </table>`;
     }
@@ -533,7 +903,8 @@
         fetch('/api/clients')
             .then(r => r.json())
             .then(data => {
-                render(data);
+                allClientsCache = data;
+                filterClients();
                 document.getElementById('ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -568,24 +939,25 @@
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
-            const r = await fetch('/api/clients', {
-                method: 'POST',
+            const url = editingClientId ? `/api/clients/${editingClientId}` : '/api/clients';
+            const method = editingClientId ? 'PUT' : 'POST';
+            const r = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, phone, email: email || null })
             });
             if (!r.ok) throw new Error();
-            document.getElementById('f-firstName').value = '';
-            document.getElementById('f-lastName').value = '';
-            document.getElementById('f-phone').value = '';
-            document.getElementById('f-email').value = '';
+            const wasEdit = !!editingClientId;
+            cancelEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = `✓ ${firstName} ${lastName} added`;
+            fb.textContent = wasEdit ? `✓ ${firstName} ${lastName} updated` : `✓ ${firstName} ${lastName} added`;
             load();
         } catch {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ Save failed — check server logs';
         } finally {
-            btn.disabled = false; btn.textContent = 'Add Client';
+            btn.disabled = false;
+            btn.textContent = editingClientId ? 'Update Client' : 'Add Client';
         }
     });
 
@@ -596,33 +968,124 @@
         });
     });
 
+    /* ── Edit / Delete client ── */
+    let editingClientId = null;
+
+    window.editClient = function(id, firstName, lastName, phone, email) {
+        editingClientId = id;
+        document.getElementById('f-firstName').value = firstName;
+        document.getElementById('f-lastName').value = lastName;
+        document.getElementById('f-phone').value = phone;
+        document.getElementById('f-email').value = email;
+        document.getElementById('submit-btn').textContent = 'Update Client';
+        document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Edit Client';
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+        if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    };
+
+    window.cancelEdit = function() {
+        editingClientId = null;
+        document.getElementById('f-firstName').value = '';
+        document.getElementById('f-lastName').value = '';
+        document.getElementById('f-phone').value = '';
+        document.getElementById('f-email').value = '';
+        document.getElementById('submit-btn').textContent = 'Add Client';
+        document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Add Client';
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        document.getElementById('fb').className = 'form-feedback';
+        document.getElementById('fb').textContent = '';
+    };
+
+    window.deleteClient = async function(id, name) {
+        if (!confirm(`Delete ${name}?`)) return;
+        try {
+            const r = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+            if (r.status === 400) {
+                const data = await r.json();
+                alert(data.message || 'Cannot delete — client has active rides');
+                return;
+            }
+            if (!r.ok) throw new Error();
+            load();
+        } catch {
+            alert('Delete failed — check server logs');
+        }
+    };
+
+    window.bulkDeleteClients = async function() {
+        const sel = selectedItems['clients'];
+        if (!sel || !sel.size) return;
+        if (!confirm(`Delete ${sel.size} client(s)?`)) return;
+        const errors = [];
+        for (const id of sel) {
+            try {
+                const r = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+                if (r.status === 400) {
+                    const data = await r.json();
+                    errors.push(data.message || `Cannot delete client ${id}`);
+                } else if (!r.ok) { errors.push(`Failed to delete client ${id}`); }
+            } catch { errors.push(`Failed to delete client ${id}`); }
+        }
+        selectedItems['clients'] = new Set();
+        deleteModeState['clients'] = false;
+        load();
+        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
+    };
+
     load();
     setInterval(load, 10000);
 
     /* ── Driver list ── */
     const availColors = { AVAILABLE: '#38a169', ON_TRIP: '#d97706', OFF_DUTY: '#999' };
 
+    window.sortDrivers = function(field) { toggleSort('drivers', field); loadDrivers(); };
+
     function renderDrivers(drivers) {
         document.getElementById('driver-count').textContent = `(${drivers.length})`;
         const el = document.getElementById('driver-list');
+        const dm = isDeleteMode('drivers');
+        const sel = selectedItems['drivers'] || new Set();
+
+        const dmBtn = document.getElementById('driver-delete-mode-btn');
+        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = dm ? 'Cancel' : 'Select'; }
+
+        const bulkEl = document.getElementById('driver-bulk-bar');
+        if (bulkEl) {
+            if (dm && sel.size) {
+                bulkEl.innerHTML = `<div class="bulk-bar">
+                    <span class="bulk-count">${sel.size} selected</span>
+                    <button class="bulk-delete-btn" onclick="bulkDeleteDrivers()">Delete ${sel.size}</button>
+                    <button class="bulk-clear" onclick="clearSelection('drivers', loadDrivers)">Clear</button>
+                </div>`;
+            } else { bulkEl.innerHTML = ''; }
+        }
+
         if (!drivers.length) {
             el.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>No drivers yet — add the first one!</p></div>`;
             return;
         }
+        const sorted = sortedData('drivers', drivers);
+        const allIds = sorted.map(d => d.id);
         el.innerHTML = `<table>
-            <thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Payout</th><th>Status</th></tr></thead>
-            <tbody>${drivers.map(d => `<tr>
-                <td style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
-                <td>${esc2(d.phone)}</td>
-                <td>${esc2(d.vehicle)}</td>
-                <td>${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
+            <tbody>${sorted.map((d, idx) => `<tr class="${dm && sel.has(d.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)" style="cursor:pointer"` : ''}>
+                ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(d.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)"></td>` : ''}
+                <td data-label="Name" style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
+                <td data-label="Phone">${esc2(d.phone)}</td>
+                <td data-label="Vehicle">${esc2(d.vehicle)}</td>
+                <td data-label="Payout">${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
                 <td>
-                    <select onchange="updateAvailability('${d.id}', this.value)"
+                    <select onclick="event.stopPropagation()" onchange="updateAvailability('${d.id}', this.value)"
                         style="font-size:.8rem;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;color:${availColors[d.availability] || '#555'}">
                         ${['AVAILABLE','ON_TRIP','OFF_DUTY'].map(a =>
                             `<option value="${a}" ${a === d.availability ? 'selected' : ''}>${a.replace('_',' ')}</option>`
                         ).join('')}
                     </select>
+                </td>
+                <td style="white-space:nowrap">
+                    <button class="btn-sm" onclick="event.stopPropagation();editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
                 </td>
             </tr>`).join('')}</tbody>
         </table>`;
@@ -685,21 +1148,25 @@
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
-            const r = await fetch('/api/drivers', {
-                method: 'POST',
+            const url = editingDriverId ? `/api/drivers/${editingDriverId}` : '/api/drivers';
+            const method = editingDriverId ? 'PUT' : 'POST';
+            const r = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, phone, email: email || null, vehicle: vehicle || null, payoutType, payoutRate: Number(payoutRate) })
             });
             if (!r.ok) throw new Error();
-            ['d-firstName','d-lastName','d-phone','d-email','d-vehicle','d-payoutRate'].forEach(id => document.getElementById(id).value = '');
+            const wasEdit = !!editingDriverId;
+            cancelDriverEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = `✓ ${firstName} ${lastName} added`;
+            fb.textContent = wasEdit ? `✓ ${firstName} ${lastName} updated` : `✓ ${firstName} ${lastName} added`;
             loadDrivers();
         } catch {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ Save failed — check server logs';
         } finally {
-            btn.disabled = false; btn.textContent = 'Add Driver';
+            btn.disabled = false;
+            btn.textContent = editingDriverId ? 'Update Driver' : 'Add Driver';
         }
     });
 
@@ -712,11 +1179,75 @@
         });
     });
 
+    /* ── Edit / Delete driver ── */
+    let editingDriverId = null;
+
+    window.editDriver = function(id, firstName, lastName, phone, email, vehicle, payoutType, payoutRate) {
+        editingDriverId = id;
+        document.getElementById('d-firstName').value = firstName;
+        document.getElementById('d-lastName').value = lastName;
+        document.getElementById('d-phone').value = phone;
+        document.getElementById('d-email').value = email;
+        document.getElementById('d-vehicle').value = vehicle;
+        document.getElementById('d-payoutType').value = payoutType;
+        document.getElementById('d-payoutRate').value = payoutRate;
+        document.getElementById('driver-submit-btn').textContent = 'Update Driver';
+        document.querySelector('#driver-form').closest('.card').querySelector('.card-title').textContent = 'Edit Driver';
+        document.getElementById('cancel-driver-edit-btn').style.display = 'inline-block';
+    };
+
+    window.cancelDriverEdit = function() {
+        editingDriverId = null;
+        ['d-firstName','d-lastName','d-phone','d-email','d-vehicle','d-payoutRate'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('driver-submit-btn').textContent = 'Add Driver';
+        document.querySelector('#driver-form').closest('.card').querySelector('.card-title').textContent = 'Add Driver';
+        document.getElementById('cancel-driver-edit-btn').style.display = 'none';
+        document.getElementById('driver-fb').className = 'form-feedback';
+        document.getElementById('driver-fb').textContent = '';
+    };
+
+    window.deleteDriver = async function(id, name) {
+        if (!confirm(`Delete ${name}?`)) return;
+        try {
+            const r = await fetch(`/api/drivers/${id}`, { method: 'DELETE' });
+            if (r.status === 400) {
+                const data = await r.json();
+                alert(data.message || 'Cannot delete — driver has active rides');
+                return;
+            }
+            if (!r.ok) throw new Error();
+            loadDrivers();
+        } catch {
+            alert('Delete failed — check server logs');
+        }
+    };
+
+    window.bulkDeleteDrivers = async function() {
+        const sel = selectedItems['drivers'];
+        if (!sel || !sel.size) return;
+        if (!confirm(`Delete ${sel.size} driver(s)?`)) return;
+        const errors = [];
+        for (const id of sel) {
+            try {
+                const r = await fetch(`/api/drivers/${id}`, { method: 'DELETE' });
+                if (r.status === 400) {
+                    const data = await r.json();
+                    errors.push(data.message || `Cannot delete driver ${id}`);
+                } else if (!r.ok) { errors.push(`Failed to delete driver ${id}`); }
+            } catch { errors.push(`Failed to delete driver ${id}`); }
+        }
+        selectedItems['drivers'] = new Set();
+        deleteModeState['drivers'] = false;
+        loadDrivers();
+        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
+    };
+
     loadDrivers();
     setInterval(loadDrivers, 10000);
 
     /* ── Rides ── */
-    const statusColors = { SCHEDULED: '#3182ce', ACCEPTED: '#805ad5', IN_PROGRESS: '#d97706', COMPLETED: '#38a169', CANCELLED: '#e53e3e' };
+    const statusColors = { SCHEDULED: '#3182ce', ASSIGNED: '#805ad5', IN_PROGRESS: '#d97706', COMPLETED: '#38a169', CANCELLED: '#e53e3e' };
+    let availableDriversCache = [];
 
     function loadClientDropdown() {
         fetch('/api/clients').then(r => r.json()).then(clients => {
@@ -729,6 +1260,7 @@
         }).catch(() => {});
     }
 
+    // Searchable client picker — filter the <option>s as you type (mobile journey #32).
     function applyClientSearchFilter() {
         const q = (document.getElementById('r-clientSearch')?.value || '').trim().toLowerCase();
         const sel = document.getElementById('r-clientId');
@@ -739,29 +1271,187 @@
             opt.hidden = !match;
             opt.style.display = match ? '' : 'none';
         });
-        // If the currently selected option got filtered out, reset
         if (sel.selectedOptions[0]?.hidden) sel.value = '';
     }
 
-    document.getElementById('r-clientSearch').addEventListener('input', applyClientSearchFilter);
+    document.getElementById('r-clientSearch')?.addEventListener('input', applyClientSearchFilter);
+
+    function loadAvailableDrivers() {
+        fetch('/api/drivers/available').then(r => r.json()).then(drivers => {
+            availableDriversCache = drivers;
+        }).catch(() => {});
+    }
+
+    function assignDriver(rideId, driverId) {
+        fetch(`/api/rides/${rideId}/assign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driverId })
+        }).then(() => { loadRides(); loadAvailableDrivers(); loadDrivers(); });
+    }
+
+    let completingRideId = null;
+
+    function completeRide(rideId) {
+        if (completingRideId === rideId) return;
+        completingRideId = rideId;
+        renderRides(lastRidesCache);
+    }
+
+    window.cancelComplete = function() {
+        completingRideId = null;
+        renderRides(lastRidesCache);
+    };
+
+    window.toggleExtras = function() {
+        document.getElementById('cp-extras').classList.toggle('open');
+        const btn = document.getElementById('cp-extras-toggle');
+        btn.textContent = document.getElementById('cp-extras').classList.contains('open') ? '▾ Hide extras' : '▸ More details (tolls, extras)';
+    };
+
+    window.updateCompleteTotal = function(basePrice) {
+        const tolls = Number(document.getElementById('cp-tolls').value) || 0;
+        const additional = Number(document.getElementById('cp-additional').value) || 0;
+        const total = (basePrice || 0) + tolls + additional;
+        document.getElementById('cp-total').textContent = `Total: $${total.toFixed(2)}`;
+    };
+
+    window.submitComplete = async function(rideId, basePrice) {
+        const actualStart = document.getElementById('cp-start').value;
+        const actualEnd = document.getElementById('cp-end').value;
+        let valid = true;
+        document.getElementById('cp-err-start').classList.toggle('show', !actualStart);
+        document.getElementById('cp-err-end').classList.toggle('show', !actualEnd);
+        if (!actualStart) valid = false;
+        if (!actualEnd) valid = false;
+        if (!valid) return;
+
+        const tolls = Number(document.getElementById('cp-tolls').value) || 0;
+        const additional = Number(document.getElementById('cp-additional').value) || 0;
+        const desc = document.getElementById('cp-desc').value.trim() || null;
+
+        const btn = document.getElementById('cp-submit-btn');
+        btn.disabled = true; btn.textContent = 'Completing…';
+        try {
+            const r = await fetch(`/api/rides/${rideId}/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actualStart: new Date(actualStart).toISOString(),
+                    actualEnd: new Date(actualEnd).toISOString(),
+                    tolls: tolls || null,
+                    additionalCharges: additional || null,
+                    chargeDescription: desc
+                })
+            });
+            if (!r.ok) throw new Error();
+            completingRideId = null;
+            loadRides(); loadAvailableDrivers(); loadDrivers();
+        } catch {
+            btn.disabled = false; btn.textContent = 'Confirm Complete';
+            alert('Complete failed — check server logs');
+        }
+    };
+
+    let lastRidesCache = [];
+    let allRidesCache = [];
+    let rideStatusFilter = 'ALL';
+
+    window.setRideFilter = function(status) {
+        rideStatusFilter = status;
+        document.querySelectorAll('#ride-status-filter .filter-btn').forEach(b =>
+            b.classList.toggle('active', b.textContent.toUpperCase().replace(' ','') === status || (status === 'ALL' && b.textContent === 'All'))
+        );
+        applyRideFilter();
+    };
+
+    window.setRideDatePreset = function(preset) {
+        const from = document.getElementById('ride-date-from');
+        const to = document.getElementById('ride-date-to');
+        const today = new Date();
+        const fmt = d => d.toISOString().slice(0, 10);
+        if (preset === 'clear') { from.value = ''; to.value = ''; }
+        else if (preset === 'today') { from.value = fmt(today); to.value = fmt(today); }
+        else if (preset === 'week') {
+            const mon = new Date(today); mon.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+            const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+            from.value = fmt(mon); to.value = fmt(sun);
+        } else if (preset === 'month') {
+            from.value = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+            to.value = fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+        }
+        applyRideFilter();
+    };
+
+    function applyRideFilter() {
+        let filtered = rideStatusFilter === 'ALL' ? allRidesCache : allRidesCache.filter(r => r.status === rideStatusFilter);
+        const fromVal = document.getElementById('ride-date-from').value;
+        const toVal = document.getElementById('ride-date-to').value;
+        if (fromVal) { const d = new Date(fromVal + 'T00:00:00'); filtered = filtered.filter(r => r.pickupDateTime && new Date(r.pickupDateTime) >= d); }
+        if (toVal) { const d = new Date(toVal + 'T23:59:59'); filtered = filtered.filter(r => r.pickupDateTime && new Date(r.pickupDateTime) <= d); }
+        renderRides(filtered);
+    }
 
     function renderRides(rides) {
+        lastRidesCache = rides;
         document.getElementById('ride-count').textContent = `(${rides.length})`;
         const el = document.getElementById('ride-list');
         if (!rides.length) {
-            el.innerHTML = `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
+            el.innerHTML = rideStatusFilter !== 'ALL'
+                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${rideStatusFilter.toLowerCase().replace('_',' ')} rides</p></div>`
+                : `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
             return;
         }
+        window.sortRides = function(field) { toggleSort('rides', field); applyRideFilter(); };
+        const sorted = sortedData('rides', rides);
         el.innerHTML = `<table>
-            <thead><tr><th>Client</th><th>Pickup</th><th>From</th><th>To</th><th>Price</th><th>Status</th></tr></thead>
-            <tbody>${rides.map(r => `<tr>
-                <td style="font-weight:600">${esc(r.clientName)}</td>
-                <td style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
-                <td>${esc2(r.pickupLocation)}</td>
-                <td>${esc2(r.dropoffLocation)}</td>
-                <td>${r.basePrice ? '$' + r.basePrice : '<span class="muted">—</span>'}</td>
+            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th></th></tr></thead>
+            <tbody>${sorted.map(r => `<tr>
+                <td data-label="Client" style="font-weight:600">${esc(r.clientName)}</td>
+                <td data-label="Pickup" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
+                <td data-label="From">${esc2(r.pickupLocation)}</td>
+                <td data-label="To">${esc2(r.dropoffLocation)}</td>
+                <td>${r.assignedDriverName ? esc(r.assignedDriverName) :
+                    (r.status === 'SCHEDULED' && availableDriversCache.length ?
+                        `<select onchange="if(this.value)assignDriver('${r.id}',this.value)" style="font-size:.78rem;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">
+                            <option value="">Assign…</option>
+                            ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
+                        </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
-            </tr>`).join('')}</tbody>
+                <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
+                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}</td>
+            </tr>${completingRideId === r.id ? `<tr><td colspan="7" style="padding:0">
+                <div class="complete-panel">
+                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · Base: $${r.basePrice || 0}</div>
+                    <div class="field-row">
+                        <div>
+                            <label>Actual Start *</label>
+                            <input type="datetime-local" id="cp-start" onchange="document.getElementById('cp-err-start').classList.remove('show')">
+                            <div class="err-inline" id="cp-err-start">Required</div>
+                        </div>
+                        <div>
+                            <label>Actual End *</label>
+                            <input type="datetime-local" id="cp-end" onchange="document.getElementById('cp-err-end').classList.remove('show')">
+                            <div class="err-inline" id="cp-err-end">Required</div>
+                        </div>
+                    </div>
+                    <button id="cp-extras-toggle" class="extras-toggle" onclick="toggleExtras()">▸ More details (tolls, extras)</button>
+                    <div class="extras" id="cp-extras">
+                        <div class="field-row">
+                            <div><label>Tolls ($)</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
+                            <div><label>Additional ($)</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
+                        </div>
+                        <div class="field-row">
+                            <div><label>Description</label><input type="text" id="cp-desc" placeholder="Extra stop, waiting, etc."></div>
+                        </div>
+                    </div>
+                    <div class="total-line" id="cp-total">Total: $${(r.basePrice || 0).toFixed ? Number(r.basePrice || 0).toFixed(2) : '0.00'}</div>
+                    <div class="panel-actions">
+                        <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">Confirm Complete</button>
+                        <button class="btn-sm" onclick="cancelComplete()">Cancel</button>
+                    </div>
+                </div>
+            </td></tr>` : ''}`).join('')}</tbody>
         </table>`;
     }
 
@@ -769,7 +1459,8 @@
         fetch('/api/rides')
             .then(r => r.json())
             .then(data => {
-                renderRides(data);
+                allRidesCache = data;
+                applyRideFilter();
                 document.getElementById('ride-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -812,21 +1503,25 @@
             if (basePrice) body.basePrice = Number(basePrice);
             if (notes) body.notes = notes;
 
-            const r = await fetch('/api/rides', {
-                method: 'POST',
+            const url = editingRideId ? `/api/rides/${editingRideId}` : '/api/rides';
+            const method = editingRideId ? 'PUT' : 'POST';
+            const r = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
             if (!r.ok) throw new Error();
-            ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-notes'].forEach(id => document.getElementById(id).value = '');
+            const wasEdit = !!editingRideId;
+            cancelRideEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = '✓ Ride booked';
+            fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
             loadRides();
         } catch {
             fb.className = 'form-feedback fail';
-            fb.textContent = '✗ Booking failed — check server logs';
+            fb.textContent = '✗ Save failed — check server logs';
         } finally {
-            btn.disabled = false; btn.textContent = 'Book Ride';
+            btn.disabled = false;
+            btn.textContent = editingRideId ? 'Update Ride' : 'Book Ride';
         }
     });
 
@@ -838,10 +1533,728 @@
         });
     });
 
+    /* ── Edit / Cancel ride ── */
+    let editingRideId = null;
+
+    window.editRide = function(id, clientId, pickupDateTime, pickupLocation, dropoffLocation, basePrice, notes) {
+        editingRideId = id;
+        document.getElementById('r-clientId').value = clientId;
+        const dt = new Date(pickupDateTime);
+        const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('r-pickupDateTime').value = local;
+        document.getElementById('r-pickupLocation').value = pickupLocation;
+        document.getElementById('r-dropoffLocation').value = dropoffLocation;
+        document.getElementById('r-basePrice').value = basePrice;
+        document.getElementById('r-notes').value = notes;
+        document.getElementById('ride-submit-btn').textContent = 'Update Ride';
+        document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Edit Ride';
+        document.getElementById('cancel-ride-edit-btn').style.display = 'inline-block';
+    };
+
+    window.cancelRideEdit = function() {
+        editingRideId = null;
+        ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-notes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('ride-submit-btn').textContent = 'Book Ride';
+        document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Book a Ride';
+        document.getElementById('cancel-ride-edit-btn').style.display = 'none';
+        document.getElementById('ride-fb').className = 'form-feedback';
+        document.getElementById('ride-fb').textContent = '';
+    };
+
+    window.cancelRide = async function(rideId) {
+        if (!confirm('Cancel this ride?')) return;
+        try {
+            const r = await fetch(`/api/rides/${rideId}/cancel`, { method: 'POST' });
+            if (!r.ok) {
+                const data = await r.json();
+                alert(data.message || 'Cannot cancel this ride');
+                return;
+            }
+            loadRides(); loadAvailableDrivers(); loadDrivers();
+        } catch {
+            alert('Cancel failed — check server logs');
+        }
+    };
+
     loadClientDropdown();
+    loadAvailableDrivers();
     loadRides();
     setInterval(loadRides, 10000);
     setInterval(loadClientDropdown, 10000);
+    setInterval(loadAvailableDrivers, 10000);
+
+    /* ── Invoices ── */
+    function generateInvoice(rideId) {
+        fetch('/api/invoices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rideId })
+        }).then(r => {
+            if (!r.ok) return r.json().then(e => { throw new Error(e.message || 'Failed'); });
+            return r.json();
+        }).then(inv => {
+            loadInvoices();
+            showTab('invoices');
+        }).catch(e => alert('Invoice failed: ' + e.message));
+    }
+
+    const invStatusColors = { OUTSTANDING: '#d97706', PAID: '#38a169' };
+    let allInvoicesCache = [];
+    let invoiceStatusFilter = 'ALL';
+
+    window.setInvoiceFilter = function(status) {
+        invoiceStatusFilter = status;
+        document.querySelectorAll('#invoice-status-filter .filter-btn').forEach(b =>
+            b.classList.toggle('active', b.textContent.toUpperCase() === status || (status === 'ALL' && b.textContent === 'All'))
+        );
+        applyInvoiceFilter();
+    };
+
+    function applyInvoiceFilter() {
+        const filtered = invoiceStatusFilter === 'ALL' ? allInvoicesCache : allInvoicesCache.filter(i => i.status === invoiceStatusFilter);
+        renderInvoices(filtered);
+    }
+
+    function markPaid(invoiceId) {
+        fetch(`/api/invoices/${invoiceId}/mark-paid`, {
+            method: 'POST'
+        }).then(r => {
+            if (!r.ok) return r.json().then(e => { throw new Error(e.message || 'Failed'); });
+            loadInvoices();
+        }).catch(e => alert('Failed: ' + e.message));
+    }
+
+    function renderInvoices(invoices) {
+        document.getElementById('invoice-count').textContent = `(${invoices.length})`;
+        const el = document.getElementById('invoice-list');
+        if (!invoices.length) {
+            el.innerHTML = invoiceStatusFilter !== 'ALL'
+                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${invoiceStatusFilter.toLowerCase()} invoices</p></div>`
+                : `<div class="empty-state"><div class="icon">📄</div><p>No invoices yet — complete a ride and generate one!</p></div>`;
+            return;
+        }
+        window.sortInvoices = function(field) { toggleSort('invoices', field); applyInvoiceFilter(); };
+        const sorted = sortedData('invoices', invoices);
+        el.innerHTML = `<table>
+            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Base</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
+            <tbody>${sorted.map(i => `<tr>
+                <td data-label="Invoice #" style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
+                <td data-label="Client">${esc(i.clientName)}</td>
+                <td data-label="Base">$${i.baseCharge}</td>
+                <td data-label="Extras">$${i.additionalCharges}</td>
+                <td data-label="Tax">$${i.tax}</td>
+                <td style="font-weight:700">$${i.total}</td>
+                <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${i.status}</span></td>
+                <td>${i.status === 'OUTSTANDING' ?
+                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">Mark Paid</button>` :
+                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">Mark Unpaid</button>`}</td>
+            </tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function loadInvoices() {
+        fetch('/api/invoices')
+            .then(r => r.json())
+            .then(data => {
+                allInvoicesCache = data;
+                applyInvoiceFilter();
+                document.getElementById('invoice-ts').textContent =
+                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+            })
+            .catch(() => {
+                document.getElementById('invoice-list').innerHTML =
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+            });
+    }
+
+    loadInvoices();
+    setInterval(loadInvoices, 10000);
+
+    /* ── Custom Tables ── */
+    let customTables = [];
+    let customTableRows = {};
+    let editingRowState = {}; // { tableId: rowId }
+    let editingColumnState = {}; // { tableId: { mode: 'add'|'edit', name: '...' } }
+
+    function colRowHtml() {
+        const tableOpts = customTables.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+        return `<div class="col-row" style="flex-wrap:wrap">
+            <input type="text" placeholder="Column name" class="ct-col-name">
+            <select class="ct-col-type" onchange="const r=this.closest('.col-row');r.querySelector('.ct-bool-labels').style.display=this.value==='BOOLEAN'?'flex':'none';r.querySelector('.ct-link-table').style.display=this.value==='LINK'?'flex':'none'">
+                <option value="STRING">Text</option><option value="INT">Number</option>
+                <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
+                <option value="LINK">Link</option>
+            </select>
+            <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
+            <div class="ct-bool-labels" style="display:none;gap:6px;width:100%;margin-top:4px">
+                <input type="text" placeholder="True label (e.g. Paid)" class="ct-true-label" style="flex:1">
+                <input type="text" placeholder="False label (e.g. Unpaid)" class="ct-false-label" style="flex:1">
+            </div>
+            <div class="ct-link-table" style="display:none;width:100%;margin-top:4px">
+                <select class="ct-linked-table" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">
+                    <option value="">Select table to link…</option>${tableOpts}
+                </select>
+            </div>
+        </div>`;
+    }
+
+    function openCreateTableModal() {
+        document.getElementById('create-table-modal').classList.add('open');
+        document.getElementById('ct-name').value = '';
+        document.getElementById('ct-err-name').classList.remove('show');
+        document.getElementById('ct-err-cols').classList.remove('show');
+        document.getElementById('ct-columns').innerHTML = colRowHtml();
+    }
+
+    function closeCreateTableModal() {
+        document.getElementById('create-table-modal').classList.remove('open');
+    }
+
+    function addColumnRow() {
+        const container = document.getElementById('ct-columns');
+        container.insertAdjacentHTML('beforeend', colRowHtml());
+    }
+
+    async function submitCreateTable() {
+        const name = document.getElementById('ct-name').value.trim();
+        const colRows = document.querySelectorAll('#ct-columns .col-row');
+        const columns = [];
+        colRows.forEach(row => {
+            const n = row.querySelector('.ct-col-name').value.trim();
+            const t = row.querySelector('.ct-col-type').value;
+            if (!n) return;
+            const col = { name: n, type: t };
+            if (t === 'BOOLEAN') {
+                const tl = row.querySelector('.ct-true-label')?.value.trim();
+                const fl = row.querySelector('.ct-false-label')?.value.trim();
+                if (tl) col.trueLabel = tl;
+                if (fl) col.falseLabel = fl;
+            }
+            if (t === 'LINK') {
+                const ltid = row.querySelector('.ct-linked-table')?.value;
+                if (ltid) col.linkedTableId = ltid;
+            }
+            columns.push(col);
+        });
+
+        let valid = true;
+        document.getElementById('ct-err-name').classList.toggle('show', !name);
+        if (!name) valid = false;
+        document.getElementById('ct-err-cols').classList.toggle('show', !columns.length);
+        if (!columns.length) valid = false;
+        if (!valid) return;
+
+        try {
+            const r = await fetch('/api/tables', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, columns })
+            });
+            if (!r.ok) throw new Error();
+            closeCreateTableModal();
+            loadCustomTables(true);
+        } catch {
+            alert('Failed to create table');
+        }
+    }
+
+    function renderCustomTabButtons() {
+        const container = document.getElementById('custom-tab-buttons');
+        container.innerHTML = customTables.map(t =>
+            `<button class="tab-btn custom-tab" id="btn-custom-${t.id}" onclick="showTab('custom-${t.id}')">
+                ${esc(t.name)}
+                <span class="del-tab" onclick="event.stopPropagation();deleteCustomTable('${t.id}','${esc(t.name)}')">&times;</span>
+            </button>`
+        ).join('');
+    }
+
+    function linkedRowSummary(linkedTableId, rowId) {
+        const rows = customTableRows[linkedTableId] || [];
+        const linkedTable = customTables.find(t => t.id === linkedTableId);
+        const row = rows.find(r => r.id === rowId);
+        if (!row) return null;
+        // Use first STRING column value as summary
+        const textCol = linkedTable?.columns?.find(c => c.type === 'STRING');
+        return textCol ? (row.data?.[textCol.name] || rowId) : rowId;
+    }
+
+    function inputForType(col, value) {
+        const id = `cr-${col.name.replace(/\s+/g, '_')}`;
+        switch (col.type) {
+            case 'INT': return `<input type="number" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
+            case 'BOOLEAN': return `<label style="display:flex;align-items:center;gap:8px;font-weight:400;color:#555"><input type="checkbox" id="${id}" ${value ? 'checked' : ''} style="width:18px;height:18px"><span style="font-size:.83rem">${esc(col.trueLabel || 'Yes')} / ${esc(col.falseLabel || 'No')}</span></label>`;
+            case 'DATE': return `<input type="date" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
+            case 'LINK': {
+                const rows = customTableRows[col.linkedTableId] || [];
+                const linkedTable = customTables.find(t => t.id === col.linkedTableId);
+                const textCol = linkedTable?.columns?.find(c => c.type === 'STRING');
+                const opts = rows.map(r => {
+                    const label = textCol ? (r.data?.[textCol.name] || r.id) : r.id;
+                    return `<option value="${r.id}" ${r.id === value ? 'selected' : ''}>${esc(String(label))}</option>`;
+                }).join('');
+                return `<select id="${id}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa"><option value="">Select…</option>${opts}</select>`;
+            }
+            default: return `<input type="text" id="${id}" value="${esc(value ?? '')}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
+        }
+    }
+
+    function readFieldValue(col) {
+        const id = `cr-${col.name.replace(/\s+/g, '_')}`;
+        const el = document.getElementById(id);
+        if (!el) return undefined;
+        switch (col.type) {
+            case 'INT': return el.value ? Number(el.value) : null;
+            case 'BOOLEAN': return el.checked;
+            case 'DATE': return el.value || null;
+            case 'LINK': return el.value || null;
+            default: return el.value.trim() || null;
+        }
+    }
+
+    function boolDisplay(col, val) {
+        if (val) return esc(col.trueLabel || 'Yes');
+        return esc(col.falseLabel || 'No');
+    }
+
+    function renderCustomTablePane(table) {
+        const rows = customTableRows[table.id] || [];
+        const editingRowId = editingRowState[table.id] || null;
+        const editingCol = editingColumnState[table.id] || null; // { mode: 'add' | 'edit', name: '...' }
+
+        const linkableTableOpts = customTables.filter(t => t.id !== table.id).map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+        const colEditForm = editingCol ? `
+            <div class="col-edit-inline">
+                <div style="font-size:.82rem;font-weight:600;margin-bottom:8px">${editingCol.mode === 'add' ? 'Add Column' : 'Edit Column'}</div>
+                <div class="field-row">
+                    <div><label>Name</label><input type="text" id="ce-name-${table.id}" value="${editingCol.mode === 'edit' ? esc(editingCol.name) : ''}" placeholder="Column name"></div>
+                    ${editingCol.mode === 'add' ? `<div><label>Type</label><select id="ce-type-${table.id}">
+                        <option value="STRING">Text</option><option value="INT">Number</option>
+                        <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
+                        <option value="LINK">Link</option>
+                    </select></div>` : ''}
+                </div>
+                ${(editingCol.mode === 'add' || (editingCol.mode === 'edit' && table.columns.find(c => c.name === editingCol.name)?.type === 'BOOLEAN')) ? `
+                <div class="field-row" id="ce-labels-${table.id}" ${editingCol.mode === 'add' ? 'style="display:none"' : ''}>
+                    <div><label>True label</label><input type="text" id="ce-true-${table.id}" value="${editingCol.mode === 'edit' ? esc(table.columns.find(c => c.name === editingCol.name)?.trueLabel || '') : ''}" placeholder="Yes"></div>
+                    <div><label>False label</label><input type="text" id="ce-false-${table.id}" value="${editingCol.mode === 'edit' ? esc(table.columns.find(c => c.name === editingCol.name)?.falseLabel || '') : ''}" placeholder="No"></div>
+                </div>` : ''}
+                ${editingCol.mode === 'add' ? `
+                <div class="field-row" id="ce-link-${table.id}" style="display:none">
+                    <div style="flex:1"><label>Link to table</label><select id="ce-linked-table-${table.id}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:.84rem;background:#fff">
+                        <option value="">Select table…</option>${linkableTableOpts}
+                    </select></div>
+                </div>` : ''}
+                <div class="col-edit-actions">
+                    <button class="btn-sm" style="background:#0f3460;color:white;border-color:#0f3460;padding:5px 14px" onclick="submitColumnEdit('${table.id}')">${editingCol.mode === 'add' ? 'Add' : 'Save'}</button>
+                    <button class="btn-sm" onclick="cancelColumnEdit('${table.id}')">Cancel</button>
+                    ${editingCol.mode === 'edit' && table.columns.length > 1 ? `<button class="btn-sm" style="color:#e53e3e;border-color:#e53e3e;margin-left:auto" onclick="deleteColumn('${table.id}','${esc(editingCol.name)}')">Delete Column</button>` : ''}
+                </div>
+            </div>` : '';
+
+        return `<div id="tab-custom-${table.id}" class="tab-pane">
+            <div class="page">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">${editingRowId ? 'Edit Row' : 'Add Row'}</div>
+                        <form onsubmit="event.preventDefault();submitCustomRow('${table.id}')" novalidate>
+                            ${table.columns.map(col => `
+                                <div class="field">
+                                    <label>${esc(col.name)} <span class="schema-type">${col.type === 'BOOLEAN' ? (col.trueLabel || 'Yes') + '/' + (col.falseLabel || 'No') : col.type}</span></label>
+                                    ${inputForType(col, editingRowId ? (rows.find(r => r.id === editingRowId)?.data?.[col.name]) : null)}
+                                </div>
+                            `).join('')}
+                            <button class="btn" type="submit">${editingRowId ? 'Update Row' : 'Add Row'}</button>
+                            ${editingRowId ? `<button class="btn btn-cancel" type="button" onclick="cancelCustomRowEdit('${table.id}')">Cancel</button>` : ''}
+                        </form>
+                        <div class="form-feedback" id="ct-fb-${table.id}"></div>
+                    </div>
+                    <div class="card">
+                        <div class="list-header">
+                            <div class="card-title" style="margin-bottom:0">${esc(table.name)}</div>
+                            <span class="count">(${rows.length})</span>
+                            <button class="delete-mode-btn ${isDeleteMode('custom-'+table.id) ? 'active' : ''}" onclick="toggleDeleteMode('custom-${table.id}', () => { renderAllCustomPanes(); showTab('custom-${table.id}'); })" style="margin-left:auto">${isDeleteMode('custom-'+table.id) ? 'Cancel' : 'Select'}</button>
+                        </div>
+                        ${(() => { const ctSel = selectedItems['custom-'+table.id]; const ctDm = isDeleteMode('custom-'+table.id);
+                            return ctDm && ctSel && ctSel.size ? `<div class="bulk-bar">
+                                <span class="bulk-count">${ctSel.size} selected</span>
+                                <button class="bulk-delete-btn" onclick="bulkDeleteCustomRows('${table.id}')">Delete ${ctSel.size}</button>
+                                <button class="bulk-clear" onclick="clearSelection('custom-${table.id}', () => { renderAllCustomPanes(); showTab('custom-${table.id}'); })">Clear</button>
+                            </div>` : '';
+                        })()}
+                        ${colEditForm}
+                        <table>
+                            <thead><tr>${isDeleteMode('custom-'+table.id) ? '<th style="width:32px"></th>' : ''}${table.columns.map(c => `<th class="col-header" onclick="toggleColMenu(event,'${table.id}','${esc(c.name)}')">
+                                ${esc(c.name)} <span class="col-menu-btn">▾</span>
+                                <div class="col-menu" id="colmenu-${table.id}-${esc(c.name)}">
+                                    <button class="col-menu-item" onclick="event.stopPropagation();startEditColumn('${table.id}','${esc(c.name)}')">Edit</button>
+                                    ${table.columns.length > 1 ? `<button class="col-menu-item danger" onclick="event.stopPropagation();deleteColumn('${table.id}','${esc(c.name)}')">Delete</button>` : ''}
+                                </div>
+                            </th>`).join('')}<th class="add-col-header" onclick="startAddColumn('${table.id}')" title="Add column">+</th></tr></thead>
+                            ${(() => { const ctDm = isDeleteMode('custom-'+table.id); const ctSel = selectedItems['custom-'+table.id] || new Set(); const ctAllIds = rows.map(r => r.id);
+                            return !rows.length ? `<tbody><tr><td colspan="${table.columns.length + (ctDm ? 2 : 1)}" style="text-align:center;padding:32px;color:#6b7280">No rows yet</td></tr></tbody>` :
+                            `<tbody>${rows.map((r, idx) => `<tr class="${ctDm && ctSel.has(r.id) ? 'selected' : ''}" ${ctDm ? `onclick="toggleSelectItem('custom-${table.id}','${r.id}',${idx},${JSON.stringify(ctAllIds).replace(/"/g,'&quot;')},event,()=>{renderAllCustomPanes();showTab('custom-${table.id}')})" style="cursor:pointer"` : ''}>
+                                ${ctDm ? `<td><input type="checkbox" class="row-checkbox" ${ctSel.has(r.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('custom-${table.id}','${r.id}',${idx},${JSON.stringify(ctAllIds).replace(/"/g,'&quot;')},event,()=>{renderAllCustomPanes();showTab('custom-${table.id}')})"></td>` : ''}
+                                ${table.columns.map(c => {
+                                    const v = r.data?.[c.name];
+                                    if (c.type === 'BOOLEAN') return `<td>${boolDisplay(c, v)}</td>`;
+                                    if (c.type === 'LINK' && v) {
+                                        const summary = linkedRowSummary(c.linkedTableId, v);
+                                        return `<td>${summary ? esc(String(summary)) : '<span class="muted">—</span>'}</td>`;
+                                    }
+                                    return `<td>${v != null ? esc(String(v)) : '<span class="muted">—</span>'}</td>`;
+                                }).join('')}
+                                <td style="white-space:nowrap">
+                                    <button class="btn-sm" onclick="event.stopPropagation();editCustomRow('${table.id}','${r.id}')">Edit</button>
+                                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteCustomRow('${table.id}','${r.id}')">Del</button>
+                                </td>
+                            </tr>`).join('')}</tbody>`; })()}
+                        </table>
+                        <div class="refresh-ts" id="ct-ts-${table.id}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderAllCustomPanes() {
+        const container = document.getElementById('custom-tab-panes');
+        container.innerHTML = customTables.map(t => renderCustomTablePane(t)).join('');
+    }
+
+    /* ── Column management ── */
+    let openColMenu = null;
+    window.toggleColMenu = function(event, tableId, colName) {
+        event.stopPropagation();
+        const menuId = `colmenu-${tableId}-${colName}`;
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        // Close any open menu
+        if (openColMenu && openColMenu !== menu) openColMenu.classList.remove('open');
+        menu.classList.toggle('open');
+        openColMenu = menu.classList.contains('open') ? menu : null;
+    };
+
+    document.addEventListener('click', () => {
+        if (openColMenu) { openColMenu.classList.remove('open'); openColMenu = null; }
+    });
+
+    window.startAddColumn = function(tableId) {
+        editingColumnState[tableId] = { mode: 'add' };
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+        // Show/hide boolean labels and link picker based on type selection
+        setTimeout(() => {
+            const typeSelect = document.getElementById(`ce-type-${tableId}`);
+            const labelsDiv = document.getElementById(`ce-labels-${tableId}`);
+            const linkDiv = document.getElementById(`ce-link-${tableId}`);
+            if (typeSelect) {
+                typeSelect.addEventListener('change', () => {
+                    if (labelsDiv) labelsDiv.style.display = typeSelect.value === 'BOOLEAN' ? '' : 'none';
+                    if (linkDiv) linkDiv.style.display = typeSelect.value === 'LINK' ? '' : 'none';
+                });
+            }
+        }, 0);
+    };
+
+    window.startEditColumn = function(tableId, colName) {
+        editingColumnState[tableId] = { mode: 'edit', name: colName };
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+    };
+
+    window.cancelColumnEdit = function(tableId) {
+        editingColumnState[tableId] = null;
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+    };
+
+    window.submitColumnEdit = async function(tableId) {
+        const state = editingColumnState[tableId];
+        if (!state) return;
+        const name = document.getElementById(`ce-name-${tableId}`)?.value.trim();
+        if (!name) { alert('Column name is required'); return; }
+
+        try {
+            if (state.mode === 'add') {
+                const type = document.getElementById(`ce-type-${tableId}`)?.value || 'STRING';
+                const body = { name, type };
+                if (type === 'BOOLEAN') {
+                    const tl = document.getElementById(`ce-true-${tableId}`)?.value.trim();
+                    const fl = document.getElementById(`ce-false-${tableId}`)?.value.trim();
+                    if (tl) body.trueLabel = tl;
+                    if (fl) body.falseLabel = fl;
+                }
+                if (type === 'LINK') {
+                    const ltid = document.getElementById(`ce-linked-table-${tableId}`)?.value;
+                    if (!ltid) { alert('Please select a table to link to'); return; }
+                    body.linkedTableId = ltid;
+                }
+                const r = await fetch(`/api/tables/${tableId}/columns`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                });
+                if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Failed'); }
+            } else {
+                const body = {};
+                if (name !== state.name) body.name = name;
+                const tl = document.getElementById(`ce-true-${tableId}`)?.value?.trim();
+                const fl = document.getElementById(`ce-false-${tableId}`)?.value?.trim();
+                if (tl !== undefined) body.trueLabel = tl || null;
+                if (fl !== undefined) body.falseLabel = fl || null;
+                const r = await fetch(`/api/tables/${tableId}/columns/${encodeURIComponent(state.name)}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                });
+                if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Failed'); }
+            }
+            editingColumnState[tableId] = null;
+            await loadCustomTables(true);
+            showTab(`custom-${tableId}`);
+        } catch (e) { alert('Failed: ' + e.message); }
+    };
+
+    window.deleteColumn = async function(tableId, colName) {
+        if (!confirm(`Delete column "${colName}"?`)) return;
+        try {
+            const r = await fetch(`/api/tables/${tableId}/columns/${encodeURIComponent(colName)}`, { method: 'DELETE' });
+            if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Failed'); }
+            editingColumnState[tableId] = null;
+            await loadCustomTables(true);
+            showTab(`custom-${tableId}`);
+        } catch (e) { alert('Failed: ' + e.message); }
+    };
+
+    function isUserEditingCustomTable() {
+        const active = document.activeElement;
+        if (!active || active === document.body) return false;
+        return !!active.closest('#custom-tab-panes');
+    }
+
+    function getActiveCustomTabId() {
+        const btn = document.querySelector('.tab-btn.custom-tab.active');
+        return btn ? btn.id.replace('btn-custom-', '') : null;
+    }
+
+    function restoreActiveCustomTab(tableId) {
+        if (!tableId) return;
+        const btn = document.getElementById(`btn-custom-${tableId}`);
+        const pane = document.getElementById(`tab-custom-${tableId}`);
+        if (btn) btn.classList.add('active');
+        if (pane) pane.classList.add('active');
+    }
+
+    async function loadCustomTables(forceRender = false) {
+        try {
+            // Remember which custom tab is active before re-rendering
+            const activeTableId = getActiveCustomTabId();
+
+            const r = await fetch('/api/tables');
+            customTables = await r.json();
+            renderCustomTabButtons();
+            // Load rows for each table
+            await Promise.all(customTables.map(async t => {
+                const rr = await fetch(`/api/tables/${t.id}/rows`);
+                customTableRows[t.id] = await rr.json();
+            }));
+            // Skip DOM re-render if user is typing in a custom table form (unless forced)
+            if (!forceRender && isUserEditingCustomTable()) {
+                // Still restore the tab button active state
+                restoreActiveCustomTab(activeTableId);
+                return;
+            }
+            renderAllCustomPanes();
+            restoreActiveCustomTab(activeTableId);
+        } catch { /* ignore */ }
+    }
+
+    async function submitCustomRow(tableId) {
+        const table = customTables.find(t => t.id === tableId);
+        if (!table) return;
+        const data = {};
+        table.columns.forEach(col => { data[col.name] = readFieldValue(col); });
+
+        const editingRowId = editingRowState[tableId] || null;
+        const fb = document.getElementById(`ct-fb-${tableId}`);
+
+        try {
+            const url = editingRowId ? `/api/tables/${tableId}/rows/${editingRowId}` : `/api/tables/${tableId}/rows`;
+            const method = editingRowId ? 'PUT' : 'POST';
+            const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if (!r.ok) throw new Error();
+            editingRowState[tableId] = null;
+            if (fb) { fb.className = 'form-feedback ok'; fb.textContent = editingRowId ? '✓ Row updated' : '✓ Row added'; }
+            // Reload rows for this table
+            const rr = await fetch(`/api/tables/${tableId}/rows`);
+            customTableRows[tableId] = await rr.json();
+            renderAllCustomPanes();
+            // Keep this tab active
+            showTab(`custom-${tableId}`);
+        } catch {
+            if (fb) { fb.className = 'form-feedback fail'; fb.textContent = '✗ Save failed'; }
+        }
+    }
+
+    window.editCustomRow = function(tableId, rowId) {
+        editingRowState[tableId] = rowId;
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+    };
+
+    window.cancelCustomRowEdit = function(tableId) {
+        editingRowState[tableId] = null;
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+    };
+
+    window.deleteCustomRow = async function(tableId, rowId) {
+        if (!confirm('Delete this row?')) return;
+        try {
+            await fetch(`/api/tables/${tableId}/rows/${rowId}`, { method: 'DELETE' });
+            const rr = await fetch(`/api/tables/${tableId}/rows`);
+            customTableRows[tableId] = await rr.json();
+            renderAllCustomPanes();
+            showTab(`custom-${tableId}`);
+        } catch { alert('Delete failed'); }
+    };
+
+    window.bulkDeleteCustomRows = async function(tableId) {
+        const key = 'custom-' + tableId;
+        const sel = selectedItems[key];
+        if (!sel || !sel.size) return;
+        if (!confirm(`Delete ${sel.size} row(s)?`)) return;
+        const errors = [];
+        for (const rowId of sel) {
+            try {
+                const r = await fetch(`/api/tables/${tableId}/rows/${rowId}`, { method: 'DELETE' });
+                if (!r.ok) errors.push(`Failed to delete row ${rowId}`);
+            } catch { errors.push(`Failed to delete row ${rowId}`); }
+        }
+        selectedItems[key] = new Set();
+        deleteModeState[key] = false;
+        const rr = await fetch(`/api/tables/${tableId}/rows`);
+        customTableRows[tableId] = await rr.json();
+        renderAllCustomPanes();
+        showTab(`custom-${tableId}`);
+        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
+    };
+
+    window.deleteCustomTable = async function(tableId, name) {
+        if (!confirm(`Delete table "${name}" and all its rows?`)) return;
+        try {
+            await fetch(`/api/tables/${tableId}`, { method: 'DELETE' });
+            delete customTableRows[tableId];
+            delete editingRowState[tableId];
+            loadCustomTables();
+            showTab('clients');
+        } catch { alert('Delete failed'); }
+    };
+
+    loadCustomTables();
+    setInterval(loadCustomTables, 15000);
+
+    /* ── DB type badge ── */
+    fetch('/api/info')
+        .then(r => r.json())
+        .then(info => {
+            const el = document.getElementById('db-badge');
+            if (el) el.textContent = info.dbType === 'atlas' ? 'MongoDB Atlas' : 'MongoDB in-memory';
+        })
+        .catch(() => {});
+
+    /* ── Help Overlay ── */
+    const helpPanels = [
+        {
+            title: 'Welcome to Tatalance',
+            content: `
+                <h3>Your chauffeur client management tool</h3>
+                <p>Tatalance helps you manage clients, drivers, rides, invoices, and any custom data you need — all in one place.</p>
+                <div class="help-tip"><span class="tip-icon">📋</span><div class="tip-text"><strong>Tabs at the top</strong> — switch between Clients, Drivers, Rides, Invoices, and any custom tables you create.</div></div>
+                <div class="help-tip"><span class="tip-icon">➕</span><div class="tip-text"><strong>The + button</strong> — create your own custom tables for anything (vehicles, expenses, notes, etc).</div></div>
+                <div class="help-tip"><span class="tip-icon">❓</span><div class="tip-text"><strong>The ? button</strong> — you're here! Come back anytime for a refresher.</div></div>
+            `
+        },
+        {
+            title: 'Clients',
+            content: `
+                <h3>Add and manage your clients</h3>
+                <div class="help-tip"><span class="tip-icon">👤</span><div class="tip-text"><strong>Add a client</strong> — fill in first name, last name, and phone (international format: +1 then digits). Email is optional.</div></div>
+                <div class="help-tip"><span class="tip-icon">✏️</span><div class="tip-text"><strong>Edit</strong> — click the Edit button on any row to update their info. The form switches to edit mode.</div></div>
+                <div class="help-tip"><span class="tip-icon">🗑️</span><div class="tip-text"><strong>Delete</strong> — click Del to remove a client. You can't delete a client who has active rides.</div></div>
+                <p>The list auto-refreshes every 10 seconds so you always see the latest data.</p>
+            `
+        },
+        {
+            title: 'Drivers',
+            content: `
+                <h3>Manage your driver roster</h3>
+                <div class="help-tip"><span class="tip-icon">🚗</span><div class="tip-text"><strong>Add a driver</strong> — name, phone, optional vehicle, and payout info (percentage or flat rate).</div></div>
+                <div class="help-tip"><span class="tip-icon">🟢</span><div class="tip-text"><strong>Availability</strong> — change a driver's status using the dropdown: Available, On Trip, or Off Duty.</div></div>
+                <div class="help-tip"><span class="tip-icon">💰</span><div class="tip-text"><strong>Payout</strong> — set to Percentage (e.g. 70%) or Flat (e.g. $50 per ride). This shows on invoices.</div></div>
+            `
+        },
+        {
+            title: 'Rides',
+            content: `
+                <h3>Book and manage rides</h3>
+                <div class="help-tip"><span class="tip-icon">📅</span><div class="tip-text"><strong>Book a ride</strong> — pick a client, set pickup date/time, locations, and optional base price.</div></div>
+                <div class="help-tip"><span class="tip-icon">🔗</span><div class="tip-text"><strong>Assign a driver</strong> — once booked, use the dropdown in the Driver column to assign an available driver.</div></div>
+                <div class="help-tip"><span class="tip-icon">✅</span><div class="tip-text"><strong>Complete</strong> — after assignment, click Complete. Fill in actual start/end times, tolls, and extras.</div></div>
+                <div class="help-tip"><span class="tip-icon">❌</span><div class="tip-text"><strong>Cancel</strong> — cancel a ride at any time before completion. The driver becomes available again.</div></div>
+            `
+        },
+        {
+            title: 'Invoices',
+            content: `
+                <h3>Generate and track invoices</h3>
+                <div class="help-tip"><span class="tip-icon">📄</span><div class="tip-text"><strong>Generate</strong> — after completing a ride, click the Invoice button on that ride. It calculates base + extras + tax.</div></div>
+                <div class="help-tip"><span class="tip-icon">💵</span><div class="tip-text"><strong>Mark Paid / Unpaid</strong> — toggle an invoice's status with one click. No complex payment processing needed.</div></div>
+                <p>Invoices show the breakdown: base charge, additional charges, tax, and total.</p>
+            `
+        },
+        {
+            title: 'Custom Tables',
+            content: `
+                <h3>Create your own data tables</h3>
+                <div class="help-tip"><span class="tip-icon">➕</span><div class="tip-text"><strong>Create a table</strong> — click the + button in the nav bar. Name your table and add columns with types: Text, Number, Yes/No, or Date.</div></div>
+                <div class="help-tip"><span class="tip-icon">📋</span><div class="tip-text"><strong>Use it</strong> — your table appears as a new tab. Add rows, edit them, delete them — just like Clients or Drivers.</div></div>
+                <div class="help-tip"><span class="tip-icon">🗑️</span><div class="tip-text"><strong>Delete a table</strong> — hover over the tab name and click the x. This removes the table and all its rows.</div></div>
+                <p>Ideas: Vehicles, Expenses, Fuel Logs, Client Notes, anything you need to track.</p>
+            `
+        }
+    ];
+
+    let helpIndex = 0;
+
+    function renderHelpPanel() {
+        const panel = helpPanels[helpIndex];
+        document.getElementById('help-title').textContent = panel.title;
+        document.getElementById('help-body').innerHTML = panel.content;
+        document.getElementById('help-prev').disabled = helpIndex === 0;
+        const nextBtn = document.getElementById('help-next');
+        nextBtn.textContent = helpIndex === helpPanels.length - 1 ? 'Done' : 'Next';
+        document.getElementById('help-dots').innerHTML = helpPanels.map((_, i) =>
+            `<button class="help-dot ${i === helpIndex ? 'active' : ''}" onclick="helpGoTo(${i})"></button>`
+        ).join('');
+    }
+
+    function openHelp() {
+        helpIndex = 0;
+        renderHelpPanel();
+        document.getElementById('help-overlay').classList.add('open');
+    }
+
+    function closeHelp() {
+        document.getElementById('help-overlay').classList.remove('open');
+    }
+
+    function helpNav(dir) {
+        if (dir === 1 && helpIndex === helpPanels.length - 1) { closeHelp(); return; }
+        helpIndex = Math.max(0, Math.min(helpPanels.length - 1, helpIndex + dir));
+        renderHelpPanel();
+    }
+
+    window.helpGoTo = function(i) {
+        helpIndex = i;
+        renderHelpPanel();
+    };
 </script>
 </body>
 </html>

@@ -1,6 +1,8 @@
 package com.tatalance.driver;
 
 import com.tatalance.SecurityConfig;
+import com.tatalance.ride.RideRepository;
+import com.tatalance.ride.RideStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -12,12 +14,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -31,6 +35,9 @@ class DriverControllerTest {
 
     @MockBean
     private DriverRepository repository;
+
+    @MockBean
+    private RideRepository rideRepository;
 
     private Driver sampleDriver() {
         var driver = new Driver();
@@ -172,5 +179,67 @@ class DriverControllerTest {
                                 {"availability":"SLEEPING"}
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_updateDriver() throws Exception {
+        when(repository.findById("drv001")).thenReturn(Optional.of(sampleDriver()));
+        when(repository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/drivers/drv001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"Carlos","lastName":"Garcia","phone":"+13055551002",
+                                 "vehicle":"2025 BMW 7 Series","payoutType":"FLAT","payoutRate":50}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lastName").value("Garcia"))
+                .andExpect(jsonPath("$.vehicle").value("2025 BMW 7 Series"))
+                .andExpect(jsonPath("$.payoutType").value("FLAT"))
+                .andExpect(jsonPath("$.payoutRate").value(50));
+    }
+
+    @Test
+    void should_return404_when_updatingNonexistentDriver() throws Exception {
+        when(repository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/drivers/unknown")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"Carlos","lastName":"Garcia","phone":"+13055551002",
+                                 "payoutType":"FLAT","payoutRate":50}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_deleteDriver() throws Exception {
+        when(repository.existsById("drv001")).thenReturn(true);
+        when(rideRepository.findByAssignedDriverIdAndStatusIn(eq("drv001"), any()))
+                .thenReturn(Collections.emptyList());
+
+        mockMvc.perform(delete("/api/drivers/drv001"))
+                .andExpect(status().isNoContent());
+        verify(repository).deleteById("drv001");
+    }
+
+    @Test
+    void should_return400_when_driverHasActiveRides() throws Exception {
+        when(repository.existsById("drv001")).thenReturn(true);
+        var ride = new com.tatalance.ride.Ride();
+        ride.setStatus(RideStatus.IN_PROGRESS);
+        when(rideRepository.findByAssignedDriverIdAndStatusIn(eq("drv001"), any()))
+                .thenReturn(List.of(ride));
+
+        mockMvc.perform(delete("/api/drivers/drv001"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_deletingNonexistentDriver() throws Exception {
+        when(repository.existsById("unknown")).thenReturn(false);
+
+        mockMvc.perform(delete("/api/drivers/unknown"))
+                .andExpect(status().isNotFound());
     }
 }

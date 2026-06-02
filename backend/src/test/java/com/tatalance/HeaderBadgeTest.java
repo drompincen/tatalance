@@ -1,7 +1,10 @@
 package com.tatalance;
 
 import com.tatalance.client.ClientRepository;
+import com.tatalance.customtable.CustomTableRepository;
+import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
+import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,15 @@ class HeaderBadgeTest {
 
     @MockBean
     RideRepository rideRepository;
+
+    @MockBean
+    CustomTableRepository customTableRepository;
+
+    @MockBean
+    CustomTableRowRepository customTableRowRepository;
+
+    @MockBean
+    InvoiceRepository invoiceRepository;
 
     @Test
     void should_haveDynamicDbBadgeElement() throws Exception {

@@ -76,3 +76,30 @@ jobs:
           version_label: ${{ github.sha }}-${{ env.TARGET_ENV }}
           deployment_package: tatalance-0.0.1-SNAPSHOT.jar
           wait_for_environment_recovery: 120
+
+  e2e:
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      E2E_BASE_URL: http://tatalance-${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'qa' || github.ref_name) }}.eba-7u2dj39y.us-east-1.elasticbeanstalk.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install E2E dependencies
+        run: cd tests/e2e && npm ci
+
+      - name: Install Playwright browsers
+        run: cd tests/e2e && npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: cd tests/e2e && npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: tests/e2e/test-results/

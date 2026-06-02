@@ -84,6 +84,8 @@ test.describe('M5 — Login on iPhone Safari', () => {
       page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 10_000 }),
       page.locator('button[type="submit"], input[type="submit"]').first().click(),
     ]);
-    await expect(page.locator('#btn-clients')).toBeVisible();
+    // On mobile the tab nav is behind the hamburger; the shell rendering
+    // (hamburger visible) confirms we reached the authenticated app.
+    await expect(page.locator('#hamburger')).toBeVisible();
   });
 });
