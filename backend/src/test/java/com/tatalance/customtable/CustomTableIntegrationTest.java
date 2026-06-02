@@ -28,6 +28,7 @@ class CustomTableIntegrationTest {
     void cleanUp() {
         mongoTemplate.dropCollection("custom_tables");
         mongoTemplate.dropCollection("custom_table_rows");
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
     private String createTable() {

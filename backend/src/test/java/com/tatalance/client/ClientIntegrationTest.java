@@ -26,8 +26,9 @@ class ClientIntegrationTest {
     private MongoTemplate mongoTemplate;
 
     @BeforeEach
-    void cleanUp() {
+    void setUp() {
         mongoTemplate.dropCollection("clients");
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
     @Test

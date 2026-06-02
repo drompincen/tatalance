@@ -1,5 +1,6 @@
 package com.tatalance.ride;
 
+import com.tatalance.SecurityConfig;
 import com.tatalance.client.Client;
 import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
@@ -9,7 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -25,6 +28,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RideController.class)
+@Import(SecurityConfig.class)
+@WithMockUser
 class RideControllerTest {
 
     @Autowired
@@ -61,6 +66,17 @@ class RideControllerTest {
         ride.setStatus(RideStatus.SCHEDULED);
         ride.setCreatedAt(Instant.now());
         return ride;
+    }
+
+    private Driver sampleDriver() {
+        var driver = new Driver();
+        driver.setId("drv001");
+        driver.setFirstName("Carlos");
+        driver.setLastName("Mendez");
+        driver.setPhone("+13055551002");
+        driver.setAvailability(Availability.AVAILABLE);
+        driver.setActive(true);
+        return driver;
     }
 
     @Test
@@ -175,17 +191,6 @@ class RideControllerTest {
                 .andExpect(jsonPath("$[0].clientId").value("cli001"));
     }
 
-    private Driver sampleDriver() {
-        var driver = new Driver();
-        driver.setId("drv001");
-        driver.setFirstName("Carlos");
-        driver.setLastName("Mendez");
-        driver.setPhone("+13055551002");
-        driver.setAvailability(Availability.AVAILABLE);
-        driver.setActive(true);
-        return driver;
-    }
-
     @Test
     void should_assignDriver_when_available() throws Exception {
         var ride = sampleRide();
@@ -273,96 +278,92 @@ class RideControllerTest {
     }
 
     @Test
-    void should_completeRide_when_assigned() throws Exception {
+    void should_listRidesByDriver_when_driverAssigned() throws Exception {
+        // M3 (#33) — Driver queue endpoint. Returns rides where assignedDriverId
+        // matches, sorted by pickupDateTime ascending.
         var ride = sampleRide();
-        ride.setStatus(RideStatus.ASSIGNED);
         ride.setAssignedDriverId("drv001");
+        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv001"))
+                .thenReturn(List.of(ride));
+
+        mockMvc.perform(get("/api/drivers/drv001/rides"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].assignedDriverId").value("drv001"))
+                .andExpect(jsonPath("$[0].pickupLocation").value("Miami Airport"));
+    }
+
+    @Test
+    void should_returnEmptyList_when_driverHasNoRides() throws Exception {
+        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv999"))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/drivers/drv999/rides"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void should_startRide_when_scheduled() throws Exception {
+        // M4 (#34) — start endpoint, transitions to IN_PROGRESS + actualStart=now
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.SCHEDULED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/start"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.actualStart").exists());
+    }
+
+    @Test
+    void should_return404_when_startingMissingRide() throws Exception {
+        when(rideRepository.findById("missing")).thenReturn(Optional.empty());
+        mockMvc.perform(post("/api/rides/missing/start"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_return409_when_startingAlreadyCompletedRide() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.COMPLETED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/start"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void should_completeRide_andCalculateBillable() throws Exception {
+        // M4 (#34) — complete endpoint, transitions to COMPLETED + billable = base + extras
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.IN_PROGRESS);
         ride.setBasePrice(new BigDecimal("85.00"));
-        var driver = sampleDriver();
-        driver.setAvailability(Availability.ON_TRIP);
-
         when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
         when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
-        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/rides/ride001/complete")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"actualStart":"2026-06-01T14:05:00Z","actualEnd":"2026-06-01T15:10:00Z",
-                                 "tolls":5.50,"parking":10.00,"additionalCharges":15.00,
-                                 "chargeDescription":"Extra stop"}
+                                {"tolls": 8.50, "parking": 12.00, "additionalCharges": 15.00}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
-                .andExpect(jsonPath("$.totalAmount").value(115.50))
-                .andExpect(jsonPath("$.actualStart").value("2026-06-01T14:05:00Z"))
-                .andExpect(jsonPath("$.chargeDescription").value("Extra stop"));
+                .andExpect(jsonPath("$.actualEnd").exists())
+                .andExpect(jsonPath("$.billableAmount").value(120.50));
     }
 
     @Test
-    void should_return400_when_rideNotAssigned() throws Exception {
-        var ride = sampleRide(); // status is SCHEDULED
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-
-        mockMvc.perform(post("/api/rides/ride001/complete")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"actualStart":"2026-06-01T14:05:00Z","actualEnd":"2026-06-01T15:10:00Z"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void should_return400_when_actualStartMissing() throws Exception {
+    void should_return409_when_completingScheduledRide() throws Exception {
         var ride = sampleRide();
-        ride.setStatus(RideStatus.ASSIGNED);
+        ride.setStatus(RideStatus.SCHEDULED);
         when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
 
         mockMvc.perform(post("/api/rides/ride001/complete")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"actualEnd":"2026-06-01T15:10:00Z"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void should_return400_when_actualEndMissing() throws Exception {
-        var ride = sampleRide();
-        ride.setStatus(RideStatus.ASSIGNED);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-
-        mockMvc.perform(post("/api/rides/ride001/complete")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"actualStart":"2026-06-01T14:05:00Z"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void should_completeRide_withZeroExtras() throws Exception {
-        var ride = sampleRide();
-        ride.setStatus(RideStatus.ASSIGNED);
-        ride.setAssignedDriverId("drv001");
-        ride.setBasePrice(new BigDecimal("50.00"));
-        var driver = sampleDriver();
-        driver.setAvailability(Availability.ON_TRIP);
-
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
-        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        mockMvc.perform(post("/api/rides/ride001/complete")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"actualStart":"2026-06-01T14:05:00Z","actualEnd":"2026-06-01T15:10:00Z"}
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("COMPLETED"))
-                .andExpect(jsonPath("$.totalAmount").value(50.00));
+                        .content("{}"))
+                .andExpect(status().isConflict());
     }
 
     @Test

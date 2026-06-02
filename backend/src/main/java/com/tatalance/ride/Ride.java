@@ -26,6 +26,9 @@ public class Ride {
     private RideStatus status = RideStatus.SCHEDULED;
     private String assignedDriverId;
     private String assignedDriverName;
+    private Instant createdAt;
+
+    // Completion details (set by POST /api/rides/{id}/start and /complete — M4, #34)
     private Instant actualStart;
     private Instant actualEnd;
     private Integer waitingTimeMinutes;
@@ -34,7 +37,7 @@ public class Ride {
     private BigDecimal additionalCharges;
     private String chargeDescription;
     private BigDecimal totalAmount;
-    private Instant createdAt;
+    private BigDecimal billableAmount;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -58,6 +61,8 @@ public class Ride {
     public void setAssignedDriverId(String assignedDriverId) { this.assignedDriverId = assignedDriverId; }
     public String getAssignedDriverName() { return assignedDriverName; }
     public void setAssignedDriverName(String assignedDriverName) { this.assignedDriverName = assignedDriverName; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getActualStart() { return actualStart; }
     public void setActualStart(Instant actualStart) { this.actualStart = actualStart; }
     public Instant getActualEnd() { return actualEnd; }
@@ -74,6 +79,6 @@ public class Ride {
     public void setChargeDescription(String chargeDescription) { this.chargeDescription = chargeDescription; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public BigDecimal getBillableAmount() { return billableAmount; }
+    public void setBillableAmount(BigDecimal billableAmount) { this.billableAmount = billableAmount; }
 }

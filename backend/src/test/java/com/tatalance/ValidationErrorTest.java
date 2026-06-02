@@ -1,5 +1,6 @@
 package com.tatalance;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,11 @@ class ValidationErrorTest {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @BeforeEach
+    void authenticate() {
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
+    }
 
     @Test
     void should_returnStructuredErrors_when_clientValidationFails() {

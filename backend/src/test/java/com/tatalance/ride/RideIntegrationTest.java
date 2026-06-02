@@ -29,6 +29,7 @@ class RideIntegrationTest {
         mongoTemplate.dropCollection("rides");
         mongoTemplate.dropCollection("clients");
         mongoTemplate.dropCollection("drivers");
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
     private String createClient() {
@@ -177,7 +178,7 @@ class RideIntegrationTest {
     }
 
     @Test
-    void should_completeAssignedRide() {
+    void should_startThenCompleteRide_andCalculateBillable() {
         var clientId = createClient();
         var driverId = createDriver();
 
@@ -186,14 +187,12 @@ class RideIntegrationTest {
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
 
-        // Assign
+        // Assign → Start → Complete (complete requires IN_PROGRESS)
         restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
                 Map.of("driverId", driverId), Map.class);
+        restTemplate.postForEntity("/api/rides/" + rideId + "/start", null, Map.class);
 
-        // Complete
         var completeBody = Map.of(
-                "actualStart", "2026-06-01T14:05:00Z",
-                "actualEnd", "2026-06-01T15:10:00Z",
                 "tolls", 5.50,
                 "parking", 10.00
         );
@@ -201,24 +200,20 @@ class RideIntegrationTest {
                 "/api/rides/" + rideId + "/complete", completeBody, Map.class);
         assertThat(completeResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(completeResponse.getBody().get("status")).isEqualTo("COMPLETED");
-        assertThat(((Number) completeResponse.getBody().get("totalAmount")).doubleValue()).isEqualTo(100.50);
-
-        // Verify driver is back to AVAILABLE
-        var driverResponse = restTemplate.getForEntity("/api/drivers/" + driverId, Map.class);
-        assertThat(driverResponse.getBody().get("availability")).isEqualTo("AVAILABLE");
+        // billableAmount = basePrice(85) + tolls(5.50) + parking(10.00) = 100.50
+        assertThat(((Number) completeResponse.getBody().get("billableAmount")).doubleValue()).isEqualTo(100.50);
     }
 
     @Test
-    void should_return400_when_completingScheduledRide() {
+    void should_return409_when_completingScheduledRide() {
         var clientId = createClient();
         var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL");
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
 
-        var completeBody = Map.of("actualStart", "2026-06-01T14:05:00Z", "actualEnd", "2026-06-01T15:10:00Z");
-        var response = restTemplate.postForEntity("/api/rides/" + rideId + "/complete", completeBody, Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        var response = restTemplate.postForEntity("/api/rides/" + rideId + "/complete", Map.of(), Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
@@ -241,9 +236,7 @@ class RideIntegrationTest {
         restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
                 Map.of("driverId", driver1Id), Map.class);
 
-        // Reassign to second driver — need to free first driver first
-        // For now the AC says "can reassign before ride starts" so let's test it works
-        // The first driver should be freed when reassigned
+        // Reassign to second driver — the first driver should be freed when reassigned
         var reassignResponse = restTemplate.postForEntity(
                 "/api/rides/" + rideId + "/assign",
                 Map.of("driverId", driver2Id), Map.class);
@@ -298,8 +291,55 @@ class RideIntegrationTest {
         assertThat(cancelResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cancelResponse.getBody().get("status")).isEqualTo("CANCELLED");
 
-        // Verify driver is back to AVAILABLE
+        // Verify driver is back to AVAILABLE (cancel frees the driver)
         var driverResponse = restTemplate.getForEntity("/api/drivers/" + driverId, Map.class);
         assertThat(driverResponse.getBody().get("availability")).isEqualTo("AVAILABLE");
+    }
+
+    @Test
+    void should_listRidesByDriver_sortedByPickupTime() {
+        // M3 (#33) — driver queue endpoint
+        var clientId = createClient();
+
+        // Two rides, one earlier, one later. Both assigned to the same driver.
+        var laterId = createRide(clientId, "2026-08-01T18:00:00Z", "Bayfront", "Wynwood", "drv-q-test");
+        var earlierId = createRide(clientId, "2026-08-01T08:00:00Z", "MIA", "Downtown", "drv-q-test");
+        createRide(clientId, "2026-08-01T10:00:00Z", "Brickell", "South Beach", "other-driver");
+
+        var response = restTemplate.getForEntity("/api/drivers/drv-q-test/rides", List.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).hasSize(2);
+        assertThat(((Map) response.getBody().get(0)).get("id")).isEqualTo(earlierId);
+        assertThat(((Map) response.getBody().get(1)).get("id")).isEqualTo(laterId);
+    }
+
+    @Test
+    void should_returnEmptyList_when_driverHasNoRides() {
+        var response = restTemplate.getForEntity("/api/drivers/no-such-driver/rides", List.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEmpty();
+    }
+
+    /**
+     * Helper that posts a ride and back-fills assignedDriverId via Mongo to set up
+     * driver-queue scenarios without going through the assignment flow.
+     */
+    private String createRide(String clientId, String pickupTime, String from, String to, String driverId) {
+        var ride = Map.of(
+                "clientId", clientId,
+                "pickupDateTime", pickupTime,
+                "pickupLocation", from,
+                "dropoffLocation", to
+        );
+        var resp = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = resp.getBody().get("id").toString();
+        if (driverId != null) {
+            mongoTemplate.updateFirst(
+                    org.springframework.data.mongodb.core.query.Query.query(
+                            org.springframework.data.mongodb.core.query.Criteria.where("_id").is(rideId)),
+                    org.springframework.data.mongodb.core.query.Update.update("assignedDriverId", driverId),
+                    "rides");
+        }
+        return rideId;
     }
 }

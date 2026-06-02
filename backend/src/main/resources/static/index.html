@@ -320,7 +320,7 @@
     <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
     <h1>Tatalance</h1>
     <span class="badge badge-poc">POC</span>
-    <span class="badge badge-mongo"><span class="dot"></span>MongoDB in-memory</span>
+    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
     <nav id="main-nav">
         <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
@@ -2126,6 +2126,15 @@
 
     loadCustomTables();
     setInterval(loadCustomTables, 15000);
+
+    /* ── DB type badge ── */
+    fetch('/api/info')
+        .then(r => r.json())
+        .then(info => {
+            const el = document.getElementById('db-badge');
+            if (el) el.textContent = info.dbType === 'atlas' ? 'MongoDB Atlas' : 'MongoDB in-memory';
+        })
+        .catch(() => {});
 
     /* ── Help Overlay ── */
     const helpPanels = [

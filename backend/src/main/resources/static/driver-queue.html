@@ -3,280 +3,389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Rides — Tatalance</title>
+    <title>My Queue — Tatalance</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #1a1a2e;
+            --muted: #4b5563;
+            --line: #e2e8f0;
+            --primary: #0f3460;
+            --scheduled: #3182ce;
+            --assigned: #805ad5;
+            --in-progress: #d97706;
+            --completed: #38a169;
+            --cancelled: #e53e3e;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f0f2f5; color: #1a1a2e; min-height: 100dvh;
-            padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100dvh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            font-size: 16px;
         }
-        header {
-            background: #1a1a2e; color: white; padding: 0 16px; height: 56px;
-            display: flex; align-items: center; gap: 12px;
-            position: sticky; top: 0; z-index: 100;
-            padding-top: env(safe-area-inset-top);
-        }
-        header h1 { font-size: 1.1rem; font-weight: 700; }
-        .subtitle { font-size: .8rem; color: rgba(255,255,255,.6); }
-        .refresh-btn {
-            margin-left: auto; background: none; border: 1px solid rgba(255,255,255,.3);
-            color: white; padding: 6px 12px; border-radius: 6px; font-size: .8rem; cursor: pointer;
-        }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px 12px; }
-        .date-group { margin-bottom: 20px; }
-        .date-label {
-            font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
-            color: #6b7280; margin-bottom: 8px; padding-left: 4px;
-        }
-        .ride-card {
-            background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,.06); cursor: pointer; transition: box-shadow .15s;
-        }
-        .ride-card:active { box-shadow: 0 1px 6px rgba(0,0,0,.15); }
-        .ride-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .ride-time { font-size: .95rem; font-weight: 700; }
-        .ride-status {
-            font-size: .72rem; font-weight: 600; padding: 3px 8px; border-radius: 10px;
-        }
-        .status-ASSIGNED { background: #f3e8ff; color: #805ad5; }
-        .status-IN_PROGRESS { background: #fef3c7; color: #d97706; }
-        .status-SCHEDULED { background: #dbeafe; color: #3182ce; }
-        .ride-client { font-size: .9rem; font-weight: 600; margin-bottom: 4px; }
-        .ride-route { font-size: .82rem; color: #6b7280; }
-        .ride-route span { margin: 0 4px; }
-        .empty { text-align: center; padding: 60px 24px; color: #6b7280; }
-        .empty .icon { font-size: 2.5rem; margin-bottom: 12px; }
 
-        /* Detail panel */
-        .detail-panel {
-            display: none; position: fixed; inset: 0; background: #f0f2f5; z-index: 200;
-            overflow-y: auto; padding-bottom: env(safe-area-inset-bottom);
+        header {
+            background: #1a1a2e;
+            color: white;
+            padding: 14px 16px;
         }
-        .detail-panel.open { display: block; }
-        .detail-header {
-            background: #1a1a2e; color: white; padding: 16px; display: flex; align-items: center; gap: 12px;
-            position: sticky; top: 0; padding-top: calc(16px + env(safe-area-inset-top));
+        header h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
         }
-        .back-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; padding: 4px; }
-        .detail-body { padding: 16px; max-width: 600px; margin: 0 auto; }
-        .detail-card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-label { font-size: .8rem; color: #6b7280; font-weight: 600; }
-        .detail-value { font-size: .88rem; font-weight: 500; text-align: right; }
+        header .subtitle {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        main {
+            padding: 16px;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .day-heading {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin: 18px 4px 8px;
+        }
+        .day-heading:first-child { margin-top: 4px; }
+
+        .ride-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px 12px;
+        }
+        .ride-card.completed { opacity: 0.6; }
+
+        .actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
         .action-btn {
-            width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 1rem;
-            font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity .15s;
+            flex: 1;
+            min-height: 44px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 12px;
         }
-        .action-btn:disabled { opacity: .5; cursor: not-allowed; }
-        .btn-start { background: #d97706; color: white; }
-        .btn-complete { background: #38a169; color: white; }
-        .complete-fields { margin-top: 12px; }
-        .complete-fields label { display: block; font-size: .8rem; font-weight: 600; color: #555; margin-bottom: 4px; margin-top: 10px; }
-        .complete-fields input {
-            width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
-            font-size: 16px; background: #fafafa;
+        .action-btn.primary { background: var(--primary); color: white; }
+        .action-btn.primary:active { background: #0a2440; }
+        .action-btn.complete { background: var(--completed); color: white; }
+        .action-btn.complete:active { background: #2f855a; }
+
+        .complete-form {
+            grid-column: 1 / -1;
+            margin-top: 10px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            display: none;
         }
-        .complete-fields input:focus { outline: none; border-color: #0f3460; background: white; }
-        .total-display { font-size: 1.1rem; font-weight: 700; text-align: center; margin: 12px 0; color: #1a1a2e; }
-        .error-msg { color: #e53e3e; font-size: .85rem; text-align: center; margin-top: 8px; }
-        .success-msg { color: #38a169; font-size: .85rem; text-align: center; margin-top: 8px; }
+        .complete-form.open { display: block; }
+        .complete-form .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .complete-form label {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+        .complete-form input {
+            width: 110px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            text-align: right;
+        }
+        .complete-form .total {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            padding-top: 8px;
+            border-top: 1px solid var(--line);
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .complete-form .confirm-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .complete-form .confirm-row button { flex: 1; }
+        .action-btn.cancel { background: var(--line); color: var(--text); }
+        .pickup-time {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .client-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            grid-column: 1 / -1;
+        }
+        .route {
+            font-size: 0.9rem;
+            color: var(--muted);
+            grid-column: 1 / -1;
+            line-height: 1.4;
+        }
+        .arrow { color: #94a3b8; padding: 0 4px; }
+
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            color: white;
+            justify-self: end;
+            align-self: start;
+        }
+        .badge-SCHEDULED   { background: var(--scheduled); }
+        .badge-ASSIGNED    { background: var(--assigned); }
+        .badge-IN_PROGRESS { background: var(--in-progress); }
+        .badge-COMPLETED   { background: var(--completed); }
+        .badge-CANCELLED   { background: var(--cancelled); }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .empty-state p { font-size: 0.95rem; }
+
+        .error-state {
+            padding: 24px 16px;
+            border-radius: 12px;
+            background: #fee2e2;
+            color: #991b1b;
+            margin-top: 16px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+    <header>
+        <h1 id="header-title">My Queue</h1>
+        <div class="subtitle" id="header-subtitle">Today and upcoming rides</div>
+    </header>
 
-<header>
-    <h1>My Rides</h1>
-    <span class="subtitle" id="driver-name"></span>
-    <button class="refresh-btn" onclick="loadQueue()">Refresh</button>
-</header>
+    <main id="content">
+        <div class="empty-state" data-test="empty-state" id="empty-state" style="display:none">
+            <div class="icon">🚘</div>
+            <p>No rides assigned. Pull down to refresh.</p>
+        </div>
+        <div id="rides"></div>
+    </main>
 
-<div class="container" id="queue"></div>
+    <script>
+        const esc = s => String(s ?? '').replace(/[&<>"']/g,
+            c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-<div class="detail-panel" id="detail-panel">
-    <div class="detail-header">
-        <button class="back-btn" onclick="closeDetail()">&#8592;</button>
-        <h1>Ride Details</h1>
-    </div>
-    <div class="detail-body" id="detail-body"></div>
-</div>
+        const qs = new URLSearchParams(location.search);
+        const driverId = qs.get('id') || '';
 
-<script>
-    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        function formatTime(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        }
+        function formatDateHeading(iso) {
+            if (!iso) return 'Unscheduled';
+            const d = new Date(iso);
+            const today = new Date();
+            const sameDay = d.toDateString() === today.toDateString();
+            if (sameDay) return 'Today';
+            return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        }
 
-    // Get driver ID from URL: /driver-queue.html?driver=DRIVER_ID
-    const params = new URLSearchParams(window.location.search);
-    const driverId = params.get('driver');
+        function render(rides) {
+            const empty = document.getElementById('empty-state');
+            const container = document.getElementById('rides');
+            container.innerHTML = '';
 
-    if (!driverId) {
-        document.getElementById('queue').innerHTML = '<div class="empty"><div class="icon">&#9888;</div><p>No driver ID in URL.<br>Use: ?driver=YOUR_ID</p></div>';
-    }
+            if (!rides.length) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
 
-    let rides = [];
-
-    async function loadQueue() {
-        if (!driverId) return;
-        try {
-            const resp = await fetch(`/api/drivers/${driverId}/rides`);
-            if (!resp.ok) throw new Error();
-            rides = await resp.json();
-            rides.sort((a, b) => new Date(a.pickupDateTime) - new Date(b.pickupDateTime));
-
-            // Load driver name
-            const driverResp = await fetch(`/api/drivers/${driverId}`);
-            if (driverResp.ok) {
-                const driver = await driverResp.json();
-                document.getElementById('driver-name').textContent = `${driver.firstName} ${driver.lastName}`;
+            // Group by day, preserving the server's ascending sort.
+            const groups = new Map();
+            for (const r of rides) {
+                const key = formatDateHeading(r.pickupDateTime);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(r);
             }
 
-            renderQueue();
-        } catch {
-            document.getElementById('queue').innerHTML = '<div class="empty"><div class="icon">&#9888;</div><p>Cannot load rides</p></div>';
+            for (const [day, dayRides] of groups) {
+                const h = document.createElement('div');
+                h.className = 'day-heading';
+                h.textContent = day;
+                container.appendChild(h);
+
+                for (const r of dayRides) {
+                    const card = document.createElement('article');
+                    card.className = 'ride-card' + (r.status === 'COMPLETED' ? ' completed' : '');
+                    card.setAttribute('data-test', 'ride-card');
+                    card.setAttribute('data-ride-id', r.id);
+                    card.innerHTML = `
+                        <div class="pickup-time">${esc(formatTime(r.pickupDateTime))}</div>
+                        <span class="status-badge badge-${esc(r.status)}" data-test="status-badge">${esc(r.status)}</span>
+                        <div class="client-name">${esc(r.clientName || 'Unknown client')}</div>
+                        <div class="route">${esc(r.pickupLocation || '—')} <span class="arrow">→</span> ${esc(r.dropoffLocation || '—')}</div>
+                        ${actionsFor(r)}
+                        ${completeFormFor(r)}
+                    `;
+                    container.appendChild(card);
+                }
+            }
         }
-    }
 
-    function renderQueue() {
-        const el = document.getElementById('queue');
-        if (!rides.length) {
-            el.innerHTML = '<div class="empty"><div class="icon">&#9989;</div><p>No upcoming rides</p></div>';
-            return;
+        function actionsFor(r) {
+            if (r.status === 'SCHEDULED' || r.status === 'ACCEPTED') {
+                return `<div class="actions">
+                    <button class="action-btn primary" data-test="start-btn"
+                            onclick="startRide('${esc(r.id)}')">Start ride</button>
+                </div>`;
+            }
+            if (r.status === 'IN_PROGRESS') {
+                return `<div class="actions">
+                    <button class="action-btn complete" data-test="complete-btn"
+                            onclick="openCompleteForm('${esc(r.id)}')">Complete ride</button>
+                </div>`;
+            }
+            return '';
         }
 
-        // Group by date
-        const groups = {};
-        const today = new Date().toLocaleDateString();
-        rides.forEach(r => {
-            const d = new Date(r.pickupDateTime);
-            const label = d.toLocaleDateString() === today ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-            if (!groups[label]) groups[label] = [];
-            groups[label].push(r);
-        });
-
-        el.innerHTML = Object.entries(groups).map(([label, rides]) => `
-            <div class="date-group">
-                <div class="date-label">${esc(label)}</div>
-                ${rides.map(r => `
-                    <div class="ride-card" onclick="openDetail('${r.id}')">
-                        <div class="ride-top">
-                            <span class="ride-time">${new Date(r.pickupDateTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                            <span class="ride-status status-${r.status}">${r.status.replace('_',' ')}</span>
-                        </div>
-                        <div class="ride-client">${esc(r.clientName)}</div>
-                        <div class="ride-route">${esc(r.pickupLocation)}<span>→</span>${esc(r.dropoffLocation)}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `).join('');
-    }
-
-    function openDetail(rideId) {
-        const r = rides.find(x => x.id === rideId);
-        if (!r) return;
-        const panel = document.getElementById('detail-panel');
-        const body = document.getElementById('detail-body');
-
-        let actions = '';
-        if (r.status === 'ASSIGNED') {
-            actions = `<button class="action-btn btn-start" onclick="startRide('${r.id}')">Start Ride</button>`;
-        } else if (r.status === 'IN_PROGRESS') {
-            actions = `
-                <div class="complete-fields">
-                    <label>Tolls ($)</label>
-                    <input type="number" id="cd-tolls" value="0" min="0" step="0.01" inputmode="decimal" onchange="updateTotal(${r.basePrice||0})">
-                    <label>Parking ($)</label>
-                    <input type="number" id="cd-parking" value="0" min="0" step="0.01" inputmode="decimal" onchange="updateTotal(${r.basePrice||0})">
-                    <label>Additional ($)</label>
-                    <input type="number" id="cd-additional" value="0" min="0" step="0.01" inputmode="decimal" onchange="updateTotal(${r.basePrice||0})">
-                    <label>Description</label>
-                    <input type="text" id="cd-desc" placeholder="Extra stop, waiting, etc.">
+        function completeFormFor(r) {
+            if (r.status !== 'IN_PROGRESS') return '';
+            const base = Number(r.basePrice || 0);
+            return `<div class="complete-form" data-test="complete-form" data-ride-id="${esc(r.id)}">
+                <div class="row"><label>Base price</label><span>$${base.toFixed(2)}</span></div>
+                <div class="row"><label for="tolls-${esc(r.id)}">Tolls</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
+                           id="tolls-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
+                <div class="row"><label for="parking-${esc(r.id)}">Parking</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
+                           id="parking-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
+                <div class="row"><label for="extras-${esc(r.id)}">Extras</label>
+                    <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
+                           id="extras-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
+                <div class="total">
+                    <span>Total billable</span>
+                    <span data-test="billable" id="billable-${esc(r.id)}">$${base.toFixed(2)}</span>
                 </div>
-                <div class="total-display">Total: $${Number(r.basePrice || 0).toFixed(2)}</div>
-                <button class="action-btn btn-complete" onclick="completeRide('${r.id}',${r.basePrice||0})">Complete Ride</button>
-            `;
+                <div class="confirm-row">
+                    <button class="action-btn cancel" onclick="closeCompleteForm('${esc(r.id)}')">Cancel</button>
+                    <button class="action-btn complete" data-test="confirm-complete-btn"
+                            onclick="submitComplete('${esc(r.id)}')">Confirm</button>
+                </div>
+            </div>`;
         }
 
-        body.innerHTML = `
-            <div class="detail-card">
-                <div class="detail-row"><span class="detail-label">Client</span><span class="detail-value">${esc(r.clientName)}</span></div>
-                <div class="detail-row"><span class="detail-label">Pickup</span><span class="detail-value">${new Date(r.pickupDateTime).toLocaleString()}</span></div>
-                <div class="detail-row"><span class="detail-label">From</span><span class="detail-value">${esc(r.pickupLocation)}</span></div>
-                <div class="detail-row"><span class="detail-label">To</span><span class="detail-value">${esc(r.dropoffLocation)}</span></div>
-                <div class="detail-row"><span class="detail-label">Base Price</span><span class="detail-value">$${r.basePrice || 0}</span></div>
-                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="ride-status status-${r.status}">${r.status.replace('_',' ')}</span></span></div>
-                ${r.notes ? `<div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value">${esc(r.notes)}</span></div>` : ''}
-            </div>
-            ${actions}
-            <div id="detail-msg"></div>
-        `;
-        panel.classList.add('open');
-    }
-
-    function closeDetail() {
-        document.getElementById('detail-panel').classList.remove('open');
-    }
-
-    function updateTotal(basePrice) {
-        const tolls = Number(document.getElementById('cd-tolls')?.value || 0);
-        const parking = Number(document.getElementById('cd-parking')?.value || 0);
-        const additional = Number(document.getElementById('cd-additional')?.value || 0);
-        const total = basePrice + tolls + parking + additional;
-        const el = document.querySelector('.total-display');
-        if (el) el.textContent = `Total: $${total.toFixed(2)}`;
-    }
-
-    async function startRide(rideId) {
-        const msg = document.getElementById('detail-msg');
-        try {
-            const resp = await fetch(`/api/rides/${rideId}/start`, { method: 'POST' });
-            if (!resp.ok) throw new Error((await resp.json()).message || 'Failed');
-            msg.className = 'success-msg';
-            msg.textContent = 'Ride started!';
-            await loadQueue();
-            setTimeout(() => openDetail(rideId), 300);
-        } catch (e) {
-            msg.className = 'error-msg';
-            msg.textContent = 'Failed: ' + e.message;
+        function readNumber(id) {
+            const v = parseFloat(document.getElementById(id)?.value || '0');
+            return Number.isFinite(v) ? v : 0;
         }
-    }
 
-    async function completeRide(rideId, basePrice) {
-        const msg = document.getElementById('detail-msg');
-        const tolls = Number(document.getElementById('cd-tolls')?.value || 0);
-        const parking = Number(document.getElementById('cd-parking')?.value || 0);
-        const additional = Number(document.getElementById('cd-additional')?.value || 0);
-        const desc = document.getElementById('cd-desc')?.value || '';
+        function recalc(id, base) {
+            const total = base + readNumber(`tolls-${id}`) + readNumber(`parking-${id}`) + readNumber(`extras-${id}`);
+            const el = document.getElementById(`billable-${id}`);
+            if (el) el.textContent = `$${total.toFixed(2)}`;
+        }
 
-        try {
-            const resp = await fetch(`/api/rides/${rideId}/complete`, {
+        function openCompleteForm(id) {
+            document.querySelector(`.complete-form[data-ride-id="${id}"]`)?.classList.add('open');
+        }
+        function closeCompleteForm(id) {
+            document.querySelector(`.complete-form[data-ride-id="${id}"]`)?.classList.remove('open');
+        }
+
+        function startRide(id) {
+            fetch(`/api/rides/${encodeURIComponent(id)}/start`, { method: 'POST' })
+                .then(r => { if (!r.ok) throw new Error(`start failed: ${r.status}`); return r.json(); })
+                .then(loadQueue)
+                .catch(err => alert(err.message));
+        }
+
+        function submitComplete(id) {
+            const body = {
+                tolls: readNumber(`tolls-${id}`),
+                parking: readNumber(`parking-${id}`),
+                additionalCharges: readNumber(`extras-${id}`),
+            };
+            fetch(`/api/rides/${encodeURIComponent(id)}/complete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    actualStart: new Date().toISOString(),
-                    actualEnd: new Date().toISOString(),
-                    tolls, parking, additionalCharges: additional, chargeDescription: desc
-                })
-            });
-            if (!resp.ok) throw new Error((await resp.json()).message || 'Failed');
-            msg.className = 'success-msg';
-            msg.textContent = 'Ride completed!';
-            await loadQueue();
-            setTimeout(closeDetail, 1000);
-        } catch (e) {
-            msg.className = 'error-msg';
-            msg.textContent = 'Failed: ' + e.message;
+                body: JSON.stringify(body),
+            })
+                .then(r => { if (!r.ok) throw new Error(`complete failed: ${r.status}`); return r.json(); })
+                .then(loadQueue)
+                .catch(err => alert(err.message));
         }
-    }
 
-    // Pull-to-refresh via touchstart/touchend
-    let touchStart = 0;
-    document.addEventListener('touchstart', e => { if (window.scrollY === 0) touchStart = e.touches[0].clientY; });
-    document.addEventListener('touchend', e => {
-        if (touchStart && e.changedTouches[0].clientY - touchStart > 100) loadQueue();
-        touchStart = 0;
-    });
+        function loadDriverHeader() {
+            if (!driverId) return;
+            fetch(`/api/drivers/${encodeURIComponent(driverId)}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    if (!d) return;
+                    document.getElementById('header-title').textContent =
+                        `${d.firstName || ''} ${d.lastName || ''}`.trim() || 'My Queue';
+                    document.getElementById('header-subtitle').textContent =
+                        d.vehicle ? d.vehicle : 'Today and upcoming rides';
+                })
+                .catch(() => {});
+        }
 
-    loadQueue();
-</script>
+        function loadQueue() {
+            if (!driverId) {
+                document.getElementById('empty-state').style.display = 'block';
+                return;
+            }
+            fetch(`/api/drivers/${encodeURIComponent(driverId)}/rides`)
+                .then(r => r.json())
+                .then(render)
+                .catch(() => {
+                    document.getElementById('rides').innerHTML =
+                        '<div class="error-state">Could not load your queue. Pull down to retry.</div>';
+                });
+        }
+
+        loadDriverHeader();
+        loadQueue();
+        // Light refresh — keeps the queue current as David assigns work.
+        setInterval(loadQueue, 15000);
+    </script>
 </body>
 </html>

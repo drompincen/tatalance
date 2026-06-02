@@ -28,6 +28,7 @@ class InvoiceIntegrationTest {
         mongoTemplate.dropCollection("rides");
         mongoTemplate.dropCollection("clients");
         mongoTemplate.dropCollection("drivers");
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
     private String createCompletedRide() {
@@ -48,14 +49,14 @@ class InvoiceIntegrationTest {
         var rideResp = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = rideResp.getBody().get("id").toString();
 
-        // Assign driver
+        // Assign driver, start, then complete (complete requires IN_PROGRESS)
         restTemplate.postForEntity("/api/rides/" + rideId + "/assign",
                 Map.of("driverId", driverId), Map.class);
+        restTemplate.postForEntity("/api/rides/" + rideId + "/start", null, Map.class);
 
         // Complete ride
         restTemplate.postForEntity("/api/rides/" + rideId + "/complete",
-                Map.of("actualStart", "2026-06-01T14:05:00Z", "actualEnd", "2026-06-01T15:10:00Z",
-                        "tolls", 5.0, "parking", 10.0), Map.class);
+                Map.of("tolls", 5.0, "parking", 10.0), Map.class);
 
         return rideId;
     }

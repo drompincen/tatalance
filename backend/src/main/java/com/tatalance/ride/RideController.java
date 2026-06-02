@@ -69,17 +69,13 @@ public class RideController {
         return rideRepository.findByClientId(clientId);
     }
 
-    @Operation(summary = "List rides assigned to a driver")
-    @ApiResponse(responseCode = "200", description = "Driver rides")
+    @Operation(summary = "List rides assigned to a driver",
+            description = "Returns rides where assignedDriverId matches, sorted by pickupDateTime ascending. "
+                    + "Powers the mobile driver queue (issue #33).")
+    @ApiResponse(responseCode = "200", description = "Driver's rides")
     @GetMapping("/drivers/{driverId}/rides")
-    public List<Ride> listByDriver(@PathVariable String driverId,
-                                   @RequestParam(required = false) List<String> status) {
-        if (status != null && !status.isEmpty()) {
-            List<RideStatus> statuses = status.stream().map(RideStatus::valueOf).toList();
-            return rideRepository.findByAssignedDriverIdAndStatusIn(driverId, statuses);
-        }
-        return rideRepository.findByAssignedDriverIdAndStatusIn(driverId,
-                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS, RideStatus.SCHEDULED));
+    public List<Ride> listByDriver(@PathVariable String driverId) {
+        return rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc(driverId);
     }
 
     @Operation(summary = "Assign a driver to a ride")
@@ -168,61 +164,51 @@ public class RideController {
         return rideRepository.save(ride);
     }
 
-    @Operation(summary = "Start a ride (ASSIGNED → IN_PROGRESS)")
-    @ApiResponse(responseCode = "200", description = "Ride started")
-    @ApiResponse(responseCode = "400", description = "Ride not in ASSIGNED status")
-    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @Operation(summary = "Start a ride (mobile driver action)",
+            description = "Transitions SCHEDULED or ACCEPTED → IN_PROGRESS and records actualStart=now. "
+                    + "Powers the Start button on the driver queue (issue #34).")
     @PostMapping("/rides/{id}/start")
-    public Ride startRide(@PathVariable String id) {
+    public Ride start(@PathVariable String id) {
         Ride ride = rideRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
-        if (ride.getStatus() != RideStatus.ASSIGNED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be in ASSIGNED status to start");
+        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot start a ride in status " + ride.getStatus());
         }
         ride.setStatus(RideStatus.IN_PROGRESS);
         ride.setActualStart(Instant.now());
         return rideRepository.save(ride);
     }
 
-    @Operation(summary = "Complete a ride")
-    @ApiResponse(responseCode = "200", description = "Ride completed")
-    @ApiResponse(responseCode = "400", description = "Ride not in ASSIGNED status or missing fields")
-    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @Operation(summary = "Complete a ride with billable extras (mobile driver action)",
+            description = "Transitions IN_PROGRESS → COMPLETED. Body may include tolls / parking / "
+                    + "additionalCharges; billableAmount = basePrice + extras. Issue #34.")
     @PostMapping("/rides/{id}/complete")
-    public Ride completeRide(@PathVariable String id, @Valid @RequestBody CompleteRideRequest req) {
+    public Ride complete(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
         Ride ride = rideRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
-
-        if (ride.getStatus() != RideStatus.ASSIGNED && ride.getStatus() != RideStatus.IN_PROGRESS) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be in ASSIGNED or IN_PROGRESS status to complete");
+        if (ride.getStatus() != RideStatus.IN_PROGRESS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot complete a ride in status " + ride.getStatus() + " — start it first");
         }
-
-        ride.setActualStart(req.getActualStart());
-        ride.setActualEnd(req.getActualEnd());
-        ride.setWaitingTimeMinutes(req.getWaitingTimeMinutes());
-        ride.setTolls(req.getTolls());
-        ride.setParking(req.getParking());
-        ride.setAdditionalCharges(req.getAdditionalCharges());
-        ride.setChargeDescription(req.getChargeDescription());
-
-        // Calculate total: basePrice + tolls + parking + additionalCharges
-        BigDecimal total = ride.getBasePrice() != null ? ride.getBasePrice() : BigDecimal.ZERO;
-        if (req.getTolls() != null) total = total.add(req.getTolls());
-        if (req.getParking() != null) total = total.add(req.getParking());
-        if (req.getAdditionalCharges() != null) total = total.add(req.getAdditionalCharges());
-        ride.setTotalAmount(total);
-
+        BigDecimal tolls   = asDecimal(body, "tolls");
+        BigDecimal parking = asDecimal(body, "parking");
+        BigDecimal extras  = asDecimal(body, "additionalCharges");
+        BigDecimal base    = ride.getBasePrice() == null ? BigDecimal.ZERO : ride.getBasePrice();
+        ride.setTolls(tolls);
+        ride.setParking(parking);
+        ride.setAdditionalCharges(extras);
+        ride.setBillableAmount(base.add(tolls).add(parking).add(extras));
+        ride.setActualEnd(Instant.now());
         ride.setStatus(RideStatus.COMPLETED);
-
-        // Free the driver
-        if (ride.getAssignedDriverId() != null) {
-            driverRepository.findById(ride.getAssignedDriverId()).ifPresent(driver -> {
-                driver.setAvailability(Availability.AVAILABLE);
-                driverRepository.save(driver);
-            });
-        }
-
         return rideRepository.save(ride);
+    }
+
+    private static BigDecimal asDecimal(Map<String, Object> body, String key) {
+        if (body == null || body.get(key) == null) return BigDecimal.ZERO;
+        Object v = body.get(key);
+        if (v instanceof Number n) return new BigDecimal(n.toString());
+        return new BigDecimal(v.toString());
     }
 
     @Operation(summary = "List available drivers")

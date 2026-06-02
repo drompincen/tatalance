@@ -29,6 +29,7 @@ class DriverIntegrationTest {
     @BeforeEach
     void cleanUp() {
         mongoTemplate.dropCollection("drivers");
+        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
     }
 
     @Test
