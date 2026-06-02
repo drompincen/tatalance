@@ -456,6 +456,9 @@
                 <form id="ride-form" novalidate>
                     <div class="field">
                         <label>Client <span class="req">*</span></label>
+                        <input type="search" id="r-clientSearch" placeholder="Search by name…"
+                               autocomplete="off" autocapitalize="off" spellcheck="false"
+                               style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;margin-bottom:6px">
                         <select id="r-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px;line-height:normal;">
                             <option value="">Select a client…</option>
                         </select>
@@ -1250,8 +1253,25 @@
             sel.innerHTML = '<option value="">Select a client…</option>' +
                 clients.map(c => `<option value="${c.id}">${esc(c.firstName)} ${esc(c.lastName)}</option>`).join('');
             if (current) sel.value = current;
+            applyClientSearchFilter();
         }).catch(() => {});
     }
+
+    // Searchable client picker — filter the <option>s as you type (mobile journey #32).
+    function applyClientSearchFilter() {
+        const q = (document.getElementById('r-clientSearch')?.value || '').trim().toLowerCase();
+        const sel = document.getElementById('r-clientId');
+        if (!sel) return;
+        Array.from(sel.options).forEach(opt => {
+            if (!opt.value) return; // keep the placeholder
+            const match = !q || opt.textContent.toLowerCase().includes(q);
+            opt.hidden = !match;
+            opt.style.display = match ? '' : 'none';
+        });
+        if (sel.selectedOptions[0]?.hidden) sel.value = '';
+    }
+
+    document.getElementById('r-clientSearch')?.addEventListener('input', applyClientSearchFilter);
 
     function loadAvailableDrivers() {
         fetch('/api/drivers/available').then(r => r.json()).then(drivers => {

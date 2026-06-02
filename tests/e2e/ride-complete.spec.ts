@@ -33,11 +33,13 @@ test.describe('Ride completion', () => {
     await app.goto();
     const { client, driver, ride } = await seedAssignedRide(app);
 
+    // start the ride first — complete requires IN_PROGRESS
+    const startResp = await page.request.post(`/api/rides/${ride.id}/start`);
+    expect(startResp.ok()).toBe(true);
+
     // complete via API
     const resp = await page.request.post(`/api/rides/${ride.id}/complete`, {
       data: {
-        actualStart: '2026-06-20T09:00:00Z',
-        actualEnd: '2026-06-20T09:45:00Z',
         tolls: 5,
         parking: 10
       }
@@ -45,11 +47,11 @@ test.describe('Ride completion', () => {
     expect(resp.ok()).toBe(true);
 
     // verify
-    const rides = await app.apiGet('/api/rides') as { id: string; status: string; totalAmount: number }[];
+    const rides = await app.apiGet('/api/rides') as { id: string; status: string; billableAmount: number }[];
     const completed = rides.find(r => r.id === ride.id);
     expect(completed).toBeTruthy();
     expect(completed!.status).toBe('COMPLETED');
-    expect(completed!.totalAmount).toBe(90); // 75 base + 5 tolls + 10 parking
+    expect(completed!.billableAmount).toBe(90); // 75 base + 5 tolls + 10 parking
 
     // cleanup
     await app.apiDelete(`/api/rides/${ride.id}`);
@@ -70,32 +72,27 @@ test.describe('Ride completion', () => {
       pickupLocation: 'A', dropoffLocation: 'B', basePrice: 50
     }) as { id: string };
 
-    // try to complete a SCHEDULED ride — should fail
+    // try to complete a SCHEDULED ride — should fail (must be IN_PROGRESS)
     const resp = await page.request.post(`/api/rides/${ride.id}/complete`, {
-      data: {
-        actualStart: '2026-06-21T10:00:00Z',
-        actualEnd: '2026-06-21T10:30:00Z'
-      }
+      data: {}
     });
-    expect(resp.status()).toBe(400);
+    expect(resp.status()).toBe(409);
 
     // cleanup
     await app.apiDelete(`/api/rides/${ride.id}`);
     await app.apiDelete(`/api/clients/${client.id}`);
   });
 
-  test('complete without actualStart is rejected', async ({ page }) => {
+  test('cannot complete an ASSIGNED ride before it is started', async ({ page }) => {
     const app = new AppPage(page);
     await app.goto();
     const { client, driver, ride } = await seedAssignedRide(app);
 
-    // missing actualStart
+    // ride is ASSIGNED but not started — complete requires IN_PROGRESS
     const resp = await page.request.post(`/api/rides/${ride.id}/complete`, {
-      data: {
-        actualEnd: '2026-06-20T09:45:00Z'
-      }
+      data: {}
     });
-    expect(resp.status()).toBe(400);
+    expect(resp.status()).toBe(409);
 
     // cleanup
     await app.apiDelete(`/api/rides/${ride.id}`);

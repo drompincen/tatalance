@@ -22,10 +22,10 @@ test.describe('Billing', () => {
     await app.page.request.post(`/api/rides/${ride.id}/assign`, {
       data: { driverId: driver.id }
     });
+    // start before complete — complete requires IN_PROGRESS
+    await app.page.request.post(`/api/rides/${ride.id}/start`);
     await app.page.request.post(`/api/rides/${ride.id}/complete`, {
       data: {
-        actualStart: '2026-06-25T08:00:00Z',
-        actualEnd: '2026-06-25T08:50:00Z',
         tolls: 5, parking: 10
       }
     });
