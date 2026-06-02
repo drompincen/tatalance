@@ -295,7 +295,7 @@
             .api-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; border-radius: 10px; }
             input, select { font-size: 16px !important; }
-            .btn { width: 100%; padding: 12px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
+            .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
             .btn-cancel { width: auto; position: static; box-shadow: none; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
         }
@@ -709,6 +709,9 @@
         const btn = document.getElementById(`btn-${name}`);
         if (pane) pane.classList.add('active');
         if (btn) btn.classList.add('active');
+        // Refresh the client picker when opening the booking tab so newly
+        // added clients appear without waiting for the 10s poll.
+        if (name === 'rides') loadClientDropdown();
         closeNav();
     }
 
