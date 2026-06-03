@@ -20,18 +20,21 @@ const uniq = () => Math.random().toString(36).slice(2, 8);
 test.describe('M2 — David books a ride from iPhone', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#btn-rides')).toBeVisible();
+    // Mobile nav is collapsed behind the hamburger — wait for the shell.
+    await expect(page.locator('#hamburger')).toBeVisible();
   });
 
-  test('Rides tab is reachable in one tap from app open', async ({ page }) => {
-    // Default landing is Clients. One tap on the Rides tab.
+  test('Rides tab is reachable from the mobile menu', async ({ page }) => {
+    // On mobile the tab nav lives behind the hamburger: open the menu, tap Rides.
+    await page.locator('#hamburger').click();
     await page.locator('#btn-rides').click();
     await expect(page.locator('#tab-rides.active')).toBeVisible();
-    // "Book Ride" submit is in view
+    // "Book Ride" submit is in view (showTab auto-closes the drawer)
     await expect(page.locator('#ride-submit-btn')).toBeVisible();
   });
 
   test('client picker has a searchable filter input', async ({ page }) => {
+    await page.locator('#hamburger').click();
     await page.locator('#btn-rides').click();
     const search = page.locator('#r-clientSearch');
     await expect(search, 'searchable filter input above the client select').toBeVisible();
@@ -50,6 +53,7 @@ test.describe('M2 — David books a ride from iPhone', () => {
       data: { firstName: b, lastName: 'Beta', phone: `+1305555${Math.floor(1000 + Math.random() * 9000)}` },
     });
 
+    await page.locator('#hamburger').click();
     await page.locator('#btn-rides').click();
     // Wait for the dropdown to populate (it loads via /api/clients)
     await expect(page.locator(`#r-clientId option:has-text("${a}")`)).toHaveCount(1);
@@ -70,6 +74,7 @@ test.describe('M2 — David books a ride from iPhone', () => {
   });
 
   test('pickup date/time uses the iOS native wheel (datetime-local)', async ({ page }) => {
+    await page.locator('#hamburger').click();
     await page.locator('#btn-rides').click();
     await expect(page.locator('#r-pickupDateTime')).toHaveAttribute('type', 'datetime-local');
   });
@@ -83,6 +88,7 @@ test.describe('M2 — David books a ride from iPhone', () => {
     expect(create.ok(), `seed client status ${create.status()}`).toBeTruthy();
     const client = await create.json();
 
+    await page.locator('#hamburger').click();
     await page.locator('#btn-rides').click();
     // Wait for client option to appear in the picker
     await expect(page.locator(`#r-clientId option[value="${client.id}"]`)).toHaveCount(1);

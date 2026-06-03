@@ -1,6 +1,8 @@
 package com.tatalance.client;
 
 import com.tatalance.SecurityConfig;
+import com.tatalance.ride.RideRepository;
+import com.tatalance.ride.RideStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -11,13 +13,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ClientController.class)
@@ -30,6 +34,9 @@ class ClientControllerTest {
 
     @MockBean
     private ClientRepository repository;
+
+    @MockBean
+    private RideRepository rideRepository;
 
     @Test
     void should_returnCreatedClient_when_validFirstNameAndLastName() throws Exception {
@@ -129,5 +136,93 @@ class ClientControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].firstName").value("John"))
                 .andExpect(jsonPath("$[0].lastName").value("Doe"));
+    }
+
+    @Test
+    void should_getClientById() throws Exception {
+        var client = new Client();
+        client.setId("abc123");
+        client.setFirstName("John");
+        client.setLastName("Doe");
+        client.setPhone("+12125551234");
+        when(repository.findById("abc123")).thenReturn(Optional.of(client));
+
+        mockMvc.perform(get("/api/clients/abc123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("John"));
+    }
+
+    @Test
+    void should_return404_when_clientNotFound() throws Exception {
+        when(repository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/clients/unknown"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_updateClient() throws Exception {
+        var existing = new Client();
+        existing.setId("abc123");
+        existing.setFirstName("John");
+        existing.setLastName("Doe");
+        existing.setPhone("+12125551234");
+        existing.setCreatedAt(Instant.now());
+
+        when(repository.findById("abc123")).thenReturn(Optional.of(existing));
+        when(repository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/clients/abc123")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"Jane","lastName":"Smith","phone":"+13055559999"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Jane"))
+                .andExpect(jsonPath("$.lastName").value("Smith"))
+                .andExpect(jsonPath("$.phone").value("+13055559999"));
+    }
+
+    @Test
+    void should_return404_when_updatingNonexistentClient() throws Exception {
+        when(repository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/clients/unknown")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"Jane","lastName":"Smith","phone":"+13055559999"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_deleteClient() throws Exception {
+        when(repository.existsById("abc123")).thenReturn(true);
+        when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
+                .thenReturn(Collections.emptyList());
+
+        mockMvc.perform(delete("/api/clients/abc123"))
+                .andExpect(status().isNoContent());
+        verify(repository).deleteById("abc123");
+    }
+
+    @Test
+    void should_return400_when_clientHasActiveRides() throws Exception {
+        when(repository.existsById("abc123")).thenReturn(true);
+        var ride = new com.tatalance.ride.Ride();
+        ride.setStatus(RideStatus.SCHEDULED);
+        when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
+                .thenReturn(List.of(ride));
+
+        mockMvc.perform(delete("/api/clients/abc123"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_deletingNonexistentClient() throws Exception {
+        when(repository.existsById("unknown")).thenReturn(false);
+
+        mockMvc.perform(delete("/api/clients/unknown"))
+                .andExpect(status().isNotFound());
     }
 }

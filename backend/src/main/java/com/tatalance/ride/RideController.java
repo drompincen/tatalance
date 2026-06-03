@@ -2,6 +2,9 @@ package com.tatalance.ride;
 
 import com.tatalance.client.Client;
 import com.tatalance.client.ClientRepository;
+import com.tatalance.driver.Availability;
+import com.tatalance.driver.Driver;
+import com.tatalance.driver.DriverRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,10 +25,12 @@ public class RideController {
 
     private final RideRepository rideRepository;
     private final ClientRepository clientRepository;
+    private final DriverRepository driverRepository;
 
-    public RideController(RideRepository rideRepository, ClientRepository clientRepository) {
+    public RideController(RideRepository rideRepository, ClientRepository clientRepository, DriverRepository driverRepository) {
         this.rideRepository = rideRepository;
         this.clientRepository = clientRepository;
+        this.driverRepository = driverRepository;
     }
 
     @Operation(summary = "Create a ride")
@@ -73,6 +78,92 @@ public class RideController {
         return rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc(driverId);
     }
 
+    @Operation(summary = "Assign a driver to a ride")
+    @ApiResponse(responseCode = "200", description = "Driver assigned")
+    @ApiResponse(responseCode = "400", description = "Driver not available or not found")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PostMapping("/rides/{id}/assign")
+    public Ride assignDriver(@PathVariable String id, @RequestBody Map<String, String> body) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+
+        String driverId = body.get("driverId");
+        if (driverId == null || driverId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "driverId is required");
+        }
+
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Driver not found"));
+
+        if (driver.getAvailability() != Availability.AVAILABLE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Driver is not available");
+        }
+
+        // Free previously assigned driver if reassigning
+        if (ride.getAssignedDriverId() != null) {
+            driverRepository.findById(ride.getAssignedDriverId()).ifPresent(prev -> {
+                prev.setAvailability(Availability.AVAILABLE);
+                driverRepository.save(prev);
+            });
+        }
+
+        ride.setAssignedDriverId(driverId);
+        ride.setAssignedDriverName(driver.getFirstName() + " " + driver.getLastName());
+        ride.setStatus(RideStatus.ASSIGNED);
+
+        driver.setAvailability(Availability.ON_TRIP);
+        driverRepository.save(driver);
+
+        return rideRepository.save(ride);
+    }
+
+    @Operation(summary = "Update a scheduled ride")
+    @ApiResponse(responseCode = "200", description = "Ride updated")
+    @ApiResponse(responseCode = "400", description = "Ride not in SCHEDULED status")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PutMapping("/rides/{id}")
+    public Ride update(@PathVariable String id, @Valid @RequestBody Ride updates) {
+        Ride existing = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (existing.getStatus() != RideStatus.SCHEDULED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Only SCHEDULED rides can be edited");
+        }
+        Client client = clientRepository.findById(updates.getClientId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
+        existing.setClientId(updates.getClientId());
+        existing.setClientName(client.getFirstName() + " " + client.getLastName());
+        existing.setPickupDateTime(updates.getPickupDateTime());
+        existing.setPickupLocation(updates.getPickupLocation());
+        existing.setDropoffLocation(updates.getDropoffLocation());
+        existing.setBasePrice(updates.getBasePrice());
+        existing.setNotes(updates.getNotes());
+        return rideRepository.save(existing);
+    }
+
+    @Operation(summary = "Cancel a ride")
+    @ApiResponse(responseCode = "200", description = "Ride cancelled")
+    @ApiResponse(responseCode = "400", description = "Ride cannot be cancelled")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PostMapping("/rides/{id}/cancel")
+    public Ride cancelRide(@PathVariable String id) {
+        Ride ride = rideRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot cancel a " + ride.getStatus() + " ride");
+        }
+        // Free the assigned driver
+        if (ride.getAssignedDriverId() != null) {
+            driverRepository.findById(ride.getAssignedDriverId()).ifPresent(driver -> {
+                driver.setAvailability(Availability.AVAILABLE);
+                driverRepository.save(driver);
+            });
+        }
+        ride.setStatus(RideStatus.CANCELLED);
+        return rideRepository.save(ride);
+    }
+
     @Operation(summary = "Start a ride (mobile driver action)",
             description = "Transitions SCHEDULED or ACCEPTED → IN_PROGRESS and records actualStart=now. "
                     + "Powers the Start button on the driver queue (issue #34).")
@@ -118,5 +209,12 @@ public class RideController {
         Object v = body.get(key);
         if (v instanceof Number n) return new BigDecimal(n.toString());
         return new BigDecimal(v.toString());
+    }
+
+    @Operation(summary = "List available drivers")
+    @ApiResponse(responseCode = "200", description = "Available drivers")
+    @GetMapping("/drivers/available")
+    public List<Driver> listAvailableDrivers() {
+        return driverRepository.findByAvailability(Availability.AVAILABLE);
     }
 }

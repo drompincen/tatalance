@@ -3,6 +3,9 @@ package com.tatalance.ride;
 import com.tatalance.SecurityConfig;
 import com.tatalance.client.Client;
 import com.tatalance.client.ClientRepository;
+import com.tatalance.driver.Availability;
+import com.tatalance.driver.Driver;
+import com.tatalance.driver.DriverRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -19,6 +22,7 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,6 +40,9 @@ class RideControllerTest {
 
     @MockBean
     private ClientRepository clientRepository;
+
+    @MockBean
+    private DriverRepository driverRepository;
 
     private Client sampleClient() {
         var client = new Client();
@@ -59,6 +66,17 @@ class RideControllerTest {
         ride.setStatus(RideStatus.SCHEDULED);
         ride.setCreatedAt(Instant.now());
         return ride;
+    }
+
+    private Driver sampleDriver() {
+        var driver = new Driver();
+        driver.setId("drv001");
+        driver.setFirstName("Carlos");
+        driver.setLastName("Mendez");
+        driver.setPhone("+13055551002");
+        driver.setAvailability(Availability.AVAILABLE);
+        driver.setActive(true);
+        return driver;
     }
 
     @Test
@@ -174,6 +192,92 @@ class RideControllerTest {
     }
 
     @Test
+    void should_assignDriver_when_available() throws Exception {
+        var ride = sampleRide();
+        var driver = sampleDriver();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"drv001"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ASSIGNED"))
+                .andExpect(jsonPath("$.assignedDriverId").value("drv001"))
+                .andExpect(jsonPath("$.assignedDriverName").value("Carlos Mendez"));
+    }
+
+    @Test
+    void should_return400_when_driverNotAvailable() throws Exception {
+        var ride = sampleRide();
+        var driver = sampleDriver();
+        driver.setAvailability(Availability.ON_TRIP);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"drv001"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_driverIdMissing() throws Exception {
+        var ride = sampleRide();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_rideNotFound_forAssign() throws Exception {
+        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/rides/unknown/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"drv001"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_return400_when_driverNotFound() throws Exception {
+        var ride = sampleRide();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(driverRepository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/rides/ride001/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"driverId":"unknown"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_listAvailableDrivers() throws Exception {
+        var driver = sampleDriver();
+        when(driverRepository.findByAvailability(Availability.AVAILABLE)).thenReturn(List.of(driver));
+
+        mockMvc.perform(get("/api/drivers/available"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].firstName").value("Carlos"));
+    }
+
+    @Test
     void should_listRidesByDriver_when_driverAssigned() throws Exception {
         // M3 (#33) — Driver queue endpoint. Returns rides where assignedDriverId
         // matches, sorted by pickupDateTime ascending.
@@ -260,5 +364,101 @@ class RideControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void should_updateScheduledRide() throws Exception {
+        var ride = sampleRide();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(clientRepository.findById("cli001")).thenReturn(Optional.of(sampleClient()));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/rides/ride001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clientId":"cli001","pickupDateTime":"2026-06-02T10:00:00Z",
+                                 "pickupLocation":"Brickell","dropoffLocation":"Wynwood",
+                                 "basePrice":60.00,"notes":"Updated"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pickupLocation").value("Brickell"))
+                .andExpect(jsonPath("$.dropoffLocation").value("Wynwood"))
+                .andExpect(jsonPath("$.notes").value("Updated"));
+    }
+
+    @Test
+    void should_return400_when_updatingAssignedRide() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(put("/api/rides/ride001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clientId":"cli001","pickupDateTime":"2026-06-02T10:00:00Z",
+                                 "pickupLocation":"Brickell","dropoffLocation":"Wynwood"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_updatingNonexistentRide() throws Exception {
+        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/rides/unknown")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clientId":"cli001","pickupDateTime":"2026-06-02T10:00:00Z",
+                                 "pickupLocation":"Brickell","dropoffLocation":"Wynwood"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_cancelScheduledRide() throws Exception {
+        var ride = sampleRide();
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/cancel"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    void should_cancelAssignedRide_and_freeDriver() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        ride.setAssignedDriverId("drv001");
+        var driver = sampleDriver();
+        driver.setAvailability(Availability.ON_TRIP);
+
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/cancel"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+        verify(driverRepository).save(any(Driver.class));
+    }
+
+    @Test
+    void should_return400_when_cancellingCompletedRide() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.COMPLETED);
+        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/cancel"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return404_when_cancellingNonexistentRide() throws Exception {
+        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/rides/unknown/cancel"))
+                .andExpect(status().isNotFound());
     }
 }
