@@ -2,8 +2,8 @@
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
 status: in-progress
 created: 2026-04-27
-updated: 2026-05-27
-current_chapter: epic-3
+updated: 2026-06-08
+current_chapter: epic-5
 ---
 
 # Tatalance v1 Plan
@@ -182,6 +182,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #48 | Filter rides by date range | Epic 4 | feature | completed |
 | #49 | Filter invoices by status | Epic 4 | feature | completed |
 | #50 | Sort tables by column | Epic 4 | feature | completed |
+| #52 | User registration and management | Epic 5 | feature | not started |
+| #53 | Polling wipes form data while editing | Epic 5 | bug | not started |
 
 ---
 
@@ -198,6 +200,26 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | 3 | Filter rides by date range | completed | luciano | #48 |
 | 4 | Filter invoices by status | completed | luciano | #49 |
 | 5 | Sort tables by column headers | completed | luciano | #50 |
+
+---
+
+# Epic 5: Bugfixes & User Management
+**Status:** in-progress
+**Outcome:** Multiple users can register and log in; editing forms no longer wipes data on auto-refresh.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Add user registration and management | not started | luciano | #52 |
+| 2 | Fix: polling wipes form data while editing | not started | luciano | #53 |
+
+## Dependencies
+
+```
+#52 (User registration) — independent, changes SecurityConfig + adds AppUser document
+#53 (Polling fix) — independent, UI-only change (fix already stashed)
+```
 
 ---
 

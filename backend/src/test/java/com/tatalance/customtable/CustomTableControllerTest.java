@@ -1,6 +1,7 @@
 package com.tatalance.customtable;
 
 import com.tatalance.SecurityConfig;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -35,6 +36,9 @@ class CustomTableControllerTest {
 
     @MockBean
     private CustomTableRowRepository rowRepository;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     private CustomTable sampleTable() {
         var table = new CustomTable();

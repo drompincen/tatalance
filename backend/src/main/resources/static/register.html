@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Sign in — Tatalance</title>
+    <title>Create Account — Tatalance</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -83,27 +83,22 @@
             display: none;
         }
         .message-error { background: #fee2e2; color: #991b1b; }
-        .message-info { background: #dbeafe; color: #1e3a8a; }
+        .message-success { background: #d1fae5; color: #065f46; }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <h1>Sign in</h1>
-        <p class="subtitle">Tatalance — chauffeur platform demo</p>
+        <h1>Create Account</h1>
+        <p class="subtitle">Tatalance — chauffeur platform</p>
 
-        <div id="msg-error" class="message message-error" role="alert">
-            Wrong username or password.
-        </div>
-        <div id="msg-info" class="message message-info" role="status">
-            You have been signed out.
-        </div>
+        <div id="msg-error" class="message message-error" role="alert"></div>
+        <div id="msg-success" class="message message-success" role="status"></div>
 
-        <form method="post" action="/login" novalidate>
+        <form id="register-form" novalidate>
             <div class="field">
                 <label for="username">Username</label>
                 <input type="text"
                        id="username"
-                       name="username"
                        autocomplete="username"
                        autocapitalize="off"
                        autocorrect="off"
@@ -115,21 +110,62 @@
                 <label for="password">Password</label>
                 <input type="password"
                        id="password"
-                       name="password"
-                       autocomplete="current-password"
+                       autocomplete="new-password"
                        required>
             </div>
-            <button type="submit">Sign in</button>
+            <div class="field">
+                <label for="confirm">Confirm Password</label>
+                <input type="password"
+                       id="confirm"
+                       autocomplete="new-password"
+                       required>
+            </div>
+            <button type="submit">Create Account</button>
         </form>
         <p style="text-align:center;margin-top:16px;font-size:0.9rem;color:#4b5563">
-            Don't have an account? <a href="/register.html" style="color:#0f3460;font-weight:600">Create one</a>
+            Already have an account? <a href="/login.html" style="color:#0f3460;font-weight:600">Sign in</a>
         </p>
     </div>
 
     <script>
-        var qs = new URLSearchParams(location.search);
-        if (qs.has('error'))  document.getElementById('msg-error').style.display = 'block';
-        if (qs.has('logout')) document.getElementById('msg-info').style.display  = 'block';
+        var form = document.getElementById('register-form');
+        var msgError = document.getElementById('msg-error');
+        var msgSuccess = document.getElementById('msg-success');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            msgError.style.display = 'none';
+            msgSuccess.style.display = 'none';
+
+            var username = document.getElementById('username').value.trim();
+            var password = document.getElementById('password').value;
+            var confirm = document.getElementById('confirm').value;
+
+            if (!username) { showError('Username is required'); return; }
+            if (password.length < 4) { showError('Password must be at least 4 characters'); return; }
+            if (password !== confirm) { showError('Passwords do not match'); return; }
+
+            try {
+                var res = await fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, password: password })
+                });
+                var data = await res.json();
+                if (!res.ok) { showError(data.message || 'Registration failed'); return; }
+                msgSuccess.textContent = data.message || 'Account created!';
+                msgSuccess.style.display = 'block';
+                form.reset();
+                setTimeout(function() { window.location.href = '/login.html'; }, 1500);
+            } catch (err) {
+                showError('Could not reach server');
+            }
+        });
+
+        function showError(msg) {
+            msgError.textContent = msg;
+            msgError.style.display = 'block';
+        }
     </script>
 </body>
 </html>

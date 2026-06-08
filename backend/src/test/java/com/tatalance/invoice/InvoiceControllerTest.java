@@ -4,6 +4,7 @@ import com.tatalance.SecurityConfig;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -37,6 +38,9 @@ class InvoiceControllerTest {
 
     @MockBean
     private RideRepository rideRepository;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     private Ride completedRide() {
         var ride = new Ride();

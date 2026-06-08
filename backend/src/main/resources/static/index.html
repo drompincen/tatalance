@@ -899,12 +899,18 @@
         </table>`;
     }
 
+    function isUserEditingTab(tabId) {
+        const active = document.activeElement;
+        if (!active || active === document.body) return false;
+        return !!active.closest('#' + tabId);
+    }
+
     function load() {
         fetch('/api/clients')
             .then(r => r.json())
             .then(data => {
                 allClientsCache = data;
-                filterClients();
+                if (!isUserEditingTab('tab-clients')) filterClients();
                 document.getElementById('ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -1095,7 +1101,7 @@
         fetch('/api/drivers')
             .then(r => r.json())
             .then(data => {
-                renderDrivers(data);
+                if (!isUserEditingTab('tab-drivers')) renderDrivers(data);
                 document.getElementById('driver-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -1460,7 +1466,9 @@
             .then(r => r.json())
             .then(data => {
                 allRidesCache = data;
-                applyRideFilter();
+                if (!isUserEditingTab('tab-rides')) {
+                    applyRideFilter();
+                }
                 document.getElementById('ride-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -1657,7 +1665,7 @@
             .then(r => r.json())
             .then(data => {
                 allInvoicesCache = data;
-                applyInvoiceFilter();
+                if (!isUserEditingTab('tab-invoices')) applyInvoiceFilter();
                 document.getElementById('invoice-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })

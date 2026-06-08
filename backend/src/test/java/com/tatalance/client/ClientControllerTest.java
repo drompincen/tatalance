@@ -3,6 +3,7 @@ package com.tatalance.client;
 import com.tatalance.SecurityConfig;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -37,6 +38,9 @@ class ClientControllerTest {
 
     @MockBean
     private RideRepository rideRepository;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Test
     void should_returnCreatedClient_when_validFirstNameAndLastName() throws Exception {

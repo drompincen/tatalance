@@ -6,6 +6,7 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
 import com.tatalance.driver.Driver;
 import com.tatalance.driver.DriverRepository;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -43,6 +44,9 @@ class RideControllerTest {
 
     @MockBean
     private DriverRepository driverRepository;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     private Client sampleClient() {
         var client = new Client();
