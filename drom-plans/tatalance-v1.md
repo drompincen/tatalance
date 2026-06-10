@@ -2,8 +2,8 @@
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
 status: in-progress
 created: 2026-04-27
-updated: 2026-06-08
-current_chapter: epic-5
+updated: 2026-06-10
+current_chapter: epic-6
 ---
 
 # Tatalance v1 Plan
@@ -182,8 +182,24 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #48 | Filter rides by date range | Epic 4 | feature | completed |
 | #49 | Filter invoices by status | Epic 4 | feature | completed |
 | #50 | Sort tables by column | Epic 4 | feature | completed |
-| #52 | User registration and management | Epic 5 | feature | not started |
-| #53 | Polling wipes form data while editing | Epic 5 | bug | not started |
+| #52 | User registration and management | Epic 5 | feature | completed |
+| #53 | Polling wipes form data while editing | Epic 5 | bug | completed |
+| #54 | Per-user data isolation (epic) | Epic 6 | epic | not started |
+| #55 | Foundation: userId + auth helper + migration | Epic 6 | feature | not started |
+| #56 | Scope Client & Driver by userId | Epic 6 | feature | not started |
+| #57 | Scope Ride by userId | Epic 6 | feature | not started |
+| #58 | Scope Invoice by userId | Epic 6 | feature | not started |
+| #59 | Scope Custom Tables by userId | Epic 6 | feature | not started |
+| #60 | Update all tests for data isolation | Epic 6 | qa | not started |
+| #61 | Security hardening (epic) | Epic 7 | epic | not started |
+| #62 | Logout button + username display | Epic 7 | feature | not started |
+| #63 | Password change | Epic 7 | feature | not started |
+| #64 | Forgot password / password reset | Epic 7 | feature | not started |
+| #65 | Re-enable CSRF protection | Epic 7 | feature | not started |
+| #66 | Practical gaps (epic) | Epic 8 | epic | not started |
+| #67 | Prevent booking rides in the past | Epic 8 | bug | not started |
+| #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | not started |
+| #69 | Pagination for all list endpoints | Epic 8 | feature | not started |
 
 ---
 
@@ -211,8 +227,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | Add user registration and management | not started | luciano | #52 |
-| 2 | Fix: polling wipes form data while editing | not started | luciano | #53 |
+| 1 | Add user registration and management | completed | luciano | #52 |
+| 2 | Fix: polling wipes form data while editing | completed | luciano | #53 |
 
 ## Dependencies
 
@@ -223,10 +239,100 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 ---
 
-# What's NOT in v1
+# Epic 6: Per-user data isolation (multi-tenancy)
+**Status:** not started
+**Outcome:** Each user sees only their own data. User A's clients, drivers, rides, invoices, and custom tables are invisible to User B.
+**Depends on:** Epic 5 (#52 — user registration)
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Foundation: userId field + auth helper + data migration | not started | luciano | #55 |
+| 2 | Scope Client & Driver by userId | not started | luciano | #56 |
+| 3 | Scope Ride by userId | not started | luciano | #57 |
+| 4 | Scope Invoice by userId | not started | luciano | #58 |
+| 5 | Scope Custom Tables by userId | not started | luciano | #59 |
+| 6 | Update all tests for data isolation | not started | luciano | #60 |
+
+## Dependencies
+
+```
+#55 (Foundation) — first, adds userId field + AuthHelper
+  |
+  ├──> #56 (Client & Driver) — independent from #59
+  |       |
+  |       └──> #57 (Ride) — needs Client & Driver scoped
+  |               |
+  |               └──> #58 (Invoice) — needs Ride scoped
+  |
+  └──> #59 (Custom Tables) — independent from #56-#58
+
+#60 (Tests) — last, after all scoping stories
+```
+
+## Key decisions
+- Return 404 (not 403) when accessing another user's data — no information leakage
+- Invoice numbers are per-user (INV-YYYY-001, 002...) to avoid collisions
+- Existing data migrated to admin user on startup (idempotent)
+- LINK columns in custom tables can only reference the current user's tables
+
+---
+
+# Epic 7: Security hardening
+**Status:** not started
+**Outcome:** Users can sign out, change passwords, recover accounts, and the app is protected against CSRF.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Logout button + username display in header | not started | luciano | #62 |
+| 2 | Password change | not started | luciano | #63 |
+| 3 | Forgot password / password reset | not started | luciano | #64 |
+| 4 | Re-enable CSRF protection | not started | luciano | #65 |
+
+## Dependencies
+
+```
+#62 (Logout + username) — first, establishes user menu in header
+  ├──> #63 (Password change) — adds to user menu
+  └──> #64 (Forgot password) — adds to login page
+#65 (CSRF) — independent, can be done anytime
+```
+
+---
+
+# Epic 8: Practical gaps
+**Status:** not started
+**Outcome:** The app handles real-world edge cases — no past dates, no duplicate clients, no performance cliffs.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Prevent booking rides in the past | not started | luciano | #67 |
+| 2 | Prevent duplicate clients (same phone) | not started | luciano | #68 |
+| 3 | Pagination for all list endpoints | not started | luciano | #69 |
+
+## Dependencies
+
+```
+#67 (Past dates) — independent
+#68 (Duplicate clients) — independent (compound index with userId after Epic 6)
+#69 (Pagination) — best done after Epic 6 (queries already scoped by userId)
+```
+
+---
+
+# What's NOT in v1 (nice-to-haves for later)
 
 | Feature | Why deferred |
 |---|---|
+| Dashboard stats (rides, revenue, outstanding) | Needs data volume to be meaningful |
+| Export invoices to PDF/CSV | Useful but not blocking core workflow |
+| Ride reminders / notifications | Needs notification infrastructure |
+| Activity log (who changed what) | Audit trail — add when multi-user is stable |
 | Driver self-service UI | David manages everything in MVP |
 | Driver payouts | Not needed for core book-to-pay loop |
 | VIP preferences | Nice-to-have fields for later |
