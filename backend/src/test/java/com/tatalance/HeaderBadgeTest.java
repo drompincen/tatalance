@@ -7,6 +7,7 @@ import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.user.AppUserRepository;
+import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,9 @@ class HeaderBadgeTest {
 
     @MockBean
     AppUserRepository appUserRepository;
+
+    @MockBean
+    AuthHelper authHelper;
 
     @Test
     void should_haveDynamicDbBadgeElement() throws Exception {

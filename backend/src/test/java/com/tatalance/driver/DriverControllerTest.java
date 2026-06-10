@@ -3,7 +3,9 @@ package com.tatalance.driver;
 import com.tatalance.SecurityConfig;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,6 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class DriverControllerTest {
 
+    private static final String TEST_USER_ID = "user123";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -42,6 +46,14 @@ class DriverControllerTest {
 
     @MockBean
     private UserDetailsService userDetailsService;
+
+    @MockBean
+    private AuthHelper authHelper;
+
+    @BeforeEach
+    void setUp() {
+        when(authHelper.getCurrentUserId()).thenReturn(TEST_USER_ID);
+    }
 
     private Driver sampleDriver() {
         var driver = new Driver();
@@ -133,7 +145,7 @@ class DriverControllerTest {
 
     @Test
     void should_returnDriverList() throws Exception {
-        when(repository.findAll()).thenReturn(List.of(sampleDriver()));
+        when(repository.findByUserId(TEST_USER_ID)).thenReturn(List.of(sampleDriver()));
 
         mockMvc.perform(get("/api/drivers"))
                 .andExpect(status().isOk())
@@ -143,7 +155,7 @@ class DriverControllerTest {
 
     @Test
     void should_returnDriver_when_idExists() throws Exception {
-        when(repository.findById("drv001")).thenReturn(Optional.of(sampleDriver()));
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(sampleDriver()));
 
         mockMvc.perform(get("/api/drivers/drv001"))
                 .andExpect(status().isOk())
@@ -152,7 +164,7 @@ class DriverControllerTest {
 
     @Test
     void should_return404_when_idNotFound() throws Exception {
-        when(repository.findById("unknown")).thenReturn(Optional.empty());
+        when(repository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/drivers/unknown"))
                 .andExpect(status().isNotFound());
@@ -161,7 +173,7 @@ class DriverControllerTest {
     @Test
     void should_updateAvailability() throws Exception {
         var driver = sampleDriver();
-        when(repository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
         when(repository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(patch("/api/drivers/drv001/availability")
@@ -175,7 +187,7 @@ class DriverControllerTest {
 
     @Test
     void should_return400_when_invalidAvailability() throws Exception {
-        when(repository.findById("drv001")).thenReturn(Optional.of(sampleDriver()));
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(sampleDriver()));
 
         mockMvc.perform(patch("/api/drivers/drv001/availability")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -187,7 +199,7 @@ class DriverControllerTest {
 
     @Test
     void should_updateDriver() throws Exception {
-        when(repository.findById("drv001")).thenReturn(Optional.of(sampleDriver()));
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(sampleDriver()));
         when(repository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(put("/api/drivers/drv001")
@@ -205,7 +217,7 @@ class DriverControllerTest {
 
     @Test
     void should_return404_when_updatingNonexistentDriver() throws Exception {
-        when(repository.findById("unknown")).thenReturn(Optional.empty());
+        when(repository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/api/drivers/unknown")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,7 +230,7 @@ class DriverControllerTest {
 
     @Test
     void should_deleteDriver() throws Exception {
-        when(repository.existsById("drv001")).thenReturn(true);
+        when(repository.existsByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(true);
         when(rideRepository.findByAssignedDriverIdAndStatusIn(eq("drv001"), any()))
                 .thenReturn(Collections.emptyList());
 
@@ -229,7 +241,7 @@ class DriverControllerTest {
 
     @Test
     void should_return400_when_driverHasActiveRides() throws Exception {
-        when(repository.existsById("drv001")).thenReturn(true);
+        when(repository.existsByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(true);
         var ride = new com.tatalance.ride.Ride();
         ride.setStatus(RideStatus.IN_PROGRESS);
         when(rideRepository.findByAssignedDriverIdAndStatusIn(eq("drv001"), any()))
@@ -241,7 +253,7 @@ class DriverControllerTest {
 
     @Test
     void should_return404_when_deletingNonexistentDriver() throws Exception {
-        when(repository.existsById("unknown")).thenReturn(false);
+        when(repository.existsByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(false);
 
         mockMvc.perform(delete("/api/drivers/unknown"))
                 .andExpect(status().isNotFound());

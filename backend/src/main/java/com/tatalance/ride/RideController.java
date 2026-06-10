@@ -5,6 +5,7 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
 import com.tatalance.driver.Driver;
 import com.tatalance.driver.DriverRepository;
+import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,11 +27,14 @@ public class RideController {
     private final RideRepository rideRepository;
     private final ClientRepository clientRepository;
     private final DriverRepository driverRepository;
+    private final AuthHelper authHelper;
 
-    public RideController(RideRepository rideRepository, ClientRepository clientRepository, DriverRepository driverRepository) {
+    public RideController(RideRepository rideRepository, ClientRepository clientRepository,
+                          DriverRepository driverRepository, AuthHelper authHelper) {
         this.rideRepository = rideRepository;
         this.clientRepository = clientRepository;
         this.driverRepository = driverRepository;
+        this.authHelper = authHelper;
     }
 
     @Operation(summary = "Create a ride")
@@ -38,8 +42,10 @@ public class RideController {
     @PostMapping("/rides")
     @ResponseStatus(HttpStatus.CREATED)
     public Ride create(@Valid @RequestBody Ride ride) {
-        Client client = clientRepository.findById(ride.getClientId())
+        String userId = authHelper.getCurrentUserId();
+        Client client = clientRepository.findByIdAndUserId(ride.getClientId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
+        ride.setUserId(userId);
         ride.setClientName(client.getFirstName() + " " + client.getLastName());
         ride.setStatus(RideStatus.SCHEDULED);
         ride.setCreatedAt(Instant.now());
@@ -50,7 +56,7 @@ public class RideController {
     @ApiResponse(responseCode = "200", description = "Ride list")
     @GetMapping("/rides")
     public List<Ride> list() {
-        return rideRepository.findAll();
+        return rideRepository.findByUserId(authHelper.getCurrentUserId());
     }
 
     @Operation(summary = "Get ride by id")
@@ -58,7 +64,7 @@ public class RideController {
     @ApiResponse(responseCode = "404", description = "Ride not found")
     @GetMapping("/rides/{id}")
     public Ride getById(@PathVariable String id) {
-        return rideRepository.findById(id)
+        return rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
     }
 
@@ -84,7 +90,8 @@ public class RideController {
     @ApiResponse(responseCode = "404", description = "Ride not found")
     @PostMapping("/rides/{id}/assign")
     public Ride assignDriver(@PathVariable String id, @RequestBody Map<String, String> body) {
-        Ride ride = rideRepository.findById(id)
+        String userId = authHelper.getCurrentUserId();
+        Ride ride = rideRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
 
         String driverId = body.get("driverId");
@@ -92,7 +99,7 @@ public class RideController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "driverId is required");
         }
 
-        Driver driver = driverRepository.findById(driverId)
+        Driver driver = driverRepository.findByIdAndUserId(driverId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Driver not found"));
 
         if (driver.getAvailability() != Availability.AVAILABLE) {
@@ -101,7 +108,7 @@ public class RideController {
 
         // Free previously assigned driver if reassigning
         if (ride.getAssignedDriverId() != null) {
-            driverRepository.findById(ride.getAssignedDriverId()).ifPresent(prev -> {
+            driverRepository.findByIdAndUserId(ride.getAssignedDriverId(), userId).ifPresent(prev -> {
                 prev.setAvailability(Availability.AVAILABLE);
                 driverRepository.save(prev);
             });
@@ -123,13 +130,14 @@ public class RideController {
     @ApiResponse(responseCode = "404", description = "Ride not found")
     @PutMapping("/rides/{id}")
     public Ride update(@PathVariable String id, @Valid @RequestBody Ride updates) {
-        Ride existing = rideRepository.findById(id)
+        String userId = authHelper.getCurrentUserId();
+        Ride existing = rideRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
         if (existing.getStatus() != RideStatus.SCHEDULED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Only SCHEDULED rides can be edited");
         }
-        Client client = clientRepository.findById(updates.getClientId())
+        Client client = clientRepository.findByIdAndUserId(updates.getClientId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
         existing.setClientId(updates.getClientId());
         existing.setClientName(client.getFirstName() + " " + client.getLastName());
@@ -147,7 +155,8 @@ public class RideController {
     @ApiResponse(responseCode = "404", description = "Ride not found")
     @PostMapping("/rides/{id}/cancel")
     public Ride cancelRide(@PathVariable String id) {
-        Ride ride = rideRepository.findById(id)
+        String userId = authHelper.getCurrentUserId();
+        Ride ride = rideRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
         if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -155,7 +164,7 @@ public class RideController {
         }
         // Free the assigned driver
         if (ride.getAssignedDriverId() != null) {
-            driverRepository.findById(ride.getAssignedDriverId()).ifPresent(driver -> {
+            driverRepository.findByIdAndUserId(ride.getAssignedDriverId(), userId).ifPresent(driver -> {
                 driver.setAvailability(Availability.AVAILABLE);
                 driverRepository.save(driver);
             });
@@ -169,7 +178,7 @@ public class RideController {
                     + "Powers the Start button on the driver queue (issue #34).")
     @PostMapping("/rides/{id}/start")
     public Ride start(@PathVariable String id) {
-        Ride ride = rideRepository.findById(id)
+        Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
         if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -185,7 +194,7 @@ public class RideController {
                     + "additionalCharges; billableAmount = basePrice + extras. Issue #34.")
     @PostMapping("/rides/{id}/complete")
     public Ride complete(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        Ride ride = rideRepository.findById(id)
+        Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
         if (ride.getStatus() != RideStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,

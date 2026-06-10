@@ -4,7 +4,9 @@ import com.tatalance.SecurityConfig;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -30,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class InvoiceControllerTest {
 
+    private static final String TEST_USER_ID = "user123";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -41,6 +45,14 @@ class InvoiceControllerTest {
 
     @MockBean
     private UserDetailsService userDetailsService;
+
+    @MockBean
+    private AuthHelper authHelper;
+
+    @BeforeEach
+    void setUp() {
+        when(authHelper.getCurrentUserId()).thenReturn(TEST_USER_ID);
+    }
 
     private Ride completedRide() {
         var ride = new Ride();
@@ -77,8 +89,8 @@ class InvoiceControllerTest {
 
     @Test
     void should_createInvoice_fromCompletedRide() throws Exception {
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(completedRide()));
-        when(invoiceRepository.count()).thenReturn(0L);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(completedRide()));
+        when(invoiceRepository.countByUserId(TEST_USER_ID)).thenReturn(0L);
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> {
             Invoice i = inv.getArgument(0);
             i.setId("inv001");
@@ -104,7 +116,7 @@ class InvoiceControllerTest {
     void should_return400_when_rideNotCompleted() throws Exception {
         var ride = completedRide();
         ride.setStatus(RideStatus.ASSIGNED);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
 
         mockMvc.perform(post("/api/invoices")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -116,7 +128,7 @@ class InvoiceControllerTest {
 
     @Test
     void should_return400_when_rideNotFound() throws Exception {
-        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(rideRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/invoices")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -138,7 +150,7 @@ class InvoiceControllerTest {
 
     @Test
     void should_listInvoices() throws Exception {
-        when(invoiceRepository.findAll()).thenReturn(List.of(sampleInvoice()));
+        when(invoiceRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(sampleInvoice()));
 
         mockMvc.perform(get("/api/invoices"))
                 .andExpect(status().isOk())
@@ -148,7 +160,7 @@ class InvoiceControllerTest {
 
     @Test
     void should_getInvoiceById() throws Exception {
-        when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(sampleInvoice()));
+        when(invoiceRepository.findByIdAndUserId("inv001", TEST_USER_ID)).thenReturn(Optional.of(sampleInvoice()));
 
         mockMvc.perform(get("/api/invoices/inv001"))
                 .andExpect(status().isOk())
@@ -157,7 +169,7 @@ class InvoiceControllerTest {
 
     @Test
     void should_return404_when_invoiceNotFound() throws Exception {
-        when(invoiceRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(invoiceRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/invoices/unknown"))
                 .andExpect(status().isNotFound());
@@ -169,8 +181,8 @@ class InvoiceControllerTest {
         ride.setTolls(null);
         ride.setParking(null);
         ride.setAdditionalCharges(null);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-        when(invoiceRepository.count()).thenReturn(2L);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(invoiceRepository.countByUserId(TEST_USER_ID)).thenReturn(2L);
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> {
             Invoice i = inv.getArgument(0);
             i.setId("inv003");
@@ -193,7 +205,7 @@ class InvoiceControllerTest {
     @Test
     void should_markOutstandingAsPaid() throws Exception {
         var invoice = sampleInvoice();
-        when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.findByIdAndUserId("inv001", TEST_USER_ID)).thenReturn(Optional.of(invoice));
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/invoices/inv001/mark-paid"))
@@ -205,7 +217,7 @@ class InvoiceControllerTest {
     void should_togglePaidBackToOutstanding() throws Exception {
         var invoice = sampleInvoice();
         invoice.setStatus(InvoiceStatus.PAID);
-        when(invoiceRepository.findById("inv001")).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.findByIdAndUserId("inv001", TEST_USER_ID)).thenReturn(Optional.of(invoice));
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/invoices/inv001/mark-paid"))
@@ -215,7 +227,7 @@ class InvoiceControllerTest {
 
     @Test
     void should_return404_when_markingNonexistentInvoice() throws Exception {
-        when(invoiceRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(invoiceRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/invoices/unknown/mark-paid"))
                 .andExpect(status().isNotFound());

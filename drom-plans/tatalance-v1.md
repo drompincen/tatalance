@@ -3,7 +3,7 @@ title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
 status: in-progress
 created: 2026-04-27
 updated: 2026-06-10
-current_chapter: epic-6
+current_chapter: epic-7
 ---
 
 # Tatalance v1 Plan
@@ -184,13 +184,13 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #50 | Sort tables by column | Epic 4 | feature | completed |
 | #52 | User registration and management | Epic 5 | feature | completed |
 | #53 | Polling wipes form data while editing | Epic 5 | bug | completed |
-| #54 | Per-user data isolation (epic) | Epic 6 | epic | not started |
-| #55 | Foundation: userId + auth helper + migration | Epic 6 | feature | not started |
-| #56 | Scope Client & Driver by userId | Epic 6 | feature | not started |
-| #57 | Scope Ride by userId | Epic 6 | feature | not started |
-| #58 | Scope Invoice by userId | Epic 6 | feature | not started |
-| #59 | Scope Custom Tables by userId | Epic 6 | feature | not started |
-| #60 | Update all tests for data isolation | Epic 6 | qa | not started |
+| #54 | Per-user data isolation (epic) | Epic 6 | epic | completed |
+| #55 | Foundation: userId + auth helper + migration | Epic 6 | feature | completed |
+| #56 | Scope Client & Driver by userId | Epic 6 | feature | completed |
+| #57 | Scope Ride by userId | Epic 6 | feature | completed |
+| #58 | Scope Invoice by userId | Epic 6 | feature | completed |
+| #59 | Scope Custom Tables by userId | Epic 6 | feature | completed |
+| #60 | Update all tests for data isolation | Epic 6 | qa | completed |
 | #61 | Security hardening (epic) | Epic 7 | epic | not started |
 | #62 | Logout button + username display | Epic 7 | feature | not started |
 | #63 | Password change | Epic 7 | feature | not started |
@@ -240,7 +240,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 6: Per-user data isolation (multi-tenancy)
-**Status:** not started
+**Status:** completed
 **Outcome:** Each user sees only their own data. User A's clients, drivers, rides, invoices, and custom tables are invisible to User B.
 **Depends on:** Epic 5 (#52 — user registration)
 
@@ -248,12 +248,12 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | Foundation: userId field + auth helper + data migration | not started | luciano | #55 |
-| 2 | Scope Client & Driver by userId | not started | luciano | #56 |
-| 3 | Scope Ride by userId | not started | luciano | #57 |
-| 4 | Scope Invoice by userId | not started | luciano | #58 |
-| 5 | Scope Custom Tables by userId | not started | luciano | #59 |
-| 6 | Update all tests for data isolation | not started | luciano | #60 |
+| 1 | Foundation: userId field + auth helper + data migration | completed | luciano | #55 |
+| 2 | Scope Client & Driver by userId | completed | luciano | #56 |
+| 3 | Scope Ride by userId | completed | luciano | #57 |
+| 4 | Scope Invoice by userId | completed | luciano | #58 |
+| 5 | Scope Custom Tables by userId | completed | luciano | #59 |
+| 6 | Update all tests for data isolation | completed | luciano | #60 |
 
 ## Dependencies
 

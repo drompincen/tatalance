@@ -7,6 +7,7 @@ import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.user.AppUserRepository;
+import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.http.MediaType;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -57,6 +59,9 @@ class SecurityConfigTest {
     @MockBean
     AppUserRepository appUserRepository;
 
+    @MockBean
+    AuthHelper authHelper;
+
     @Test
     void should_return401_when_apiRequestUnauthenticated() throws Exception {
         mockMvc.perform(get("/api/clients"))
@@ -75,7 +80,8 @@ class SecurityConfigTest {
     @Test
     @WithMockUser
     void should_returnOk_when_authenticated() throws Exception {
-        when(repository.findAll()).thenReturn(List.of());
+        when(authHelper.getCurrentUserId()).thenReturn("testuser");
+        when(repository.findByUserId(any())).thenReturn(List.of());
         mockMvc.perform(get("/api/clients"))
             .andExpect(status().isOk());
     }

@@ -6,7 +6,9 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
 import com.tatalance.driver.Driver;
 import com.tatalance.driver.DriverRepository;
+import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -33,6 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class RideControllerTest {
 
+    private static final String TEST_USER_ID = "user123";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -47,6 +51,14 @@ class RideControllerTest {
 
     @MockBean
     private UserDetailsService userDetailsService;
+
+    @MockBean
+    private AuthHelper authHelper;
+
+    @BeforeEach
+    void setUp() {
+        when(authHelper.getCurrentUserId()).thenReturn(TEST_USER_ID);
+    }
 
     private Client sampleClient() {
         var client = new Client();
@@ -85,7 +97,7 @@ class RideControllerTest {
 
     @Test
     void should_createRide_when_validInput() throws Exception {
-        when(clientRepository.findById("cli001")).thenReturn(Optional.of(sampleClient()));
+        when(clientRepository.findByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(Optional.of(sampleClient()));
         when(rideRepository.save(any(Ride.class))).thenReturn(sampleRide());
 
         mockMvc.perform(post("/api/rides")
@@ -147,7 +159,7 @@ class RideControllerTest {
 
     @Test
     void should_return400_when_clientNotFound() throws Exception {
-        when(clientRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(clientRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/rides")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,7 +172,7 @@ class RideControllerTest {
 
     @Test
     void should_listAllRides() throws Exception {
-        when(rideRepository.findAll()).thenReturn(List.of(sampleRide()));
+        when(rideRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(sampleRide()));
 
         mockMvc.perform(get("/api/rides"))
                 .andExpect(status().isOk())
@@ -170,7 +182,7 @@ class RideControllerTest {
 
     @Test
     void should_getRideById() throws Exception {
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(sampleRide()));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(sampleRide()));
 
         mockMvc.perform(get("/api/rides/ride001"))
                 .andExpect(status().isOk())
@@ -179,7 +191,7 @@ class RideControllerTest {
 
     @Test
     void should_return404_when_rideNotFound() throws Exception {
-        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(rideRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/rides/unknown"))
                 .andExpect(status().isNotFound());
@@ -199,8 +211,8 @@ class RideControllerTest {
     void should_assignDriver_when_available() throws Exception {
         var ride = sampleRide();
         var driver = sampleDriver();
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(driverRepository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
         when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
         when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -220,8 +232,8 @@ class RideControllerTest {
         var ride = sampleRide();
         var driver = sampleDriver();
         driver.setAvailability(Availability.ON_TRIP);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(driverRepository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
 
         mockMvc.perform(post("/api/rides/ride001/assign")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -234,7 +246,7 @@ class RideControllerTest {
     @Test
     void should_return400_when_driverIdMissing() throws Exception {
         var ride = sampleRide();
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
 
         mockMvc.perform(post("/api/rides/ride001/assign")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -246,7 +258,7 @@ class RideControllerTest {
 
     @Test
     void should_return404_when_rideNotFound_forAssign() throws Exception {
-        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(rideRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/rides/unknown/assign")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -259,8 +271,8 @@ class RideControllerTest {
     @Test
     void should_return400_when_driverNotFound() throws Exception {
         var ride = sampleRide();
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-        when(driverRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(driverRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/rides/ride001/assign")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -312,7 +324,7 @@ class RideControllerTest {
         // M4 (#34) — start endpoint, transitions to IN_PROGRESS + actualStart=now
         var ride = sampleRide();
         ride.setStatus(RideStatus.SCHEDULED);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
         when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/rides/ride001/start"))
@@ -323,7 +335,7 @@ class RideControllerTest {
 
     @Test
     void should_return404_when_startingMissingRide() throws Exception {
-        when(rideRepository.findById("missing")).thenReturn(Optional.empty());
+        when(rideRepository.findByIdAndUserId("missing", TEST_USER_ID)).thenReturn(Optional.empty());
         mockMvc.perform(post("/api/rides/missing/start"))
                 .andExpect(status().isNotFound());
     }
@@ -332,7 +344,7 @@ class RideControllerTest {
     void should_return409_when_startingAlreadyCompletedRide() throws Exception {
         var ride = sampleRide();
         ride.setStatus(RideStatus.COMPLETED);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
 
         mockMvc.perform(post("/api/rides/ride001/start"))
                 .andExpect(status().isConflict());
@@ -344,7 +356,7 @@ class RideControllerTest {
         var ride = sampleRide();
         ride.setStatus(RideStatus.IN_PROGRESS);
         ride.setBasePrice(new BigDecimal("85.00"));
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
         when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/rides/ride001/complete")
@@ -362,7 +374,7 @@ class RideControllerTest {
     void should_return409_when_completingScheduledRide() throws Exception {
         var ride = sampleRide();
         ride.setStatus(RideStatus.SCHEDULED);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
 
         mockMvc.perform(post("/api/rides/ride001/complete")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -373,8 +385,8 @@ class RideControllerTest {
     @Test
     void should_updateScheduledRide() throws Exception {
         var ride = sampleRide();
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
-        when(clientRepository.findById("cli001")).thenReturn(Optional.of(sampleClient()));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(clientRepository.findByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(Optional.of(sampleClient()));
         when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(put("/api/rides/ride001")
@@ -394,7 +406,7 @@ class RideControllerTest {
     void should_return400_when_updatingAssignedRide() throws Exception {
         var ride = sampleRide();
         ride.setStatus(RideStatus.ASSIGNED);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
 
         mockMvc.perform(put("/api/rides/ride001")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -407,7 +419,7 @@ class RideControllerTest {
 
     @Test
     void should_return404_when_updatingNonexistentRide() throws Exception {
-        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(rideRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/api/rides/unknown")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -421,7 +433,7 @@ class RideControllerTest {
     @Test
     void should_cancelScheduledRide() throws Exception {
         var ride = sampleRide();
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
         when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/rides/ride001/cancel"))
@@ -437,9 +449,9 @@ class RideControllerTest {
         var driver = sampleDriver();
         driver.setAvailability(Availability.ON_TRIP);
 
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
         when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(driverRepository.findById("drv001")).thenReturn(Optional.of(driver));
+        when(driverRepository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
         when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/rides/ride001/cancel"))
@@ -452,7 +464,7 @@ class RideControllerTest {
     void should_return400_when_cancellingCompletedRide() throws Exception {
         var ride = sampleRide();
         ride.setStatus(RideStatus.COMPLETED);
-        when(rideRepository.findById("ride001")).thenReturn(Optional.of(ride));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
 
         mockMvc.perform(post("/api/rides/ride001/cancel"))
                 .andExpect(status().isBadRequest());
@@ -460,7 +472,7 @@ class RideControllerTest {
 
     @Test
     void should_return404_when_cancellingNonexistentRide() throws Exception {
-        when(rideRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(rideRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/rides/unknown/cancel"))
                 .andExpect(status().isNotFound());

@@ -2,6 +2,7 @@ package com.tatalance.driver;
 
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,17 +22,19 @@ public class DriverController {
 
     private final DriverRepository repository;
     private final RideRepository rideRepository;
+    private final AuthHelper authHelper;
 
-    public DriverController(DriverRepository repository, RideRepository rideRepository) {
+    public DriverController(DriverRepository repository, RideRepository rideRepository, AuthHelper authHelper) {
         this.repository = repository;
         this.rideRepository = rideRepository;
+        this.authHelper = authHelper;
     }
 
     @Operation(summary = "List all drivers")
     @ApiResponse(responseCode = "200", description = "Driver list")
     @GetMapping
     public List<Driver> list() {
-        return repository.findAll();
+        return repository.findByUserId(authHelper.getCurrentUserId());
     }
 
     @Operation(summary = "Get driver by id")
@@ -39,7 +42,7 @@ public class DriverController {
     @ApiResponse(responseCode = "404", description = "Driver not found")
     @GetMapping("/{id}")
     public Driver getById(@PathVariable String id) {
-        return repository.findById(id)
+        return repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
     }
 
@@ -48,6 +51,7 @@ public class DriverController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Driver create(@Valid @RequestBody Driver driver) {
+        driver.setUserId(authHelper.getCurrentUserId());
         driver.setCreatedAt(Instant.now());
         return repository.save(driver);
     }
@@ -57,7 +61,7 @@ public class DriverController {
     @ApiResponse(responseCode = "404", description = "Driver not found")
     @PutMapping("/{id}")
     public Driver update(@PathVariable String id, @Valid @RequestBody Driver updates) {
-        Driver existing = repository.findById(id)
+        Driver existing = repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
         existing.setFirstName(updates.getFirstName());
         existing.setLastName(updates.getLastName());
@@ -76,7 +80,7 @@ public class DriverController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
         }
         var activeRides = rideRepository.findByAssignedDriverIdAndStatusIn(id,
@@ -93,7 +97,7 @@ public class DriverController {
     @ApiResponse(responseCode = "404", description = "Driver not found")
     @PatchMapping("/{id}/availability")
     public Driver updateAvailability(@PathVariable String id, @RequestBody Map<String, String> body) {
-        Driver driver = repository.findById(id)
+        Driver driver = repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
         String availability = body.get("availability");
         if (availability == null) {

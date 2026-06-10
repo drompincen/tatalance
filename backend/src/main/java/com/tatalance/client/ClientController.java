@@ -2,6 +2,7 @@ package com.tatalance.client;
 
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,17 +21,19 @@ public class ClientController {
 
     private final ClientRepository repository;
     private final RideRepository rideRepository;
+    private final AuthHelper authHelper;
 
-    public ClientController(ClientRepository repository, RideRepository rideRepository) {
+    public ClientController(ClientRepository repository, RideRepository rideRepository, AuthHelper authHelper) {
         this.repository = repository;
         this.rideRepository = rideRepository;
+        this.authHelper = authHelper;
     }
 
     @Operation(summary = "List all clients")
     @ApiResponse(responseCode = "200", description = "Client list")
     @GetMapping
     public List<Client> list() {
-        return repository.findAll();
+        return repository.findByUserId(authHelper.getCurrentUserId());
     }
 
     @Operation(summary = "Get client by id")
@@ -38,7 +41,7 @@ public class ClientController {
     @ApiResponse(responseCode = "404", description = "Client not found")
     @GetMapping("/{id}")
     public Client getById(@PathVariable String id) {
-        return repository.findById(id)
+        return repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
     }
 
@@ -47,6 +50,7 @@ public class ClientController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Client create(@Valid @RequestBody Client client) {
+        client.setUserId(authHelper.getCurrentUserId());
         client.setCreatedAt(Instant.now());
         return repository.save(client);
     }
@@ -56,7 +60,7 @@ public class ClientController {
     @ApiResponse(responseCode = "404", description = "Client not found")
     @PutMapping("/{id}")
     public Client update(@PathVariable String id, @Valid @RequestBody Client updates) {
-        Client existing = repository.findById(id)
+        Client existing = repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
         existing.setFirstName(updates.getFirstName());
         existing.setLastName(updates.getLastName());
@@ -72,7 +76,7 @@ public class ClientController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
-        if (!repository.existsById(id)) {
+        if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
         }
         var activeRides = rideRepository.findByClientIdAndStatusIn(id,

@@ -3,7 +3,9 @@ package com.tatalance.client;
 import com.tatalance.SecurityConfig;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -30,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class ClientControllerTest {
 
+    private static final String TEST_USER_ID = "user123";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -41,6 +45,14 @@ class ClientControllerTest {
 
     @MockBean
     private UserDetailsService userDetailsService;
+
+    @MockBean
+    private AuthHelper authHelper;
+
+    @BeforeEach
+    void setUp() {
+        when(authHelper.getCurrentUserId()).thenReturn(TEST_USER_ID);
+    }
 
     @Test
     void should_returnCreatedClient_when_validFirstNameAndLastName() throws Exception {
@@ -133,7 +145,7 @@ class ClientControllerTest {
         client.setPhone("+12125551234");
         client.setCreatedAt(Instant.now());
 
-        when(repository.findAll()).thenReturn(List.of(client));
+        when(repository.findByUserId(TEST_USER_ID)).thenReturn(List.of(client));
 
         mockMvc.perform(get("/api/clients"))
                 .andExpect(status().isOk())
@@ -149,7 +161,7 @@ class ClientControllerTest {
         client.setFirstName("John");
         client.setLastName("Doe");
         client.setPhone("+12125551234");
-        when(repository.findById("abc123")).thenReturn(Optional.of(client));
+        when(repository.findByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(Optional.of(client));
 
         mockMvc.perform(get("/api/clients/abc123"))
                 .andExpect(status().isOk())
@@ -158,7 +170,7 @@ class ClientControllerTest {
 
     @Test
     void should_return404_when_clientNotFound() throws Exception {
-        when(repository.findById("unknown")).thenReturn(Optional.empty());
+        when(repository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/clients/unknown"))
                 .andExpect(status().isNotFound());
@@ -173,7 +185,7 @@ class ClientControllerTest {
         existing.setPhone("+12125551234");
         existing.setCreatedAt(Instant.now());
 
-        when(repository.findById("abc123")).thenReturn(Optional.of(existing));
+        when(repository.findByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(Optional.of(existing));
         when(repository.save(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(put("/api/clients/abc123")
@@ -189,7 +201,7 @@ class ClientControllerTest {
 
     @Test
     void should_return404_when_updatingNonexistentClient() throws Exception {
-        when(repository.findById("unknown")).thenReturn(Optional.empty());
+        when(repository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/api/clients/unknown")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -201,7 +213,7 @@ class ClientControllerTest {
 
     @Test
     void should_deleteClient() throws Exception {
-        when(repository.existsById("abc123")).thenReturn(true);
+        when(repository.existsByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(true);
         when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
                 .thenReturn(Collections.emptyList());
 
@@ -212,7 +224,7 @@ class ClientControllerTest {
 
     @Test
     void should_return400_when_clientHasActiveRides() throws Exception {
-        when(repository.existsById("abc123")).thenReturn(true);
+        when(repository.existsByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(true);
         var ride = new com.tatalance.ride.Ride();
         ride.setStatus(RideStatus.SCHEDULED);
         when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
@@ -224,7 +236,7 @@ class ClientControllerTest {
 
     @Test
     void should_return404_when_deletingNonexistentClient() throws Exception {
-        when(repository.existsById("unknown")).thenReturn(false);
+        when(repository.existsByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(false);
 
         mockMvc.perform(delete("/api/clients/unknown"))
                 .andExpect(status().isNotFound());

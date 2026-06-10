@@ -3,10 +3,10 @@ package com.tatalance.invoice;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,10 +27,13 @@ public class InvoiceController {
 
     private final InvoiceRepository invoiceRepository;
     private final RideRepository rideRepository;
+    private final AuthHelper authHelper;
 
-    public InvoiceController(InvoiceRepository invoiceRepository, RideRepository rideRepository) {
+    public InvoiceController(InvoiceRepository invoiceRepository, RideRepository rideRepository,
+                             AuthHelper authHelper) {
         this.invoiceRepository = invoiceRepository;
         this.rideRepository = rideRepository;
+        this.authHelper = authHelper;
     }
 
     @Operation(summary = "Generate invoice from a completed ride")
@@ -39,12 +42,13 @@ public class InvoiceController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Invoice create(@RequestBody Map<String, String> body) {
+        String userId = authHelper.getCurrentUserId();
         String rideId = body.get("rideId");
         if (rideId == null || rideId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rideId is required");
         }
 
-        Ride ride = rideRepository.findById(rideId)
+        Ride ride = rideRepository.findByIdAndUserId(rideId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride not found"));
 
         if (ride.getStatus() != RideStatus.COMPLETED) {
@@ -62,7 +66,8 @@ public class InvoiceController {
         BigDecimal total = subtotal.add(tax);
 
         Invoice invoice = new Invoice();
-        invoice.setInvoiceNumber(generateInvoiceNumber());
+        invoice.setUserId(userId);
+        invoice.setInvoiceNumber(generateInvoiceNumber(userId));
         invoice.setClientId(ride.getClientId());
         invoice.setClientName(ride.getClientName());
         invoice.setRideId(rideId);
@@ -80,7 +85,7 @@ public class InvoiceController {
     @ApiResponse(responseCode = "200", description = "Invoice list")
     @GetMapping
     public List<Invoice> list() {
-        return invoiceRepository.findAll();
+        return invoiceRepository.findByUserId(authHelper.getCurrentUserId());
     }
 
     @Operation(summary = "Get invoice by id")
@@ -88,7 +93,7 @@ public class InvoiceController {
     @ApiResponse(responseCode = "404", description = "Invoice not found")
     @GetMapping("/{id}")
     public Invoice getById(@PathVariable String id) {
-        return invoiceRepository.findById(id)
+        return invoiceRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
     }
 
@@ -97,7 +102,7 @@ public class InvoiceController {
     @ApiResponse(responseCode = "404", description = "Invoice not found")
     @PostMapping("/{id}/mark-paid")
     public Invoice markPaid(@PathVariable String id) {
-        Invoice invoice = invoiceRepository.findById(id)
+        Invoice invoice = invoiceRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
 
         if (invoice.getStatus() == InvoiceStatus.OUTSTANDING) {
@@ -109,8 +114,8 @@ public class InvoiceController {
         return invoiceRepository.save(invoice);
     }
 
-    private String generateInvoiceNumber() {
-        long seq = invoiceRepository.count() + 1;
+    private String generateInvoiceNumber(String userId) {
+        long seq = invoiceRepository.countByUserId(userId) + 1;
         return String.format("INV-%d-%03d", Year.now().getValue(), seq);
     }
 }
