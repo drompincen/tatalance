@@ -192,8 +192,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #59 | Scope Custom Tables by userId | Epic 6 | feature | completed |
 | #60 | Update all tests for data isolation | Epic 6 | qa | completed |
 | #61 | Security hardening (epic) | Epic 7 | epic | not started |
-| #62 | Logout button + username display | Epic 7 | feature | not started |
-| #63 | Password change | Epic 7 | feature | not started |
+| #62 | Logout button + username display | Epic 7 | feature | completed |
+| #63 | Password change | Epic 7 | feature | completed |
 | #64 | Forgot password / password reset | Epic 7 | feature | not started |
 | #65 | Re-enable CSRF protection | Epic 7 | feature | not started |
 | #66 | Practical gaps (epic) | Epic 8 | epic | not started |
@@ -287,8 +287,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | Logout button + username display in header | not started | luciano | #62 |
-| 2 | Password change | not started | luciano | #63 |
+| 1 | Logout button + username display in header | completed | luciano | #62 |
+| 2 | Password change | completed | luciano | #63 |
 | 3 | Forgot password / password reset | not started | luciano | #64 |
 | 4 | Re-enable CSRF protection | not started | luciano | #65 |
 

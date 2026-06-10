@@ -267,6 +267,12 @@
         .help-nav-btn.primary:hover { background: #16213e; }
         .help-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
 
+        /* ── User menu ── */
+        .user-menu { display: flex; align-items: center; gap: 10px; margin-left: 12px; }
+        .user-menu .username { font-size: 0.82rem; color: rgba(255,255,255,.7); font-weight: 500; }
+        .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
+        .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+
         /* ── Hamburger menu ── */
         .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
         .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
@@ -289,6 +295,8 @@
             nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            .user-menu { margin-left: auto; }
+            .user-menu .username { display: none; }
             nav #custom-tab-buttons { display: contents; }
             .page { margin: 16px auto; padding: 0 12px; }
             .grid-2 { grid-template-columns: 1fr; gap: 16px; }
@@ -331,6 +339,11 @@
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
         <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
+    <div class="user-menu">
+        <span class="username" id="username-display"></span>
+        <button class="logout-btn" onclick="openChangePassword()">Password</button>
+        <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button>
+    </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
@@ -568,6 +581,30 @@
             <button class="help-nav-btn" id="help-prev" onclick="helpNav(-1)">Previous</button>
             <div class="help-dots" id="help-dots"></div>
             <button class="help-nav-btn primary" id="help-next" onclick="helpNav(1)">Next</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Change Password Modal ── -->
+<div class="modal-overlay" id="change-password-modal" onclick="if(event.target===this)closeChangePassword()">
+    <div class="modal" style="max-width:380px">
+        <h2>Change Password</h2>
+        <div class="field">
+            <label>Current Password <span class="req">*</span></label>
+            <input type="password" id="cp-current" autocomplete="current-password">
+        </div>
+        <div class="field">
+            <label>New Password <span class="req">*</span></label>
+            <input type="password" id="cp-new" autocomplete="new-password">
+        </div>
+        <div class="field">
+            <label>Confirm New Password <span class="req">*</span></label>
+            <input type="password" id="cp-confirm" autocomplete="new-password">
+        </div>
+        <div class="err show" id="cp-error" style="display:none"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn" style="flex:1" onclick="submitChangePassword()">Change</button>
+            <button class="btn btn-cancel" onclick="closeChangePassword()">Cancel</button>
         </div>
     </div>
 </div>
@@ -2167,6 +2204,14 @@
         })
         .catch(() => {});
 
+    fetch('/api/users/me')
+        .then(r => r.json())
+        .then(data => {
+            const el = document.getElementById('username-display');
+            if (el) el.textContent = data.username;
+        })
+        .catch(() => {});
+
     /* ── Help Overlay ── */
     const helpPanels = [
         {
@@ -2262,6 +2307,42 @@
     window.helpGoTo = function(i) {
         helpIndex = i;
         renderHelpPanel();
+    };
+
+    /* ── Change Password ── */
+    window.openChangePassword = function() {
+        document.getElementById('cp-current').value = '';
+        document.getElementById('cp-new').value = '';
+        document.getElementById('cp-confirm').value = '';
+        document.getElementById('cp-error').style.display = 'none';
+        document.getElementById('change-password-modal').classList.add('open');
+    };
+    window.closeChangePassword = function() {
+        document.getElementById('change-password-modal').classList.remove('open');
+    };
+    window.submitChangePassword = async function() {
+        const current = document.getElementById('cp-current').value;
+        const newPw = document.getElementById('cp-new').value;
+        const confirm = document.getElementById('cp-confirm').value;
+        const errEl = document.getElementById('cp-error');
+
+        if (!current) { errEl.textContent = 'Current password is required'; errEl.style.display = 'block'; return; }
+        if (newPw.length < 4) { errEl.textContent = 'New password must be at least 4 characters'; errEl.style.display = 'block'; return; }
+        if (newPw !== confirm) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+
+        const res = await fetch('/api/users/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            closeChangePassword();
+            alert('Password changed successfully');
+        } else {
+            errEl.textContent = data.message || 'Failed to change password';
+            errEl.style.display = 'block';
+        }
     };
 </script>
 </body>
