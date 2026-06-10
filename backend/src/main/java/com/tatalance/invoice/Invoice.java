@@ -1,6 +1,7 @@
 package com.tatalance.invoice;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
@@ -12,6 +13,8 @@ import java.util.List;
 public class Invoice {
     @Id
     private String id;
+    @Indexed
+    private String userId;
     private String invoiceNumber;
     private String clientId;
     private String clientName;
@@ -26,6 +29,8 @@ public class Invoice {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public String getInvoiceNumber() { return invoiceNumber; }
     public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
     public String getClientId() { return clientId; }

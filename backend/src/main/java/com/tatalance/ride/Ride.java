@@ -3,6 +3,7 @@ package com.tatalance.ride;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
@@ -12,6 +13,8 @@ import java.time.Instant;
 public class Ride {
     @Id
     private String id;
+    @Indexed
+    private String userId;
     @NotBlank
     private String clientId;
     private String clientName;
@@ -41,6 +44,8 @@ public class Ride {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public String getClientId() { return clientId; }
     public void setClientId(String clientId) { this.clientId = clientId; }
     public String getClientName() { return clientName; }
