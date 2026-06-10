@@ -75,7 +75,7 @@ class RideControllerTest {
         ride.setId("ride001");
         ride.setClientId("cli001");
         ride.setClientName("Ana Torres");
-        ride.setPickupDateTime(Instant.parse("2026-06-01T14:00:00Z"));
+        ride.setPickupDateTime(Instant.parse("2028-06-01T14:00:00Z"));
         ride.setPickupLocation("Miami Airport");
         ride.setDropoffLocation("South Beach Hotel");
         ride.setBasePrice(new BigDecimal("85.00"));
@@ -103,7 +103,7 @@ class RideControllerTest {
         mockMvc.perform(post("/api/rides")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clientId":"cli001","pickupDateTime":"2026-06-01T14:00:00Z",
+                                {"clientId":"cli001","pickupDateTime":"2028-06-01T14:00:00Z",
                                  "pickupLocation":"Miami Airport","dropoffLocation":"South Beach Hotel",
                                  "basePrice":85.00}
                                 """))
@@ -118,7 +118,7 @@ class RideControllerTest {
         mockMvc.perform(post("/api/rides")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"pickupDateTime":"2026-06-01T14:00:00Z",
+                                {"pickupDateTime":"2028-06-01T14:00:00Z",
                                  "pickupLocation":"Miami Airport","dropoffLocation":"South Beach Hotel"}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -129,7 +129,7 @@ class RideControllerTest {
         mockMvc.perform(post("/api/rides")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clientId":"cli001","pickupDateTime":"2026-06-01T14:00:00Z",
+                                {"clientId":"cli001","pickupDateTime":"2028-06-01T14:00:00Z",
                                  "dropoffLocation":"South Beach Hotel"}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -140,7 +140,7 @@ class RideControllerTest {
         mockMvc.perform(post("/api/rides")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clientId":"cli001","pickupDateTime":"2026-06-01T14:00:00Z",
+                                {"clientId":"cli001","pickupDateTime":"2028-06-01T14:00:00Z",
                                  "pickupLocation":"Miami Airport"}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -164,7 +164,7 @@ class RideControllerTest {
         mockMvc.perform(post("/api/rides")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clientId":"unknown","pickupDateTime":"2026-06-01T14:00:00Z",
+                                {"clientId":"unknown","pickupDateTime":"2028-06-01T14:00:00Z",
                                  "pickupLocation":"Miami Airport","dropoffLocation":"South Beach Hotel"}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -392,7 +392,7 @@ class RideControllerTest {
         mockMvc.perform(put("/api/rides/ride001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clientId":"cli001","pickupDateTime":"2026-06-02T10:00:00Z",
+                                {"clientId":"cli001","pickupDateTime":"2028-06-02T10:00:00Z",
                                  "pickupLocation":"Brickell","dropoffLocation":"Wynwood",
                                  "basePrice":60.00,"notes":"Updated"}
                                 """))
@@ -411,7 +411,7 @@ class RideControllerTest {
         mockMvc.perform(put("/api/rides/ride001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clientId":"cli001","pickupDateTime":"2026-06-02T10:00:00Z",
+                                {"clientId":"cli001","pickupDateTime":"2028-06-02T10:00:00Z",
                                  "pickupLocation":"Brickell","dropoffLocation":"Wynwood"}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -424,7 +424,7 @@ class RideControllerTest {
         mockMvc.perform(put("/api/rides/unknown")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"clientId":"cli001","pickupDateTime":"2026-06-02T10:00:00Z",
+                                {"clientId":"cli001","pickupDateTime":"2028-06-02T10:00:00Z",
                                  "pickupLocation":"Brickell","dropoffLocation":"Wynwood"}
                                 """))
                 .andExpect(status().isNotFound());

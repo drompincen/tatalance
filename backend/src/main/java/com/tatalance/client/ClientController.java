@@ -50,7 +50,12 @@ public class ClientController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Client create(@Valid @RequestBody Client client) {
-        client.setUserId(authHelper.getCurrentUserId());
+        String userId = authHelper.getCurrentUserId();
+        if (repository.existsByUserIdAndPhone(userId, client.getPhone())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A client with this phone number already exists");
+        }
+        client.setUserId(userId);
         client.setCreatedAt(Instant.now());
         return repository.save(client);
     }
@@ -60,8 +65,14 @@ public class ClientController {
     @ApiResponse(responseCode = "404", description = "Client not found")
     @PutMapping("/{id}")
     public Client update(@PathVariable String id, @Valid @RequestBody Client updates) {
-        Client existing = repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
+        String userId = authHelper.getCurrentUserId();
+        Client existing = repository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+        if (!existing.getPhone().equals(updates.getPhone())
+                && repository.existsByUserIdAndPhoneAndIdNot(userId, updates.getPhone(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A client with this phone number already exists");
+        }
         existing.setFirstName(updates.getFirstName());
         existing.setLastName(updates.getLastName());
         existing.setPhone(updates.getPhone());

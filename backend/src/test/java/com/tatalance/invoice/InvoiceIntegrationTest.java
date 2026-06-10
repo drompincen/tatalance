@@ -44,7 +44,7 @@ class InvoiceIntegrationTest {
         var driverId = driverResp.getBody().get("id").toString();
 
         // Create ride
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL", "basePrice", 100);
         var rideResp = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = rideResp.getBody().get("id").toString();
@@ -96,7 +96,7 @@ class InvoiceIntegrationTest {
         var clientResp = restTemplate.postForEntity("/api/clients", client, Map.class);
         var clientId = clientResp.getBody().get("id").toString();
 
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "A", "dropoffLocation", "B");
         var rideResp = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = rideResp.getBody().get("id").toString();

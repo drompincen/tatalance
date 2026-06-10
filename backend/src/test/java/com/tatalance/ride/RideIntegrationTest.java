@@ -48,7 +48,7 @@ class RideIntegrationTest {
 
         var ride = Map.of(
                 "clientId", clientId,
-                "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "Miami Airport",
                 "dropoffLocation", "South Beach Hotel",
                 "basePrice", 85
@@ -70,7 +70,7 @@ class RideIntegrationTest {
         var clientId = createClient();
         var ride = Map.of(
                 "clientId", clientId,
-                "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA",
                 "dropoffLocation", "FLL"
         );
@@ -93,7 +93,7 @@ class RideIntegrationTest {
         var clientId = createClient();
         var ride = Map.of(
                 "clientId", clientId,
-                "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "Downtown",
                 "dropoffLocation", "Airport"
         );
@@ -108,7 +108,7 @@ class RideIntegrationTest {
     void should_return400_when_clientNotFound() {
         var ride = Map.of(
                 "clientId", "nonexistent",
-                "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA",
                 "dropoffLocation", "FLL"
         );
@@ -135,7 +135,7 @@ class RideIntegrationTest {
 
         var ride = Map.of(
                 "clientId", clientId,
-                "pickupDateTime", "2026-06-01T14:00:00Z",
+                "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA",
                 "dropoffLocation", "FLL"
         );
@@ -161,14 +161,14 @@ class RideIntegrationTest {
         var driverId = createDriver();
 
         // Create and assign first ride to make driver ON_TRIP
-        var ride1 = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride1 = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "A", "dropoffLocation", "B");
         var created1 = restTemplate.postForEntity("/api/rides", ride1, Map.class);
         restTemplate.postForEntity("/api/rides/" + created1.getBody().get("id") + "/assign",
                 Map.of("driverId", driverId), Map.class);
 
         // Try to assign same driver to second ride
-        var ride2 = Map.of("clientId", clientId, "pickupDateTime", "2026-06-02T14:00:00Z",
+        var ride2 = Map.of("clientId", clientId, "pickupDateTime", "2028-06-02T14:00:00Z",
                 "pickupLocation", "C", "dropoffLocation", "D");
         var created2 = restTemplate.postForEntity("/api/rides", ride2, Map.class);
         var assignResponse = restTemplate.postForEntity(
@@ -182,7 +182,7 @@ class RideIntegrationTest {
         var clientId = createClient();
         var driverId = createDriver();
 
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL", "basePrice", 85);
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
@@ -207,7 +207,7 @@ class RideIntegrationTest {
     @Test
     void should_return409_when_completingScheduledRide() {
         var clientId = createClient();
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL");
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
@@ -227,7 +227,7 @@ class RideIntegrationTest {
         var driver2Response = restTemplate.postForEntity("/api/drivers", driver2, Map.class);
         var driver2Id = driver2Response.getBody().get("id").toString();
 
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL");
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
@@ -247,12 +247,12 @@ class RideIntegrationTest {
     @Test
     void should_updateScheduledRide() {
         var clientId = createClient();
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL", "basePrice", 85);
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
 
-        var update = Map.of("clientId", clientId, "pickupDateTime", "2026-06-02T10:00:00Z",
+        var update = Map.of("clientId", clientId, "pickupDateTime", "2028-06-02T10:00:00Z",
                 "pickupLocation", "Brickell", "dropoffLocation", "Wynwood", "basePrice", 60);
         var response = restTemplate.exchange("/api/rides/" + rideId, HttpMethod.PUT,
                 new HttpEntity<>(update), Map.class);
@@ -264,7 +264,7 @@ class RideIntegrationTest {
     @Test
     void should_cancelScheduledRide() {
         var clientId = createClient();
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL");
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
@@ -279,7 +279,7 @@ class RideIntegrationTest {
         var clientId = createClient();
         var driverId = createDriver();
 
-        var ride = Map.of("clientId", clientId, "pickupDateTime", "2026-06-01T14:00:00Z",
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL");
         var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
         var rideId = created.getBody().get("id").toString();
@@ -302,9 +302,9 @@ class RideIntegrationTest {
         var clientId = createClient();
 
         // Two rides, one earlier, one later. Both assigned to the same driver.
-        var laterId = createRide(clientId, "2026-08-01T18:00:00Z", "Bayfront", "Wynwood", "drv-q-test");
-        var earlierId = createRide(clientId, "2026-08-01T08:00:00Z", "MIA", "Downtown", "drv-q-test");
-        createRide(clientId, "2026-08-01T10:00:00Z", "Brickell", "South Beach", "other-driver");
+        var laterId = createRide(clientId, "2028-08-01T18:00:00Z", "Bayfront", "Wynwood", "drv-q-test");
+        var earlierId = createRide(clientId, "2028-08-01T08:00:00Z", "MIA", "Downtown", "drv-q-test");
+        createRide(clientId, "2028-08-01T10:00:00Z", "Brickell", "South Beach", "other-driver");
 
         var response = restTemplate.getForEntity("/api/drivers/drv-q-test/rides", List.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

@@ -42,6 +42,9 @@ public class RideController {
     @PostMapping("/rides")
     @ResponseStatus(HttpStatus.CREATED)
     public Ride create(@Valid @RequestBody Ride ride) {
+        if (ride.getPickupDateTime() != null && ride.getPickupDateTime().isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pickup date/time cannot be in the past");
+        }
         String userId = authHelper.getCurrentUserId();
         Client client = clientRepository.findByIdAndUserId(ride.getClientId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
@@ -136,6 +139,9 @@ public class RideController {
         if (existing.getStatus() != RideStatus.SCHEDULED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Only SCHEDULED rides can be edited");
+        }
+        if (updates.getPickupDateTime() != null && updates.getPickupDateTime().isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pickup date/time cannot be in the past");
         }
         Client client = clientRepository.findByIdAndUserId(updates.getClientId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));

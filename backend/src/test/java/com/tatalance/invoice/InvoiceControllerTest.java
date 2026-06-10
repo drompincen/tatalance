@@ -59,7 +59,7 @@ class InvoiceControllerTest {
         ride.setId("ride001");
         ride.setClientId("cli001");
         ride.setClientName("Ana Torres");
-        ride.setPickupDateTime(Instant.parse("2026-06-01T14:00:00Z"));
+        ride.setPickupDateTime(Instant.parse("2028-06-01T14:00:00Z"));
         ride.setPickupLocation("MIA");
         ride.setDropoffLocation("FLL");
         ride.setBasePrice(new BigDecimal("100.00"));
