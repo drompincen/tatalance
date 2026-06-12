@@ -84,9 +84,9 @@ class InvoiceIntegrationTest {
         var rideId = createCompletedRide();
         restTemplate.postForEntity("/api/invoices", Map.of("rideId", rideId), Map.class);
 
-        var response = restTemplate.getForEntity("/api/invoices", List.class);
+        var response = restTemplate.getForEntity("/api/invoices", Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).hasSize(1);
+        assertThat((List<?>) response.getBody().get("content")).hasSize(1);
     }
 
     @Test

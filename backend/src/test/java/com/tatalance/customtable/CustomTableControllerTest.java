@@ -13,6 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,12 +106,13 @@ class CustomTableControllerTest {
 
     @Test
     void should_listTables() throws Exception {
-        when(tableRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(sampleTable()));
+        when(tableRepository.findByUserId(eq(TEST_USER_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleTable())));
 
         mockMvc.perform(get("/api/tables"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("Contacts"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Contacts"));
     }
 
     @Test
@@ -199,12 +203,13 @@ class CustomTableControllerTest {
         row.setId("row001");
         row.setTableId("tbl001");
         row.setData(Map.of("Name", "John", "Age", 30));
-        when(rowRepository.findByTableId("tbl001")).thenReturn(List.of(row));
+        when(rowRepository.findByTableId(eq("tbl001"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(row)));
 
         mockMvc.perform(get("/api/tables/tbl001/rows"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].data.Name").value("John"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].data.Name").value("John"));
     }
 
     @Test

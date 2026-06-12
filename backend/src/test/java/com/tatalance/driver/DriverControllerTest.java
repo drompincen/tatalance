@@ -15,6 +15,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collections;
@@ -145,12 +148,13 @@ class DriverControllerTest {
 
     @Test
     void should_returnDriverList() throws Exception {
-        when(repository.findByUserId(TEST_USER_ID)).thenReturn(List.of(sampleDriver()));
+        when(repository.findByUserId(eq(TEST_USER_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleDriver())));
 
         mockMvc.perform(get("/api/drivers"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].firstName").value("Carlos"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].firstName").value("Carlos"));
     }
 
     @Test

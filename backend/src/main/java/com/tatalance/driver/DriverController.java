@@ -7,6 +7,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,8 +37,8 @@ public class DriverController {
     @Operation(summary = "List all drivers")
     @ApiResponse(responseCode = "200", description = "Driver list")
     @GetMapping
-    public List<Driver> list() {
-        return repository.findByUserId(authHelper.getCurrentUserId());
+    public Page<Driver> list(@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return repository.findByUserId(authHelper.getCurrentUserId(), pageable);
     }
 
     @Operation(summary = "Get driver by id")

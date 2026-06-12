@@ -7,6 +7,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,8 +36,8 @@ public class ClientController {
     @Operation(summary = "List all clients")
     @ApiResponse(responseCode = "200", description = "Client list")
     @GetMapping
-    public List<Client> list() {
-        return repository.findByUserId(authHelper.getCurrentUserId());
+    public Page<Client> list(@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return repository.findByUserId(authHelper.getCurrentUserId(), pageable);
     }
 
     @Operation(summary = "Get client by id")

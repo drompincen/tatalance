@@ -112,6 +112,18 @@
         .empty-state p { font-size: 0.85rem; }
         .refresh-ts { font-size: 0.72rem; color: #6b7280; margin-top: 12px; text-align: right; }
 
+        /* ── Pagination ── */
+        .pagination-bar {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            padding: 10px 0; font-size: 0.82rem; color: #6b7280;
+        }
+        .pagination-bar button {
+            padding: 4px 12px; font-size: 0.8rem; border: 1px solid #e2e8f0; border-radius: 6px;
+            background: #fff; color: #1a1a2e; cursor: pointer; font-weight: 500; transition: all .15s;
+        }
+        .pagination-bar button:hover:not(:disabled) { background: #f0f2f5; }
+        .pagination-bar button:disabled { opacity: .4; cursor: default; }
+
         /* ── Delete mode ── */
         .delete-mode-btn {
             padding: 4px 10px; font-size: 0.75rem; border: 1px solid #e53e3e; border-radius: 4px;
@@ -675,6 +687,26 @@
         return `sortable ${s.dir}`;
     }
 
+    /* ── Pagination state ── */
+    const pageState = { clients: 0, drivers: 0, rides: 0, invoices: 0, tables: 0 };
+    const pageMeta = { clients: {}, drivers: {}, rides: {}, invoices: {}, tables: {} };
+    const PAGE_SIZE = 20;
+
+    function paginationHtml(tab, onPrev, onNext) {
+        const m = pageMeta[tab];
+        if (!m || m.totalPages <= 1) return '';
+        const page = m.number ?? 0;
+        const total = m.totalPages ?? 1;
+        const totalEl = m.totalElements ?? 0;
+        const from = page * PAGE_SIZE + 1;
+        const to = Math.min((page + 1) * PAGE_SIZE, totalEl);
+        return `<div class="pagination-bar">
+            <button ${page === 0 ? 'disabled' : ''} onclick="${onPrev}">← Prev</button>
+            <span>Showing ${from}–${to} of ${totalEl}</span>
+            <button ${page >= total - 1 ? 'disabled' : ''} onclick="${onNext}">Next →</button>
+        </div>`;
+    }
+
     function resolveRef(spec, obj) {
         if (!obj) return null;
         if (obj.$ref) {
@@ -933,8 +965,11 @@
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
                 </td>
             </tr>`).join('')}</tbody>
-        </table>`;
+        </table>` + paginationHtml('clients', 'clientPrev()', 'clientNext()');
     }
+
+    function clientPrev() { if (pageState.clients > 0) { pageState.clients--; load(); } }
+    function clientNext() { if (pageState.clients < (pageMeta.clients.totalPages || 1) - 1) { pageState.clients++; load(); } }
 
     function isUserEditingTab(tabId) {
         const active = document.activeElement;
@@ -943,10 +978,11 @@
     }
 
     function load() {
-        fetch('/api/clients')
+        fetch(`/api/clients?page=${pageState.clients}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                allClientsCache = data;
+                allClientsCache = data.content || [];
+                pageMeta.clients = data;
                 if (!isUserEditingTab('tab-clients')) filterClients();
                 document.getElementById('ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
@@ -1131,14 +1167,18 @@
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
                 </td>
             </tr>`).join('')}</tbody>
-        </table>`;
+        </table>` + paginationHtml('drivers', 'driverPrev()', 'driverNext()');
     }
 
+    function driverPrev() { if (pageState.drivers > 0) { pageState.drivers--; loadDrivers(); } }
+    function driverNext() { if (pageState.drivers < (pageMeta.drivers.totalPages || 1) - 1) { pageState.drivers++; loadDrivers(); } }
+
     function loadDrivers() {
-        fetch('/api/drivers')
+        fetch(`/api/drivers?page=${pageState.drivers}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                if (!isUserEditingTab('tab-drivers')) renderDrivers(data);
+                pageMeta.drivers = data;
+                if (!isUserEditingTab('tab-drivers')) renderDrivers(data.content || []);
                 document.getElementById('driver-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -1293,7 +1333,8 @@
     let availableDriversCache = [];
 
     function loadClientDropdown() {
-        fetch('/api/clients').then(r => r.json()).then(clients => {
+        fetch('/api/clients?page=0&size=500').then(r => r.json()).then(data => {
+            const clients = data.content || [];
             const sel = document.getElementById('r-clientId');
             const current = sel.value;
             sel.innerHTML = '<option value="">Select a client…</option>' +
@@ -1495,14 +1536,18 @@
                     </div>
                 </div>
             </td></tr>` : ''}`).join('')}</tbody>
-        </table>`;
+        </table>` + paginationHtml('rides', 'ridePrev()', 'rideNext()');
     }
 
+    function ridePrev() { if (pageState.rides > 0) { pageState.rides--; loadRides(); } }
+    function rideNext() { if (pageState.rides < (pageMeta.rides.totalPages || 1) - 1) { pageState.rides++; loadRides(); } }
+
     function loadRides() {
-        fetch('/api/rides')
+        fetch(`/api/rides?page=${pageState.rides}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                allRidesCache = data;
+                allRidesCache = data.content || [];
+                pageMeta.rides = data;
                 if (!isUserEditingTab('tab-rides')) {
                     applyRideFilter();
                 }
@@ -1694,14 +1739,18 @@
                     `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">Mark Paid</button>` :
                     `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">Mark Unpaid</button>`}</td>
             </tr>`).join('')}</tbody>
-        </table>`;
+        </table>` + paginationHtml('invoices', 'invoicePrev()', 'invoiceNext()');
     }
 
+    function invoicePrev() { if (pageState.invoices > 0) { pageState.invoices--; loadInvoices(); } }
+    function invoiceNext() { if (pageState.invoices < (pageMeta.invoices.totalPages || 1) - 1) { pageState.invoices++; loadInvoices(); } }
+
     function loadInvoices() {
-        fetch('/api/invoices')
+        fetch(`/api/invoices?page=${pageState.invoices}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                allInvoicesCache = data;
+                allInvoicesCache = data.content || [];
+                pageMeta.invoices = data;
                 if (!isUserEditingTab('tab-invoices')) applyInvoiceFilter();
                 document.getElementById('invoice-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
@@ -2091,13 +2140,15 @@
             // Remember which custom tab is active before re-rendering
             const activeTableId = getActiveCustomTabId();
 
-            const r = await fetch('/api/tables');
-            customTables = await r.json();
+            const r = await fetch(`/api/tables?page=0&size=100`);
+            const tableData = await r.json();
+            customTables = tableData.content || [];
             renderCustomTabButtons();
             // Load rows for each table
             await Promise.all(customTables.map(async t => {
-                const rr = await fetch(`/api/tables/${t.id}/rows`);
-                customTableRows[t.id] = await rr.json();
+                const rr = await fetch(`/api/tables/${t.id}/rows?page=0&size=100`);
+                const rowData = await rr.json();
+                customTableRows[t.id] = rowData.content || [];
             }));
             // Skip DOM re-render if user is typing in a custom table form (unless forced)
             if (!forceRender && isUserEditingCustomTable()) {

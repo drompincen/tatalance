@@ -60,9 +60,9 @@ class RideIntegrationTest {
         assertThat(createResponse.getBody().get("clientName")).isEqualTo("Ana Torres");
         assertThat(createResponse.getBody().get("status")).isEqualTo("SCHEDULED");
 
-        var listResponse = restTemplate.getForEntity("/api/rides", List.class);
+        var listResponse = restTemplate.getForEntity("/api/rides", Map.class);
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(listResponse.getBody()).hasSize(1);
+        assertThat((List<?>) listResponse.getBody().get("content")).hasSize(1);
     }
 
     @Test

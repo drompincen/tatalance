@@ -5,6 +5,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -42,8 +46,8 @@ public class CustomTableController {
 
     @Operation(summary = "List all custom tables")
     @GetMapping
-    public List<CustomTable> listTables() {
-        return tableRepository.findByUserId(authHelper.getCurrentUserId());
+    public Page<CustomTable> listTables(@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return tableRepository.findByUserId(authHelper.getCurrentUserId(), pageable);
     }
 
     @Operation(summary = "Get a custom table by id")
@@ -191,8 +195,9 @@ public class CustomTableController {
     @Operation(summary = "List rows in a custom table")
     @ApiResponse(responseCode = "200", description = "Rows listed")
     @GetMapping("/{id}/rows")
-    public List<CustomTableRow> listRows(@PathVariable String id) {
-        return rowRepository.findByTableId(id);
+    public Page<CustomTableRow> listRows(@PathVariable String id,
+                                         @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return rowRepository.findByTableId(id, pageable);
     }
 
     @Operation(summary = "Update a row")

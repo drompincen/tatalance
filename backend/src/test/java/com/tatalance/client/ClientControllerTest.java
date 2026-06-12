@@ -15,6 +15,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -145,13 +148,14 @@ class ClientControllerTest {
         client.setPhone("+12125551234");
         client.setCreatedAt(Instant.now());
 
-        when(repository.findByUserId(TEST_USER_ID)).thenReturn(List.of(client));
+        when(repository.findByUserId(eq(TEST_USER_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(client)));
 
         mockMvc.perform(get("/api/clients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].firstName").value("John"))
-                .andExpect(jsonPath("$[0].lastName").value("Doe"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].firstName").value("John"))
+                .andExpect(jsonPath("$.content[0].lastName").value("Doe"));
     }
 
     @Test

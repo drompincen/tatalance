@@ -19,6 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import org.springframework.http.MediaType;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -81,7 +84,7 @@ class SecurityConfigTest {
     @WithMockUser
     void should_returnOk_when_authenticated() throws Exception {
         when(authHelper.getCurrentUserId()).thenReturn("testuser");
-        when(repository.findByUserId(any())).thenReturn(List.of());
+        when(repository.findByUserId(any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
         mockMvc.perform(get("/api/clients"))
             .andExpect(status().isOk());
     }

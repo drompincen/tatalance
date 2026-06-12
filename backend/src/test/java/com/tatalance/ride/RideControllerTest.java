@@ -18,6 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -25,6 +28,7 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -172,12 +176,13 @@ class RideControllerTest {
 
     @Test
     void should_listAllRides() throws Exception {
-        when(rideRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(sampleRide()));
+        when(rideRepository.findByUserId(eq(TEST_USER_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleRide())));
 
         mockMvc.perform(get("/api/rides"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].clientName").value("Ana Torres"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].clientName").value("Ana Torres"));
     }
 
     @Test

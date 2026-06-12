@@ -197,8 +197,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #64 | Forgot password / password reset | Epic 7 | feature | not started |
 | #65 | Re-enable CSRF protection | Epic 7 | feature | not started |
 | #66 | Practical gaps (epic) | Epic 8 | epic | not started |
-| #67 | Prevent booking rides in the past | Epic 8 | bug | not started |
-| #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | not started |
+| #67 | Prevent booking rides in the past | Epic 8 | bug | completed |
+| #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | completed |
 | #69 | Pagination for all list endpoints | Epic 8 | feature | not started |
 
 ---
@@ -311,8 +311,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | Prevent booking rides in the past | not started | luciano | #67 |
-| 2 | Prevent duplicate clients (same phone) | not started | luciano | #68 |
+| 1 | Prevent booking rides in the past | completed | luciano | #67 |
+| 2 | Prevent duplicate clients (same phone) | completed | luciano | #68 |
 | 3 | Pagination for all list endpoints | not started | luciano | #69 |
 
 ## Dependencies

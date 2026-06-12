@@ -16,6 +16,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -150,12 +154,13 @@ class InvoiceControllerTest {
 
     @Test
     void should_listInvoices() throws Exception {
-        when(invoiceRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(sampleInvoice()));
+        when(invoiceRepository.findByUserId(eq(TEST_USER_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleInvoice())));
 
         mockMvc.perform(get("/api/invoices"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].invoiceNumber").value("INV-2026-001"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].invoiceNumber").value("INV-2026-001"));
     }
 
     @Test
