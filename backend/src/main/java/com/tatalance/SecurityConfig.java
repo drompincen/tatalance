@@ -28,6 +28,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login.html")
                 .loginProcessingUrl("/login")
+                .defaultSuccessUrl("/index.html")
                 .permitAll()
             )
             .logout(Customizer.withDefaults())

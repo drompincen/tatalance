@@ -199,7 +199,11 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #66 | Practical gaps (epic) | Epic 8 | epic | not started |
 | #67 | Prevent booking rides in the past | Epic 8 | bug | completed |
 | #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | completed |
-| #69 | Pagination for all list endpoints | Epic 8 | feature | not started |
+| #69 | Pagination for all list endpoints | Epic 8 | feature | completed |
+| #70 | Google OAuth + Maps links (epic) | Epic 9 | epic | not started |
+| #71 | Google OAuth2 login | Epic 9 | feature | not started |
+| #72 | Link existing account to Google | Epic 9 | feature | not started |
+| #73 | Pickup/dropoff as Google Maps links | Epic 9 | feature | not started |
 
 ---
 
@@ -313,7 +317,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 |---|---|---|---|---|
 | 1 | Prevent booking rides in the past | completed | luciano | #67 |
 | 2 | Prevent duplicate clients (same phone) | completed | luciano | #68 |
-| 3 | Pagination for all list endpoints | not started | luciano | #69 |
+| 3 | Pagination for all list endpoints | completed | luciano | #69 |
 
 ## Dependencies
 
@@ -321,6 +325,28 @@ David can add clients, book rides, and get paid — end to end in the browser.
 #67 (Past dates) — independent
 #68 (Duplicate clients) — independent (compound index with userId after Epic 6)
 #69 (Pagination) — best done after Epic 6 (queries already scoped by userId)
+```
+
+---
+
+# Epic 9: Google OAuth + Maps links
+**Status:** not started
+**Outcome:** Tata can sign in with Google (in addition to username/password), and pickup/dropoff locations are clickable Google Maps links.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Google OAuth2 login ("Sign in with Google" button) | not started | luciano | #71 |
+| 2 | Link existing account to Google identity | not started | luciano | #72 |
+| 3 | Pickup/dropoff as clickable Google Maps links | not started | luciano | #73 |
+
+## Dependencies
+
+```
+#71 (Google OAuth) — first, adds Spring Security OAuth2 client + Google Console setup
+  └──> #72 (Link account) — maps Google identity to existing AppUser
+#73 (Maps links) — independent, small UI change
 ```
 
 ---
