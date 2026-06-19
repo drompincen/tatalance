@@ -1,6 +1,6 @@
 ---
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
-status: in-progress
+status: completed
 created: 2026-04-27
 updated: 2026-06-10
 current_chapter: epic-7
@@ -196,7 +196,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #63 | Password change | Epic 7 | feature | completed |
 | #64 | Forgot password / password reset | Epic 7 | feature | completed |
 | #65 | Re-enable CSRF protection | Epic 7 | feature | completed |
-| #66 | Practical gaps (epic) | Epic 8 | epic | not started |
+| #66 | Practical gaps (epic) | Epic 8 | epic | completed |
 | #67 | Prevent booking rides in the past | Epic 8 | bug | completed |
 | #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | completed |
 | #69 | Pagination for all list endpoints | Epic 8 | feature | completed |
@@ -229,7 +229,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 5: Bugfixes & User Management
-**Status:** in-progress
+**Status:** completed
 **Outcome:** Multiple users can register and log in; editing forms no longer wipes data on auto-refresh.
 
 ## Feature stories
@@ -313,7 +313,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 8: Practical gaps
-**Status:** not started
+**Status:** completed
 **Outcome:** The app handles real-world edge cases — no past dates, no duplicate clients, no performance cliffs.
 
 ## Feature stories
