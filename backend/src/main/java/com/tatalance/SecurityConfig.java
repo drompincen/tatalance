@@ -1,9 +1,11 @@
 package com.tatalance;
 
+import com.tatalance.user.CustomOAuth2UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -12,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
@@ -24,6 +27,12 @@ import java.io.IOException;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired(required = false)
+    private ClientRegistrationRepository clientRegistrationRepository;
+
+    @Autowired(required = false)
+    private CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
@@ -50,6 +59,15 @@ public class SecurityConfig {
                 .ignoringRequestMatchers("/api/**")
             )
             .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
+
+        if (clientRegistrationRepository != null) {
+            http.oauth2Login(oauth2 -> oauth2
+                .loginPage("/login.html")
+                .defaultSuccessUrl("/index.html")
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+            );
+        }
+
         return http.build();
     }
 

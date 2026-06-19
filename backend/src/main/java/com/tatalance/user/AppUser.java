@@ -15,6 +15,7 @@ public class AppUser {
     private String password;
     private String role;
     private Instant createdAt;
+    private String googleId;
     private String securityQuestion;
     private String securityAnswer;
 
@@ -28,6 +29,8 @@ public class AppUser {
     public void setRole(String role) { this.role = role; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
     public String getSecurityQuestion() { return securityQuestion; }
     public void setSecurityQuestion(String securityQuestion) { this.securityQuestion = securityQuestion; }
     public String getSecurityAnswer() { return securityAnswer; }

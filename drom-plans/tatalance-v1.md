@@ -191,11 +191,11 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #58 | Scope Invoice by userId | Epic 6 | feature | completed |
 | #59 | Scope Custom Tables by userId | Epic 6 | feature | completed |
 | #60 | Update all tests for data isolation | Epic 6 | qa | completed |
-| #61 | Security hardening (epic) | Epic 7 | epic | not started |
+| #61 | Security hardening (epic) | Epic 7 | epic | completed |
 | #62 | Logout button + username display | Epic 7 | feature | completed |
 | #63 | Password change | Epic 7 | feature | completed |
-| #64 | Forgot password / password reset | Epic 7 | feature | not started |
-| #65 | Re-enable CSRF protection | Epic 7 | feature | not started |
+| #64 | Forgot password / password reset | Epic 7 | feature | completed |
+| #65 | Re-enable CSRF protection | Epic 7 | feature | completed |
 | #66 | Practical gaps (epic) | Epic 8 | epic | not started |
 | #67 | Prevent booking rides in the past | Epic 8 | bug | completed |
 | #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | completed |
@@ -203,7 +203,12 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #70 | Google OAuth + Maps links (epic) | Epic 9 | epic | not started |
 | #71 | Google OAuth2 login | Epic 9 | feature | not started |
 | #72 | Link existing account to Google | Epic 9 | feature | not started |
-| #73 | Pickup/dropoff as Google Maps links | Epic 9 | feature | not started |
+| #73 | Pickup/dropoff as Google Maps links | Epic 9 | feature | completed |
+| #74 | Time-based pricing (epic) | Epic 10 | epic | completed |
+| #75 | Pricing mode + hourly rate on rides | Epic 10 | feature | completed |
+| #76 | Live stopwatch on driver queue | Epic 10 | feature | completed |
+| #77 | Duration + cost summary on completion | Epic 10 | feature | completed |
+| #78 | Invoice shows time breakdown | Epic 10 | feature | completed |
 
 ---
 
@@ -284,7 +289,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 7: Security hardening
-**Status:** not started
+**Status:** completed
 **Outcome:** Users can sign out, change passwords, recover accounts, and the app is protected against CSRF.
 
 ## Feature stories
@@ -293,8 +298,8 @@ David can add clients, book rides, and get paid — end to end in the browser.
 |---|---|---|---|---|
 | 1 | Logout button + username display in header | completed | luciano | #62 |
 | 2 | Password change | completed | luciano | #63 |
-| 3 | Forgot password / password reset | not started | luciano | #64 |
-| 4 | Re-enable CSRF protection | not started | luciano | #65 |
+| 3 | Forgot password / password reset | completed | luciano | #64 |
+| 4 | Re-enable CSRF protection | completed | luciano | #65 |
 
 ## Dependencies
 
@@ -339,7 +344,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 |---|---|---|---|---|
 | 1 | Google OAuth2 login ("Sign in with Google" button) | not started | luciano | #71 |
 | 2 | Link existing account to Google identity | not started | luciano | #72 |
-| 3 | Pickup/dropoff as clickable Google Maps links | not started | luciano | #73 |
+| 3 | Pickup/dropoff as clickable Google Maps links | completed | luciano | #73 |
 
 ## Dependencies
 
@@ -347,6 +352,38 @@ David can add clients, book rides, and get paid — end to end in the browser.
 #71 (Google OAuth) — first, adds Spring Security OAuth2 client + Google Console setup
   └──> #72 (Link account) — maps Google identity to existing AppUser
 #73 (Maps links) — independent, small UI change
+```
+
+---
+
+# Epic 10: Time-based pricing
+**Status:** completed
+**Outcome:** Tata can book rides with flexible pricing (flat, hourly, or flat + hourly). Drivers see a live stopwatch. Invoices show the time breakdown.
+
+## Pricing modes
+
+| Mode | Formula | Example |
+|---|---|---|
+| FLAT | basePrice | $100 flat |
+| HOURLY | duration × hourlyRate | 2h 15m × $7.50 = $16.88 |
+| FLAT_PLUS_HOURLY | basePrice + (duration × hourlyRate) | $50 + 2h 15m × $7.50 = $66.88 |
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Pricing mode + hourly rate on rides | completed | luciano | #75 |
+| 2 | Live stopwatch on driver queue | completed | luciano | #76 |
+| 3 | Duration + cost summary on completion | completed | luciano | #77 |
+| 4 | Invoice shows time breakdown | completed | luciano | #78 |
+
+## Dependencies
+
+```
+#75 (Pricing mode) — first, adds pricingMode + hourlyRate to Ride model + booking form
+  ├──> #76 (Stopwatch) — needs actualStart from start-ride flow
+  └──> #77 (Completion summary) — needs hourlyRate + duration to calculate cost
+        └──> #78 (Invoice breakdown) — needs duration + rate stored on completed ride
 ```
 
 ---
