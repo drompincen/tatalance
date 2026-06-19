@@ -1,5 +1,6 @@
 package com.tatalance.user;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,8 +23,16 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public Map<String, String> me(Authentication auth) {
-        return Map.of("username", auth.getName());
+    public Map<String, Object> me(Authentication auth) {
+        AppUser user = repository.findByUsername(auth.getName()).orElse(null);
+        boolean googleLinked = user != null && user.getGoogleId() != null;
+        return Map.of("username", auth.getName(), "googleLinked", googleLinked);
+    }
+
+    @PostMapping("/link-google")
+    public ResponseEntity<?> linkGoogle(Authentication auth, HttpSession session) {
+        session.setAttribute("linkUsername", auth.getName());
+        return ResponseEntity.ok(Map.of("redirect", "/oauth2/authorization/google"));
     }
 
     @PostMapping("/change-password")

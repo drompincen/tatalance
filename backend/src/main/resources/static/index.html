@@ -353,6 +353,7 @@
     </nav>
     <div class="user-menu">
         <span class="username" id="username-display"></span>
+        <button class="logout-btn" id="link-google-btn" onclick="linkGoogle()" style="display:none">Link Google</button>
         <button class="logout-btn" onclick="openChangePassword()">Password</button>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
     </div>
@@ -2331,6 +2332,8 @@
         .then(data => {
             const el = document.getElementById('username-display');
             if (el) el.textContent = data.username;
+            const linkBtn = document.getElementById('link-google-btn');
+            if (linkBtn && data.googleLinked === false) linkBtn.style.display = '';
         })
         .catch(() => {});
 
@@ -2438,6 +2441,20 @@
         if (m) headers['X-XSRF-TOKEN'] = decodeURIComponent(m[1]);
         await fetch('/logout', { method: 'POST', headers: headers, credentials: 'same-origin' });
         window.location.href = '/login.html?logout';
+    };
+
+    /* ── Link Google Account ── */
+    window.linkGoogle = async function() {
+        var headers = { 'Content-Type': 'application/json' };
+        var m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (m) headers['X-XSRF-TOKEN'] = decodeURIComponent(m[1]);
+        try {
+            var res = await fetch('/api/users/link-google', { method: 'POST', headers: headers, credentials: 'same-origin' });
+            var data = await res.json();
+            if (data.redirect) window.location.href = data.redirect;
+        } catch (err) {
+            alert('Could not start Google linking. Try again.');
+        }
     };
 
     /* ── Change Password ── */

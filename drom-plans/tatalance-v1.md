@@ -200,9 +200,9 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #67 | Prevent booking rides in the past | Epic 8 | bug | completed |
 | #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | completed |
 | #69 | Pagination for all list endpoints | Epic 8 | feature | completed |
-| #70 | Google OAuth + Maps links (epic) | Epic 9 | epic | not started |
-| #71 | Google OAuth2 login | Epic 9 | feature | not started |
-| #72 | Link existing account to Google | Epic 9 | feature | not started |
+| #70 | Google OAuth + Maps links (epic) | Epic 9 | epic | completed |
+| #71 | Google OAuth2 login | Epic 9 | feature | completed |
+| #72 | Link existing account to Google | Epic 9 | feature | completed |
 | #73 | Pickup/dropoff as Google Maps links | Epic 9 | feature | completed |
 | #74 | Time-based pricing (epic) | Epic 10 | epic | completed |
 | #75 | Pricing mode + hourly rate on rides | Epic 10 | feature | completed |
@@ -335,15 +335,15 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 9: Google OAuth + Maps links
-**Status:** not started
+**Status:** completed
 **Outcome:** Tata can sign in with Google (in addition to username/password), and pickup/dropoff locations are clickable Google Maps links.
 
 ## Feature stories
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | Google OAuth2 login ("Sign in with Google" button) | not started | luciano | #71 |
-| 2 | Link existing account to Google identity | not started | luciano | #72 |
+| 1 | Google OAuth2 login ("Sign in with Google" button) | completed | luciano | #71 |
+| 2 | Link existing account to Google identity | completed | luciano | #72 |
 | 3 | Pickup/dropoff as clickable Google Maps links | completed | luciano | #73 |
 
 ## Dependencies
