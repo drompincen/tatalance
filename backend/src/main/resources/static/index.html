@@ -903,6 +903,7 @@
 
     /* ── Client list ── */
     const esc2 = s => esc(s) || '<span class="muted">—</span>';
+    const mapsLink = s => s ? `<a href="https://www.google.com/maps/search/${encodeURIComponent(s)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${esc(s)}</a>` : '<span class="muted">—</span>';
     let allClientsCache = [];
 
     function filterClients() {
@@ -1493,8 +1494,8 @@
             <tbody>${sorted.map(r => `<tr>
                 <td data-label="Client" style="font-weight:600">${esc(r.clientName)}</td>
                 <td data-label="Pickup" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
-                <td data-label="From">${esc2(r.pickupLocation)}</td>
-                <td data-label="To">${esc2(r.dropoffLocation)}</td>
+                <td data-label="From">${mapsLink(r.pickupLocation)}</td>
+                <td data-label="To">${mapsLink(r.dropoffLocation)}</td>
                 <td>${r.assignedDriverName ? esc(r.assignedDriverName) :
                     (r.status === 'SCHEDULED' && availableDriversCache.length ?
                         `<select onchange="if(this.value)assignDriver('${r.id}',this.value)" style="font-size:.78rem;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">
