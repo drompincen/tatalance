@@ -75,6 +75,9 @@
         }
         button:hover { background: #16213e; }
         button:active { background: #0a2440; }
+        @media (max-height: 500px) {
+            body { align-items: flex-start; padding-top: 16px; }
+        }
         .message {
             padding: 10px 12px;
             border-radius: 6px;
@@ -130,6 +133,44 @@
         var qs = new URLSearchParams(location.search);
         if (qs.has('error'))  document.getElementById('msg-error').style.display = 'block';
         if (qs.has('logout')) document.getElementById('msg-info').style.display  = 'block';
+
+        var form = document.querySelector('form');
+        var btn = form.querySelector('button');
+        var msgError = document.getElementById('msg-error');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            btn.disabled = true;
+            btn.textContent = 'Signing in\u2026';
+            msgError.style.display = 'none';
+
+            var formData = new URLSearchParams();
+            formData.append('username', document.getElementById('username').value);
+            formData.append('password', document.getElementById('password').value);
+
+            try {
+                var res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString(),
+                    redirect: 'follow',
+                    credentials: 'same-origin'
+                });
+                if (res.url && res.url.includes('error')) {
+                    msgError.textContent = 'Wrong username or password.';
+                    msgError.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Sign in';
+                    return;
+                }
+                window.location.href = '/index.html';
+            } catch (err) {
+                msgError.textContent = 'Could not reach server. Try again.';
+                msgError.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Sign in';
+            }
+        });
     </script>
 </body>
 </html>
