@@ -157,6 +157,14 @@
             line-height: 1.4;
         }
         .arrow { color: #94a3b8; padding: 0 4px; }
+        .stopwatch {
+            grid-column: 1 / -1;
+            font-size: 1.6rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--in-progress);
+            letter-spacing: 1px;
+        }
 
         .status-badge {
             font-size: 0.7rem;
@@ -265,6 +273,7 @@
                         <span class="status-badge badge-${esc(r.status)}" data-test="status-badge">${esc(r.status)}</span>
                         <div class="client-name">${esc(r.clientName || 'Unknown client')}</div>
                         <div class="route">${mapsLink(r.pickupLocation)} <span class="arrow">→</span> ${mapsLink(r.dropoffLocation)}</div>
+                        ${r.status === 'IN_PROGRESS' && r.actualStart ? `<div class="stopwatch" data-start="${r.actualStart}">00:00:00</div>` : ''}
                         ${actionsFor(r)}
                         ${completeFormFor(r)}
                     `;
@@ -384,10 +393,21 @@
                 });
         }
 
+        function tickStopwatches() {
+            document.querySelectorAll('.stopwatch[data-start]').forEach(el => {
+                const start = new Date(el.dataset.start).getTime();
+                const elapsed = Math.max(0, Math.floor((Date.now() - start) / 1000));
+                const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+                const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+                const s = String(elapsed % 60).padStart(2, '0');
+                el.textContent = `${h}:${m}:${s}`;
+            });
+        }
+
         loadDriverHeader();
         loadQueue();
-        // Light refresh — keeps the queue current as David assigns work.
         setInterval(loadQueue, 15000);
+        setInterval(tickStopwatches, 1000);
     </script>
 </body>
 </html>
