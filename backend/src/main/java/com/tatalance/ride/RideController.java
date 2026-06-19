@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +157,8 @@ public class RideController {
         existing.setPickupLocation(updates.getPickupLocation());
         existing.setDropoffLocation(updates.getDropoffLocation());
         existing.setBasePrice(updates.getBasePrice());
+        existing.setPricingMode(updates.getPricingMode());
+        existing.setHourlyRate(updates.getHourlyRate());
         existing.setNotes(updates.getNotes());
         return rideRepository.save(existing);
     }
@@ -217,8 +221,24 @@ public class RideController {
         ride.setTolls(tolls);
         ride.setParking(parking);
         ride.setAdditionalCharges(extras);
-        ride.setBillableAmount(base.add(tolls).add(parking).add(extras));
         ride.setActualEnd(Instant.now());
+
+        PricingMode mode = ride.getPricingMode() == null ? PricingMode.FLAT : ride.getPricingMode();
+        BigDecimal timeCost = BigDecimal.ZERO;
+        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && ride.getActualStart() != null) {
+            long minutes = Duration.between(ride.getActualStart(), ride.getActualEnd()).toMinutes();
+            BigDecimal hours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
+            timeCost = ride.getHourlyRate().multiply(hours).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal total;
+        switch (mode) {
+            case HOURLY -> total = timeCost;
+            case FLAT_PLUS_HOURLY -> total = base.add(timeCost);
+            default -> total = base;
+        }
+        ride.setBillableAmount(total.add(tolls).add(parking).add(extras));
+        ride.setTotalAmount(total);
         ride.setStatus(RideStatus.COMPLETED);
         return rideRepository.save(ride);
     }

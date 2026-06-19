@@ -505,8 +505,20 @@
                         <div class="err" id="re-dropoffLocation">Dropoff location is required</div>
                     </div>
                     <div class="field">
-                        <label>Base Price <span class="opt">(optional)</span></label>
+                        <label>Pricing Mode</label>
+                        <select id="r-pricingMode" onchange="togglePricingFields()" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px">
+                            <option value="FLAT">Flat rate</option>
+                            <option value="HOURLY">Hourly</option>
+                            <option value="FLAT_PLUS_HOURLY">Flat + Hourly</option>
+                        </select>
+                    </div>
+                    <div class="field" id="basePrice-field">
+                        <label>Base Price ($)</label>
                         <input type="number" id="r-basePrice" placeholder="85.00" min="0" step="0.01" autocomplete="off">
+                    </div>
+                    <div class="field" id="hourlyRate-field" style="display:none">
+                        <label>Hourly Rate ($)</label>
+                        <input type="number" id="r-hourlyRate" placeholder="7.50" min="0" step="0.01" autocomplete="off">
                     </div>
                     <div class="field">
                         <label>Notes <span class="opt">(optional)</span></label>
@@ -1394,10 +1406,23 @@
         btn.textContent = document.getElementById('cp-extras').classList.contains('open') ? '▾ Hide extras' : '▸ More details (tolls, extras)';
     };
 
-    window.updateCompleteTotal = function(basePrice) {
+    window.updateCompleteTotal = function(pricingMode, basePrice, hourlyRate) {
         const tolls = Number(document.getElementById('cp-tolls').value) || 0;
         const additional = Number(document.getElementById('cp-additional').value) || 0;
-        const total = (basePrice || 0) + tolls + additional;
+        let timeCost = 0;
+        if (pricingMode !== 'FLAT' && hourlyRate) {
+            const s = document.getElementById('cp-start').value;
+            const e = document.getElementById('cp-end').value;
+            if (s && e) {
+                const mins = (new Date(e) - new Date(s)) / 60000;
+                if (mins > 0) timeCost = (mins / 60) * hourlyRate;
+            }
+        }
+        let base = 0;
+        if (pricingMode === 'FLAT') base = basePrice || 0;
+        else if (pricingMode === 'FLAT_PLUS_HOURLY') base = (basePrice || 0) + timeCost;
+        else base = timeCost;
+        const total = base + tolls + additional;
         document.getElementById('cp-total').textContent = `Total: $${total.toFixed(2)}`;
     };
 
@@ -1503,28 +1528,28 @@
                             ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
-                <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
+                <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
                     (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}</td>
             </tr>${completingRideId === r.id ? `<tr><td colspan="7" style="padding:0">
                 <div class="complete-panel">
-                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · Base: $${r.basePrice || 0}</div>
+                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} flat`}</div>
                     <div class="field-row">
                         <div>
                             <label>Actual Start *</label>
-                            <input type="datetime-local" id="cp-start" onchange="document.getElementById('cp-err-start').classList.remove('show')">
+                            <input type="datetime-local" id="cp-start" onchange="document.getElementById('cp-err-start').classList.remove('show');updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})">
                             <div class="err-inline" id="cp-err-start">Required</div>
                         </div>
                         <div>
                             <label>Actual End *</label>
-                            <input type="datetime-local" id="cp-end" onchange="document.getElementById('cp-err-end').classList.remove('show')">
+                            <input type="datetime-local" id="cp-end" onchange="document.getElementById('cp-err-end').classList.remove('show');updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})">
                             <div class="err-inline" id="cp-err-end">Required</div>
                         </div>
                     </div>
                     <button id="cp-extras-toggle" class="extras-toggle" onclick="toggleExtras()">▸ More details (tolls, extras)</button>
                     <div class="extras" id="cp-extras">
                         <div class="field-row">
-                            <div><label>Tolls ($)</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
-                            <div><label>Additional ($)</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
+                            <div><label>Tolls ($)</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
+                            <div><label>Additional ($)</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
                         </div>
                         <div class="field-row">
                             <div><label>Description</label><input type="text" id="cp-desc" placeholder="Extra stop, waiting, etc."></div>
@@ -1561,13 +1586,21 @@
             });
     }
 
+    window.togglePricingFields = function() {
+        const mode = document.getElementById('r-pricingMode').value;
+        document.getElementById('basePrice-field').style.display = mode === 'HOURLY' ? 'none' : '';
+        document.getElementById('hourlyRate-field').style.display = mode === 'FLAT' ? 'none' : '';
+    };
+
     document.getElementById('ride-form').addEventListener('submit', async e => {
         e.preventDefault();
         const clientId = document.getElementById('r-clientId').value;
         const pickupDateTime = document.getElementById('r-pickupDateTime').value;
         const pickupLocation = document.getElementById('r-pickupLocation').value.trim();
         const dropoffLocation = document.getElementById('r-dropoffLocation').value.trim();
+        const pricingMode = document.getElementById('r-pricingMode').value;
         const basePrice = document.getElementById('r-basePrice').value.trim();
+        const hourlyRate = document.getElementById('r-hourlyRate').value.trim();
         const notes = document.getElementById('r-notes').value.trim();
 
         let valid = true;
@@ -1589,9 +1622,11 @@
                 clientId,
                 pickupDateTime: new Date(pickupDateTime).toISOString(),
                 pickupLocation,
-                dropoffLocation
+                dropoffLocation,
+                pricingMode
             };
             if (basePrice) body.basePrice = Number(basePrice);
+            if (hourlyRate) body.hourlyRate = Number(hourlyRate);
             if (notes) body.notes = notes;
 
             const url = editingRideId ? `/api/rides/${editingRideId}` : '/api/rides';
@@ -1627,7 +1662,7 @@
     /* ── Edit / Cancel ride ── */
     let editingRideId = null;
 
-    window.editRide = function(id, clientId, pickupDateTime, pickupLocation, dropoffLocation, basePrice, notes) {
+    window.editRide = function(id, clientId, pickupDateTime, pickupLocation, dropoffLocation, basePrice, notes, pricingMode, hourlyRate) {
         editingRideId = id;
         document.getElementById('r-clientId').value = clientId;
         const dt = new Date(pickupDateTime);
@@ -1635,8 +1670,11 @@
         document.getElementById('r-pickupDateTime').value = local;
         document.getElementById('r-pickupLocation').value = pickupLocation;
         document.getElementById('r-dropoffLocation').value = dropoffLocation;
+        document.getElementById('r-pricingMode').value = pricingMode || 'FLAT';
         document.getElementById('r-basePrice').value = basePrice;
+        document.getElementById('r-hourlyRate').value = hourlyRate;
         document.getElementById('r-notes').value = notes;
+        togglePricingFields();
         document.getElementById('ride-submit-btn').textContent = 'Update Ride';
         document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Edit Ride';
         document.getElementById('cancel-ride-edit-btn').style.display = 'inline-block';
@@ -1644,7 +1682,9 @@
 
     window.cancelRideEdit = function() {
         editingRideId = null;
-        ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-notes'].forEach(id => document.getElementById(id).value = '');
+        ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-hourlyRate','r-notes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('r-pricingMode').value = 'FLAT';
+        togglePricingFields();
         document.getElementById('ride-submit-btn').textContent = 'Book Ride';
         document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Book a Ride';
         document.getElementById('cancel-ride-edit-btn').style.display = 'none';

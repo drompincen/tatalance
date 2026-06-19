@@ -25,6 +25,8 @@ public class Ride {
     @NotBlank
     private String dropoffLocation;
     private BigDecimal basePrice;
+    private PricingMode pricingMode;
+    private BigDecimal hourlyRate;
     private String notes;
     private RideStatus status = RideStatus.SCHEDULED;
     private String assignedDriverId;
@@ -58,6 +60,10 @@ public class Ride {
     public void setDropoffLocation(String dropoffLocation) { this.dropoffLocation = dropoffLocation; }
     public BigDecimal getBasePrice() { return basePrice; }
     public void setBasePrice(BigDecimal basePrice) { this.basePrice = basePrice; }
+    public PricingMode getPricingMode() { return pricingMode; }
+    public void setPricingMode(PricingMode pricingMode) { this.pricingMode = pricingMode; }
+    public BigDecimal getHourlyRate() { return hourlyRate; }
+    public void setHourlyRate(BigDecimal hourlyRate) { this.hourlyRate = hourlyRate; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
     public RideStatus getStatus() { return status; }
