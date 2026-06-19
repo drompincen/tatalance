@@ -23,6 +23,9 @@ public class Invoice {
     private BigDecimal additionalCharges;
     private BigDecimal tax;
     private BigDecimal total;
+    private String pricingMode;
+    private BigDecimal hourlyRate;
+    private Long durationMinutes;
     private InvoiceStatus status = InvoiceStatus.OUTSTANDING;
     private List<Payment> payments = new ArrayList<>();
     private Instant createdAt;
@@ -47,6 +50,12 @@ public class Invoice {
     public void setTax(BigDecimal tax) { this.tax = tax; }
     public BigDecimal getTotal() { return total; }
     public void setTotal(BigDecimal total) { this.total = total; }
+    public String getPricingMode() { return pricingMode; }
+    public void setPricingMode(String pricingMode) { this.pricingMode = pricingMode; }
+    public BigDecimal getHourlyRate() { return hourlyRate; }
+    public void setHourlyRate(BigDecimal hourlyRate) { this.hourlyRate = hourlyRate; }
+    public Long getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(Long durationMinutes) { this.durationMinutes = durationMinutes; }
     public InvoiceStatus getStatus() { return status; }
     public void setStatus(InvoiceStatus status) { this.status = status; }
     public List<Payment> getPayments() { return payments; }

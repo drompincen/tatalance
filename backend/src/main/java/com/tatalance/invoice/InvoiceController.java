@@ -59,7 +59,8 @@ public class InvoiceController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be COMPLETED to generate invoice");
         }
 
-        BigDecimal baseCharge = ride.getBasePrice() != null ? ride.getBasePrice() : BigDecimal.ZERO;
+        BigDecimal baseCharge = ride.getTotalAmount() != null ? ride.getTotalAmount()
+                : (ride.getBasePrice() != null ? ride.getBasePrice() : BigDecimal.ZERO);
         BigDecimal extras = BigDecimal.ZERO;
         if (ride.getTolls() != null) extras = extras.add(ride.getTolls());
         if (ride.getParking() != null) extras = extras.add(ride.getParking());
@@ -79,6 +80,9 @@ public class InvoiceController {
         invoice.setAdditionalCharges(extras);
         invoice.setTax(tax);
         invoice.setTotal(total);
+        invoice.setPricingMode(ride.getPricingMode() != null ? ride.getPricingMode().name() : null);
+        invoice.setHourlyRate(ride.getHourlyRate());
+        invoice.setDurationMinutes(ride.getDurationMinutes());
         invoice.setStatus(InvoiceStatus.OUTSTANDING);
         invoice.setCreatedAt(Instant.now());
 

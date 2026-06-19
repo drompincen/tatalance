@@ -1773,6 +1773,18 @@
         }).catch(e => alert('Failed: ' + e.message));
     }
 
+    function invoiceChargeLabel(i) {
+        const mode = i.pricingMode || 'FLAT';
+        if (mode === 'FLAT' || !i.durationMinutes) return `$${i.baseCharge}`;
+        const h = Math.floor(i.durationMinutes / 60);
+        const m = i.durationMinutes % 60;
+        const dur = (h > 0 ? h + 'h ' : '') + m + 'm';
+        const timePart = `${dur} @ $${Number(i.hourlyRate).toFixed(2)}/hr`;
+        if (mode === 'HOURLY') return timePart;
+        const basePrice = (Number(i.baseCharge) - (i.durationMinutes / 60) * Number(i.hourlyRate)).toFixed(2);
+        return `$${basePrice} + ${timePart}`;
+    }
+
     function renderInvoices(invoices) {
         document.getElementById('invoice-count').textContent = `(${invoices.length})`;
         const el = document.getElementById('invoice-list');
@@ -1785,11 +1797,11 @@
         window.sortInvoices = function(field) { toggleSort('invoices', field); applyInvoiceFilter(); };
         const sorted = sortedData('invoices', invoices);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Base</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
+            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Charge</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
             <tbody>${sorted.map(i => `<tr>
                 <td data-label="Invoice #" style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
                 <td data-label="Client">${esc(i.clientName)}</td>
-                <td data-label="Base">$${i.baseCharge}</td>
+                <td data-label="Charge" style="font-size:.8rem">${invoiceChargeLabel(i)}</td>
                 <td data-label="Extras">$${i.additionalCharges}</td>
                 <td data-label="Tax">$${i.tax}</td>
                 <td style="font-weight:700">$${i.total}</td>

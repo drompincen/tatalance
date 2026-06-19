@@ -71,7 +71,7 @@ class InvoiceControllerTest {
         ride.setParking(new BigDecimal("10.00"));
         ride.setAdditionalCharges(new BigDecimal("20.00"));
         ride.setStatus(RideStatus.COMPLETED);
-        ride.setTotalAmount(new BigDecimal("135.00"));
+        ride.setTotalAmount(new BigDecimal("100.00"));
         return ride;
     }
 
