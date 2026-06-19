@@ -354,7 +354,7 @@
     <div class="user-menu">
         <span class="username" id="username-display"></span>
         <button class="logout-btn" onclick="openChangePassword()">Password</button>
-        <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button>
+        <button class="logout-btn" onclick="doLogout()">Logout</button>
     </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
@@ -2358,6 +2358,15 @@
     window.helpGoTo = function(i) {
         helpIndex = i;
         renderHelpPanel();
+    };
+
+    /* ── Logout (POST with CSRF) ── */
+    window.doLogout = async function() {
+        var headers = {};
+        var m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (m) headers['X-XSRF-TOKEN'] = decodeURIComponent(m[1]);
+        await fetch('/logout', { method: 'POST', headers: headers, credentials: 'same-origin' });
+        window.location.href = '/login.html?logout';
     };
 
     /* ── Change Password ── */

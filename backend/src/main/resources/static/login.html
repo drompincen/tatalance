@@ -133,6 +133,11 @@
     </div>
 
     <script>
+        function getCsrfToken() {
+            var m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+            return m ? decodeURIComponent(m[1]) : null;
+        }
+
         var qs = new URLSearchParams(location.search);
         if (qs.has('error'))  document.getElementById('msg-error').style.display = 'block';
         if (qs.has('logout')) document.getElementById('msg-info').style.display  = 'block';
@@ -151,10 +156,14 @@
             formData.append('username', document.getElementById('username').value);
             formData.append('password', document.getElementById('password').value);
 
+            var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            var csrf = getCsrfToken();
+            if (csrf) headers['X-XSRF-TOKEN'] = csrf;
+
             try {
                 var res = await fetch('/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: headers,
                     body: formData.toString(),
                     redirect: 'follow',
                     credentials: 'same-origin'
