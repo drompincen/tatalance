@@ -225,9 +225,13 @@ public class RideController {
 
         PricingMode mode = ride.getPricingMode() == null ? PricingMode.FLAT : ride.getPricingMode();
         BigDecimal timeCost = BigDecimal.ZERO;
-        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && ride.getActualStart() != null) {
-            long minutes = Duration.between(ride.getActualStart(), ride.getActualEnd()).toMinutes();
-            BigDecimal hours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
+        long durationMins = 0;
+        if (ride.getActualStart() != null) {
+            durationMins = Duration.between(ride.getActualStart(), ride.getActualEnd()).toMinutes();
+            ride.setDurationMinutes(durationMins);
+        }
+        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && durationMins > 0) {
+            BigDecimal hours = BigDecimal.valueOf(durationMins).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
             timeCost = ride.getHourlyRate().multiply(hours).setScale(2, RoundingMode.HALF_UP);
         }
 

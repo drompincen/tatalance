@@ -301,20 +301,27 @@
         function completeFormFor(r) {
             if (r.status !== 'IN_PROGRESS') return '';
             const base = Number(r.basePrice || 0);
-            return `<div class="complete-form" data-test="complete-form" data-ride-id="${esc(r.id)}">
-                <div class="row"><label>Base price</label><span>$${base.toFixed(2)}</span></div>
-                <div class="row"><label for="tolls-${esc(r.id)}">Tolls</label>
+            const mode = r.pricingMode || 'FLAT';
+            const rate = Number(r.hourlyRate || 0);
+            const rid = esc(r.id);
+            let priceLabel = `Base price: $${base.toFixed(2)}`;
+            if (mode === 'HOURLY') priceLabel = `Hourly rate: $${rate.toFixed(2)}/hr`;
+            else if (mode === 'FLAT_PLUS_HOURLY') priceLabel = `$${base.toFixed(2)} flat + $${rate.toFixed(2)}/hr`;
+            return `<div class="complete-form" data-test="complete-form" data-ride-id="${rid}" data-mode="${mode}" data-base="${base}" data-rate="${rate}" data-start="${r.actualStart || ''}">
+                <div class="row"><label>${priceLabel}</label></div>
+                ${mode !== 'FLAT' ? `<div class="row" style="font-size:.9rem;color:var(--in-progress);font-weight:600" id="time-cost-${rid}"></div>` : ''}
+                <div class="row"><label for="tolls-${rid}">Tolls</label>
                     <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
-                           id="tolls-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
-                <div class="row"><label for="parking-${esc(r.id)}">Parking</label>
+                           id="tolls-${rid}" oninput="recalcQueue('${rid}')"></div>
+                <div class="row"><label for="parking-${rid}">Parking</label>
                     <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
-                           id="parking-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
-                <div class="row"><label for="extras-${esc(r.id)}">Extras</label>
+                           id="parking-${rid}" oninput="recalcQueue('${rid}')"></div>
+                <div class="row"><label for="extras-${rid}">Extras</label>
                     <input type="number" inputmode="decimal" step="0.01" min="0" value="0"
-                           id="extras-${esc(r.id)}" oninput="recalc('${esc(r.id)}', ${base})"></div>
+                           id="extras-${rid}" oninput="recalcQueue('${rid}')"></div>
                 <div class="total">
                     <span>Total billable</span>
-                    <span data-test="billable" id="billable-${esc(r.id)}">$${base.toFixed(2)}</span>
+                    <span data-test="billable" id="billable-${rid}">$${base.toFixed(2)}</span>
                 </div>
                 <div class="confirm-row">
                     <button class="action-btn cancel" onclick="closeCompleteForm('${esc(r.id)}')">Cancel</button>
@@ -331,6 +338,34 @@
 
         function recalc(id, base) {
             const total = base + readNumber(`tolls-${id}`) + readNumber(`parking-${id}`) + readNumber(`extras-${id}`);
+            const el = document.getElementById(`billable-${id}`);
+            if (el) el.textContent = `$${total.toFixed(2)}`;
+        }
+
+        function recalcQueue(id) {
+            const form = document.querySelector(`.complete-form[data-ride-id="${id}"]`);
+            if (!form) return;
+            const mode = form.dataset.mode;
+            const base = Number(form.dataset.base) || 0;
+            const rate = Number(form.dataset.rate) || 0;
+            const startIso = form.dataset.start;
+            const tolls = readNumber(`tolls-${id}`);
+            const parking = readNumber(`parking-${id}`);
+            const extras = readNumber(`extras-${id}`);
+            let timeCost = 0;
+            const tcEl = document.getElementById(`time-cost-${id}`);
+            if (mode !== 'FLAT' && rate && startIso) {
+                const mins = Math.round((Date.now() - new Date(startIso).getTime()) / 60000);
+                if (mins > 0) {
+                    timeCost = (mins / 60) * rate;
+                    const h = Math.floor(mins / 60);
+                    const m = mins % 60;
+                    const dur = (h > 0 ? h + 'h ' : '') + m + 'm';
+                    if (tcEl) tcEl.textContent = `${dur} @ $${rate.toFixed(2)}/hr = $${timeCost.toFixed(2)}`;
+                }
+            }
+            let subtotal = mode === 'FLAT' ? base : mode === 'FLAT_PLUS_HOURLY' ? base + timeCost : timeCost;
+            const total = subtotal + tolls + parking + extras;
             const el = document.getElementById(`billable-${id}`);
             if (el) el.textContent = `$${total.toFixed(2)}`;
         }
@@ -401,6 +436,10 @@
                 const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
                 const s = String(elapsed % 60).padStart(2, '0');
                 el.textContent = `${h}:${m}:${s}`;
+            });
+            document.querySelectorAll('.complete-form.open').forEach(form => {
+                const id = form.dataset.rideId;
+                if (id) recalcQueue(id);
             });
         }
 

@@ -41,6 +41,7 @@ public class Ride {
     private BigDecimal parking;
     private BigDecimal additionalCharges;
     private String chargeDescription;
+    private Long durationMinutes;
     private BigDecimal totalAmount;
     private BigDecimal billableAmount;
 
@@ -88,6 +89,8 @@ public class Ride {
     public void setAdditionalCharges(BigDecimal additionalCharges) { this.additionalCharges = additionalCharges; }
     public String getChargeDescription() { return chargeDescription; }
     public void setChargeDescription(String chargeDescription) { this.chargeDescription = chargeDescription; }
+    public Long getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(Long durationMinutes) { this.durationMinutes = durationMinutes; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public BigDecimal getBillableAmount() { return billableAmount; }

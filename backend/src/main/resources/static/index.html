@@ -1410,12 +1410,29 @@
         const tolls = Number(document.getElementById('cp-tolls').value) || 0;
         const additional = Number(document.getElementById('cp-additional').value) || 0;
         let timeCost = 0;
+        let durationText = '';
         if (pricingMode !== 'FLAT' && hourlyRate) {
             const s = document.getElementById('cp-start').value;
             const e = document.getElementById('cp-end').value;
             if (s && e) {
-                const mins = (new Date(e) - new Date(s)) / 60000;
-                if (mins > 0) timeCost = (mins / 60) * hourlyRate;
+                const mins = Math.round((new Date(e) - new Date(s)) / 60000);
+                if (mins > 0) {
+                    timeCost = (mins / 60) * hourlyRate;
+                    const h = Math.floor(mins / 60);
+                    const m = mins % 60;
+                    durationText = (h > 0 ? h + 'h ' : '') + m + 'm';
+                }
+            }
+        }
+        const bd = document.getElementById('cp-time-breakdown');
+        if (bd) {
+            if (durationText) {
+                const parts = [];
+                if (pricingMode === 'FLAT_PLUS_HOURLY') parts.push(`$${(basePrice||0).toFixed(2)} flat`);
+                parts.push(`${durationText} @ $${hourlyRate.toFixed(2)}/hr = $${timeCost.toFixed(2)}`);
+                bd.textContent = parts.join(' + ');
+            } else {
+                bd.textContent = '';
             }
         }
         let base = 0;
@@ -1555,6 +1572,7 @@
                             <div><label>Description</label><input type="text" id="cp-desc" placeholder="Extra stop, waiting, etc."></div>
                         </div>
                     </div>
+                    ${(r.pricingMode === 'HOURLY' || r.pricingMode === 'FLAT_PLUS_HOURLY') ? `<div class="total-line" id="cp-time-breakdown" style="font-size:.85rem;color:#4b5563;margin-bottom:4px"></div>` : ''}
                     <div class="total-line" id="cp-total">Total: $${(r.basePrice || 0).toFixed ? Number(r.basePrice || 0).toFixed(2) : '0.00'}</div>
                     <div class="panel-actions">
                         <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">Confirm Complete</button>
