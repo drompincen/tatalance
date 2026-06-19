@@ -15,6 +15,8 @@ public class AppUser {
     private String password;
     private String role;
     private Instant createdAt;
+    private String securityQuestion;
+    private String securityAnswer;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -26,4 +28,8 @@ public class AppUser {
     public void setRole(String role) { this.role = role; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public String getSecurityQuestion() { return securityQuestion; }
+    public void setSecurityQuestion(String securityQuestion) { this.securityQuestion = securityQuestion; }
+    public String getSecurityAnswer() { return securityAnswer; }
+    public void setSecurityAnswer(String securityAnswer) { this.securityAnswer = securityAnswer; }
 }

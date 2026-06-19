@@ -71,9 +71,63 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(password));
         user.setRole("USER");
         user.setCreatedAt(Instant.now());
+
+        String securityQuestion = body.get("securityQuestion");
+        String securityAnswer = body.get("securityAnswer");
+        if (securityQuestion != null && !securityQuestion.isBlank()
+                && securityAnswer != null && !securityAnswer.isBlank()) {
+            user.setSecurityQuestion(securityQuestion.trim());
+            user.setSecurityAnswer(securityAnswer.trim().toLowerCase());
+        }
+
         repository.save(user);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "Account created — you can now sign in"));
+    }
+
+    @PostMapping("/forgot-password/question")
+    public ResponseEntity<?> forgotPasswordQuestion(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Username is required"));
+        }
+
+        return repository.findByUsername(username.trim())
+                .filter(u -> u.getSecurityQuestion() != null)
+                .map(u -> ResponseEntity.ok(Map.of("question", u.getSecurityQuestion())))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "No security question found for this account")));
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<?> forgotPasswordReset(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        String answer = body.get("securityAnswer");
+        String newPassword = body.get("newPassword");
+
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Username is required"));
+        }
+        if (answer == null || answer.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Security answer is required"));
+        }
+        if (newPassword == null || newPassword.length() < 4) {
+            return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 4 characters"));
+        }
+
+        AppUser user = repository.findByUsername(username.trim()).orElse(null);
+        if (user == null || user.getSecurityQuestion() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No security question found for this account"));
+        }
+
+        if (!user.getSecurityAnswer().equals(answer.trim().toLowerCase())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Incorrect answer"));
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        repository.save(user);
+        return ResponseEntity.ok(Map.of("message", "Password reset — you can now sign in"));
     }
 }

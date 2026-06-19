@@ -21,7 +21,8 @@ public class SecurityConfig {
             .userDetailsService(userDetailsService)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/login.html", "/logout",
-                                 "/register.html", "/api/users/register").permitAll()
+                                 "/register.html", "/api/users/register",
+                                 "/forgot-password.html", "/api/users/forgot-password/**").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults())
