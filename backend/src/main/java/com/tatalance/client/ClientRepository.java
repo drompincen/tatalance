@@ -14,4 +14,5 @@ public interface ClientRepository extends MongoRepository<Client, String> {
     boolean existsByIdAndUserId(String id, String userId);
     boolean existsByUserIdAndPhone(String userId, String phone);
     boolean existsByUserIdAndPhoneAndIdNot(String userId, String phone, String id);
+    long countByUserId(String userId);
 }

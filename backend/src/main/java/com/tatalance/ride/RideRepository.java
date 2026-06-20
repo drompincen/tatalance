@@ -16,4 +16,8 @@ public interface RideRepository extends MongoRepository<Ride, String> {
     List<Ride> findByUserId(String userId);
     Page<Ride> findByUserId(String userId, Pageable pageable);
     Optional<Ride> findByIdAndUserId(String id, String userId);
+    long countByUserId(String userId);
+    long countByUserIdAndStatus(String userId, RideStatus status);
+    long countByUserIdAndPickupDateTimeBetween(String userId, java.time.Instant from, java.time.Instant to);
+    List<Ride> findByUserIdAndStatusIn(String userId, Collection<RideStatus> statuses);
 }

@@ -13,4 +13,5 @@ public interface InvoiceRepository extends MongoRepository<Invoice, String> {
     Page<Invoice> findByUserId(String userId, Pageable pageable);
     Optional<Invoice> findByIdAndUserId(String id, String userId);
     long countByUserId(String userId);
+    List<Invoice> findByUserIdAndStatus(String userId, InvoiceStatus status);
 }

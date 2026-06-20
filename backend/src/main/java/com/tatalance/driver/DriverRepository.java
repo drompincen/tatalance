@@ -13,4 +13,5 @@ public interface DriverRepository extends MongoRepository<Driver, String> {
     Page<Driver> findByUserId(String userId, Pageable pageable);
     Optional<Driver> findByIdAndUserId(String id, String userId);
     boolean existsByIdAndUserId(String id, String userId);
+    long countByUserId(String userId);
 }

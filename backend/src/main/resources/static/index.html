@@ -98,6 +98,28 @@
         .form-feedback.ok { color: #38a169; }
         .form-feedback.fail { color: #e53e3e; }
 
+        /* ── Dashboard ── */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .stat-card .stat-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 8px; }
+        .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; }
+        .stat-card .stat-sub { font-size: 0.78rem; color: #6b7280; margin-top: 4px; }
+        .stat-card.accent-blue { border-left: 4px solid #3b82f6; }
+        .stat-card.accent-green { border-left: 4px solid #10b981; }
+        .stat-card.accent-orange { border-left: 4px solid #f59e0b; }
+        .stat-card.accent-purple { border-left: 4px solid #8b5cf6; }
+        .stat-card.accent-red { border-left: 4px solid #ef4444; }
+        .status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .status-bar-label { font-size: 0.82rem; width: 110px; text-align: right; color: #374151; font-weight: 500; }
+        .status-bar-track { flex: 1; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden; }
+        .status-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 0.72rem; font-weight: 600; color: white; min-width: fit-content; transition: width .4s ease; }
+        .revenue-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .revenue-line:last-child { border-bottom: none; }
+        .revenue-label { color: #374151; font-weight: 500; }
+        .revenue-value { font-weight: 700; color: #1a1a2e; }
+        .revenue-value.green { color: #10b981; }
+        .revenue-value.red { color: #ef4444; }
+
         /* ── Client list ── */
         .list-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
         .count { font-size: 0.8rem; color: #6b7280; font-weight: 400; }
@@ -318,6 +340,7 @@
             .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
             .btn-cancel { width: auto; position: static; box-shadow: none; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
+            #dash-detail-row { grid-template-columns: 1fr !important; }
         }
 
         @media (max-width: 640px) {
@@ -342,7 +365,8 @@
     <span class="badge badge-poc">POC</span>
     <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
     <nav id="main-nav">
-        <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
+        <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')">Dashboard</button>
+        <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
         <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
@@ -360,8 +384,25 @@
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
+<!-- ── Dashboard tab ── -->
+<div id="tab-dashboard" class="tab-pane active">
+    <div class="page">
+        <div class="dash-grid" id="dash-cards"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px" id="dash-detail-row">
+            <div class="card">
+                <div class="card-title">Rides by status</div>
+                <div id="dash-status-bars"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Revenue summary</div>
+                <div id="dash-revenue"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Clients tab ── -->
-<div id="tab-clients" class="tab-pane active">
+<div id="tab-clients" class="tab-pane">
     <div class="page">
         <div class="grid-2">
             <div class="card">
@@ -794,6 +835,7 @@
         // Refresh the client picker when opening the booking tab so newly
         // added clients appear without waiting for the 10s poll.
         if (name === 'rides') loadClientDropdown();
+        if (name === 'dashboard') loadDashboard();
         closeNav();
     }
 
@@ -2442,6 +2484,74 @@
         await fetch('/logout', { method: 'POST', headers: headers, credentials: 'same-origin' });
         window.location.href = '/login.html?logout';
     };
+
+    /* ── Dashboard ── */
+    function loadDashboard() {
+        fetch('/api/stats')
+            .then(r => r.json())
+            .then(renderDashboard)
+            .catch(() => {
+                document.getElementById('dash-cards').innerHTML = '<p style="color:#6b7280">Could not load stats.</p>';
+            });
+    }
+
+    function renderDashboard(s) {
+        var cards = document.getElementById('dash-cards');
+        cards.innerHTML = `
+            <div class="stat-card accent-blue">
+                <div class="stat-label">Clients</div>
+                <div class="stat-value">${s.totalClients}</div>
+            </div>
+            <div class="stat-card accent-purple">
+                <div class="stat-label">Drivers</div>
+                <div class="stat-value">${s.totalDrivers}</div>
+            </div>
+            <div class="stat-card accent-blue">
+                <div class="stat-label">Rides today</div>
+                <div class="stat-value">${s.ridesToday}</div>
+                <div class="stat-sub">${s.ridesThisWeek} this week &middot; ${s.ridesThisMonth} this month</div>
+            </div>
+            <div class="stat-card accent-green">
+                <div class="stat-label">Revenue this month</div>
+                <div class="stat-value">$${Number(s.revenueThisMonth).toFixed(2)}</div>
+                <div class="stat-sub">$${Number(s.revenueTotal).toFixed(2)} all time</div>
+            </div>
+            <div class="stat-card accent-orange">
+                <div class="stat-label">Outstanding</div>
+                <div class="stat-value">$${Number(s.outstandingAmount).toFixed(2)}</div>
+                <div class="stat-sub">${s.outstandingCount} invoice${s.outstandingCount === 1 ? '' : 's'}</div>
+            </div>
+        `;
+
+        // Status bars
+        var statusBars = document.getElementById('dash-status-bars');
+        var statuses = s.ridesByStatus || {};
+        var maxCount = Math.max(1, ...Object.values(statuses));
+        var colors = { SCHEDULED: '#3b82f6', ASSIGNED: '#8b5cf6', ACCEPTED: '#06b6d4', IN_PROGRESS: '#f59e0b', COMPLETED: '#10b981', CANCELLED: '#ef4444' };
+        var html = '';
+        for (var st in statuses) {
+            var count = statuses[st];
+            var pct = Math.round((count / maxCount) * 100);
+            var color = colors[st] || '#6b7280';
+            html += '<div class="status-bar-row">' +
+                '<span class="status-bar-label">' + st.replace('_', ' ') + '</span>' +
+                '<div class="status-bar-track"><div class="status-bar-fill" style="width:' + (count > 0 ? Math.max(pct, 8) : 0) + '%;background:' + color + '">' + count + '</div></div>' +
+                '</div>';
+        }
+        statusBars.innerHTML = html || '<p class="muted">No rides yet</p>';
+
+        // Revenue summary
+        var rev = document.getElementById('dash-revenue');
+        rev.innerHTML = `
+            <div class="revenue-line"><span class="revenue-label">Paid (this month)</span><span class="revenue-value green">$${Number(s.revenueThisMonth).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Paid (all time)</span><span class="revenue-value green">$${Number(s.revenueTotal).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Outstanding</span><span class="revenue-value red">$${Number(s.outstandingAmount).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Total rides</span><span class="revenue-value">${s.totalRides}</span></div>
+        `;
+    }
+
+    // Load dashboard on page load
+    loadDashboard();
 
     /* ── Link Google Account ── */
     window.linkGoogle = async function() {
