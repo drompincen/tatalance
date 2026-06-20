@@ -341,6 +341,7 @@
             .btn-cancel { width: auto; position: static; box-shadow: none; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
             #dash-detail-row { grid-template-columns: 1fr !important; }
+            .search-box { display: none; }
         }
 
         @media (max-width: 640px) {
@@ -376,6 +377,12 @@
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
         <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
+    <div class="search-box" style="position:relative;margin-left:12px;">
+        <input type="text" id="global-search" placeholder="Search..." autocomplete="off"
+               style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:white;font-size:.85rem;width:180px;"
+               oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)">
+        <div id="search-results" style="display:none;position:absolute;top:100%;left:0;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
+    </div>
     <div class="user-menu">
         <span class="username" id="username-display"></span>
         <button class="logout-btn" id="link-google-btn" onclick="linkGoogle()" style="display:none">Link Google</button>
@@ -2596,6 +2603,51 @@
             .catch(() => {
                 document.getElementById('activity-list').innerHTML = '<p style="color:#6b7280">Could not load activity log.</p>';
             });
+    }
+
+    /* ── Global Search ── */
+    var searchTimer = null;
+    window.doSearch = function(q) {
+        clearTimeout(searchTimer);
+        var el = document.getElementById('search-results');
+        if (!q || q.trim().length < 2) { el.style.display = 'none'; return; }
+        searchTimer = setTimeout(function() {
+            fetch('/api/search?q=' + encodeURIComponent(q.trim()))
+                .then(r => r.json())
+                .then(data => {
+                    var html = '';
+                    var sections = { clients: 'Clients', rides: 'Rides', invoices: 'Invoices' };
+                    for (var key in sections) {
+                        if (data[key] && data[key].length > 0) {
+                            html += '<div style="padding:6px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #f0f0f0">' + sections[key] + '</div>';
+                            data[key].forEach(function(item) {
+                                html += '<div class="search-item" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f5f5f5" onmousedown="goToResult(\'' + key + '\',\'' + item.id + '\')">' +
+                                    '<div style="font-size:.85rem;font-weight:500;color:#1a1a2e">' + escHtml(item.text) + '</div>' +
+                                    '<div style="font-size:.75rem;color:#6b7280">' + escHtml(item.detail) + '</div>' +
+                                    '</div>';
+                            });
+                        }
+                    }
+                    if (!html) html = '<div style="padding:12px;color:#6b7280;font-size:.85rem">No results</div>';
+                    el.innerHTML = html;
+                    el.style.display = 'block';
+                });
+        }, 250);
+    };
+
+    window.goToResult = function(type, id) {
+        document.getElementById('search-results').style.display = 'none';
+        document.getElementById('global-search').value = '';
+        if (type === 'clients') showTab('clients');
+        else if (type === 'rides') showTab('rides');
+        else if (type === 'invoices') showTab('invoices');
+    };
+
+    function escHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
     }
 
     /* ── Link Google Account ── */
