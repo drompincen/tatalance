@@ -3,15 +3,20 @@ package com.tatalance.ride;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "rides")
 public class Ride {
     @Id
     private String id;
+    @Indexed
+    private String userId;
     @NotBlank
     private String clientId;
     private String clientName;
@@ -22,6 +27,8 @@ public class Ride {
     @NotBlank
     private String dropoffLocation;
     private BigDecimal basePrice;
+    private PricingMode pricingMode;
+    private BigDecimal hourlyRate;
     private String notes;
     private RideStatus status = RideStatus.SCHEDULED;
     private String assignedDriverId;
@@ -36,11 +43,21 @@ public class Ride {
     private BigDecimal parking;
     private BigDecimal additionalCharges;
     private String chargeDescription;
+    private Long durationMinutes;
     private BigDecimal totalAmount;
     private BigDecimal billableAmount;
 
+    // Driver payout (#87)
+    private BigDecimal driverPayout;
+    private boolean payoutPaid;
+
+    // Status history (#88)
+    private List<StatusEvent> statusHistory = new ArrayList<>();
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public String getClientId() { return clientId; }
     public void setClientId(String clientId) { this.clientId = clientId; }
     public String getClientName() { return clientName; }
@@ -53,6 +70,10 @@ public class Ride {
     public void setDropoffLocation(String dropoffLocation) { this.dropoffLocation = dropoffLocation; }
     public BigDecimal getBasePrice() { return basePrice; }
     public void setBasePrice(BigDecimal basePrice) { this.basePrice = basePrice; }
+    public PricingMode getPricingMode() { return pricingMode; }
+    public void setPricingMode(PricingMode pricingMode) { this.pricingMode = pricingMode; }
+    public BigDecimal getHourlyRate() { return hourlyRate; }
+    public void setHourlyRate(BigDecimal hourlyRate) { this.hourlyRate = hourlyRate; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
     public RideStatus getStatus() { return status; }
@@ -77,8 +98,31 @@ public class Ride {
     public void setAdditionalCharges(BigDecimal additionalCharges) { this.additionalCharges = additionalCharges; }
     public String getChargeDescription() { return chargeDescription; }
     public void setChargeDescription(String chargeDescription) { this.chargeDescription = chargeDescription; }
+    public Long getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(Long durationMinutes) { this.durationMinutes = durationMinutes; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public BigDecimal getBillableAmount() { return billableAmount; }
     public void setBillableAmount(BigDecimal billableAmount) { this.billableAmount = billableAmount; }
+    public BigDecimal getDriverPayout() { return driverPayout; }
+    public void setDriverPayout(BigDecimal driverPayout) { this.driverPayout = driverPayout; }
+    public boolean isPayoutPaid() { return payoutPaid; }
+    public void setPayoutPaid(boolean payoutPaid) { this.payoutPaid = payoutPaid; }
+    public List<StatusEvent> getStatusHistory() { return statusHistory; }
+    public void setStatusHistory(List<StatusEvent> statusHistory) { this.statusHistory = statusHistory; }
+    public void addStatusEvent(RideStatus status) {
+        if (this.statusHistory == null) this.statusHistory = new ArrayList<>();
+        this.statusHistory.add(new StatusEvent(status, Instant.now()));
+    }
+
+    public static class StatusEvent {
+        private RideStatus status;
+        private Instant timestamp;
+        public StatusEvent() {}
+        public StatusEvent(RideStatus status, Instant timestamp) { this.status = status; this.timestamp = timestamp; }
+        public RideStatus getStatus() { return status; }
+        public void setStatus(RideStatus status) { this.status = status; }
+        public Instant getTimestamp() { return timestamp; }
+        public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
+    }
 }

@@ -1,11 +1,16 @@
 package com.tatalance;
 
+import com.tatalance.activity.ActivityLogRepository;
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.client.ClientRepository;
 import com.tatalance.customtable.CustomTableRepository;
 import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository;
+import com.tatalance.user.AppUserRepository;
+import com.tatalance.user.AuthHelper;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -42,6 +47,21 @@ class HeaderBadgeTest {
 
     @MockBean
     InvoiceRepository invoiceRepository;
+
+    @MockBean
+    UserDetailsService userDetailsService;
+
+    @MockBean
+    AppUserRepository appUserRepository;
+
+    @MockBean
+    AuthHelper authHelper;
+
+    @MockBean
+    ActivityLogger activityLogger;
+
+    @MockBean
+    ActivityLogRepository activityLogRepository;
 
     @Test
     void should_haveDynamicDbBadgeElement() throws Exception {

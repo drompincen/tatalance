@@ -1,9 +1,14 @@
 package com.tatalance.customtable;
 
+import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,10 +25,13 @@ public class CustomTableController {
 
     private final CustomTableRepository tableRepository;
     private final CustomTableRowRepository rowRepository;
+    private final AuthHelper authHelper;
 
-    public CustomTableController(CustomTableRepository tableRepository, CustomTableRowRepository rowRepository) {
+    public CustomTableController(CustomTableRepository tableRepository, CustomTableRowRepository rowRepository,
+                                 AuthHelper authHelper) {
         this.tableRepository = tableRepository;
         this.rowRepository = rowRepository;
+        this.authHelper = authHelper;
     }
 
     @Operation(summary = "Create a custom table")
@@ -31,21 +39,22 @@ public class CustomTableController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CustomTable createTable(@Valid @RequestBody CustomTable table) {
+        table.setUserId(authHelper.getCurrentUserId());
         table.setCreatedAt(Instant.now());
         return tableRepository.save(table);
     }
 
     @Operation(summary = "List all custom tables")
     @GetMapping
-    public List<CustomTable> listTables() {
-        return tableRepository.findAll();
+    public Page<CustomTable> listTables(@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return tableRepository.findByUserId(authHelper.getCurrentUserId(), pageable);
     }
 
     @Operation(summary = "Get a custom table by id")
     @ApiResponse(responseCode = "404", description = "Table not found")
     @GetMapping("/{id}")
     public CustomTable getTable(@PathVariable String id) {
-        return tableRepository.findById(id)
+        return tableRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
     }
 
@@ -54,7 +63,7 @@ public class CustomTableController {
     @ApiResponse(responseCode = "404", description = "Table not found")
     @PutMapping("/{id}")
     public CustomTable renameTable(@PathVariable String id, @RequestBody Map<String, String> body) {
-        CustomTable table = tableRepository.findById(id)
+        CustomTable table = tableRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
         String name = body.get("name");
         if (name == null || name.isBlank()) {
@@ -70,7 +79,7 @@ public class CustomTableController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTable(@PathVariable String id) {
-        if (!tableRepository.existsById(id)) {
+        if (!tableRepository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found");
         }
         rowRepository.deleteByTableId(id);
@@ -83,8 +92,9 @@ public class CustomTableController {
     @ApiResponse(responseCode = "400", description = "Invalid column or duplicate name")
     @PostMapping("/{id}/columns")
     public CustomTable addColumn(@PathVariable String id, @Valid @RequestBody ColumnDef column) {
+        String userId = authHelper.getCurrentUserId();
         validateLabels(column);
-        CustomTable table = tableRepository.findById(id)
+        CustomTable table = tableRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
         if (column.getType() == ColumnType.LINK) {
             if (column.getLinkedTableId() == null || column.getLinkedTableId().isBlank()) {
@@ -93,7 +103,7 @@ public class CustomTableController {
             if (column.getLinkedTableId().equals(id)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot link a table to itself");
             }
-            if (!tableRepository.existsById(column.getLinkedTableId())) {
+            if (!tableRepository.existsByIdAndUserId(column.getLinkedTableId(), userId)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Linked table not found");
             }
         }
@@ -123,7 +133,7 @@ public class CustomTableController {
     @PutMapping("/{id}/columns/{columnName}")
     public CustomTable updateColumn(@PathVariable String id, @PathVariable String columnName,
                                     @RequestBody Map<String, String> body) {
-        CustomTable table = tableRepository.findById(id)
+        CustomTable table = tableRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
         ColumnDef col = table.getColumns().stream()
                 .filter(c -> c.getName().equals(columnName))
@@ -150,7 +160,7 @@ public class CustomTableController {
     @ApiResponse(responseCode = "400", description = "Cannot delete last column")
     @DeleteMapping("/{id}/columns/{columnName}")
     public CustomTable deleteColumn(@PathVariable String id, @PathVariable String columnName) {
-        CustomTable table = tableRepository.findById(id)
+        CustomTable table = tableRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
         if (table.getColumns().size() <= 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete the last column");
@@ -170,10 +180,12 @@ public class CustomTableController {
     @PostMapping("/{id}/rows")
     @ResponseStatus(HttpStatus.CREATED)
     public CustomTableRow addRow(@PathVariable String id, @RequestBody Map<String, Object> data) {
-        if (!tableRepository.existsById(id)) {
+        String userId = authHelper.getCurrentUserId();
+        if (!tableRepository.existsByIdAndUserId(id, userId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found");
         }
         CustomTableRow row = new CustomTableRow();
+        row.setUserId(userId);
         row.setTableId(id);
         row.setData(data);
         row.setCreatedAt(Instant.now());
@@ -183,8 +195,9 @@ public class CustomTableController {
     @Operation(summary = "List rows in a custom table")
     @ApiResponse(responseCode = "200", description = "Rows listed")
     @GetMapping("/{id}/rows")
-    public List<CustomTableRow> listRows(@PathVariable String id) {
-        return rowRepository.findByTableId(id);
+    public Page<CustomTableRow> listRows(@PathVariable String id,
+                                         @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return rowRepository.findByTableId(id, pageable);
     }
 
     @Operation(summary = "Update a row")
@@ -193,7 +206,7 @@ public class CustomTableController {
     @PutMapping("/{id}/rows/{rowId}")
     public CustomTableRow updateRow(@PathVariable String id, @PathVariable String rowId,
                                     @RequestBody Map<String, Object> data) {
-        CustomTableRow row = rowRepository.findById(rowId)
+        CustomTableRow row = rowRepository.findByIdAndUserId(rowId, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Row not found"));
         if (!row.getTableId().equals(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Row not found in this table");
@@ -208,7 +221,7 @@ public class CustomTableController {
     @DeleteMapping("/{id}/rows/{rowId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRow(@PathVariable String id, @PathVariable String rowId) {
-        CustomTableRow row = rowRepository.findById(rowId)
+        CustomTableRow row = rowRepository.findByIdAndUserId(rowId, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Row not found"));
         if (!row.getTableId().equals(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Row not found in this table");

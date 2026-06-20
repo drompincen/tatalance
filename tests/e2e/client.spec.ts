@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { AppPage } from './pages/app.page';
+import { AppPage, uniquePhone } from './pages/app.page';
 
 test.describe('Client management', () => {
   const uniqueId = () => Date.now().toString(36);
@@ -7,11 +7,13 @@ test.describe('Client management', () => {
   test('add a client and see it in the list', async ({ page }) => {
     const app = new AppPage(page);
     await app.goto();
+    // Dashboard is the default tab; the client form lives on the Clients tab.
+    await app.switchTab('Clients');
 
     const tag = uniqueId();
     const firstName = `E2E${tag}`;
     const lastName = `Bot${tag}`;
-    const phone = '+12125550001';
+    const phone = uniquePhone();
     const email = `e2e-${tag}@test.com`;
 
     await page.fill('#f-firstName', firstName);
@@ -22,8 +24,9 @@ test.describe('Client management', () => {
 
     await expect(page.locator('#fb')).toContainText(`${firstName} ${lastName} added`);
 
-    // verify via API that the client was persisted
-    const clients = await app.apiGet('/api/clients') as { id: string; firstName: string; lastName: string; phone: string }[];
+    // verify via API that the client was persisted (large page so the new
+    // row isn't buried past the default page size in the shared test DB)
+    const clients = await app.apiGet('/api/clients?size=1000') as { id: string; firstName: string; lastName: string; phone: string }[];
     const created = clients.find(c => c.firstName === firstName);
     expect(created).toBeTruthy();
     expect(created!.lastName).toBe(lastName);
@@ -36,6 +39,7 @@ test.describe('Client management', () => {
   test('phone validation rejects invalid input', async ({ page }) => {
     const app = new AppPage(page);
     await app.goto();
+    await app.switchTab('Clients');
 
     await page.fill('#f-firstName', 'ValidFirst');
     await page.fill('#f-lastName', 'ValidLast');
@@ -53,10 +57,11 @@ test.describe('Client management', () => {
   test('firstName required', async ({ page }) => {
     const app = new AppPage(page);
     await app.goto();
+    await app.switchTab('Clients');
 
     await page.fill('#f-firstName', '');
     await page.fill('#f-lastName', 'SomeLast');
-    await page.fill('#f-phone', '+12125550002');
+    await page.fill('#f-phone', uniquePhone());
     await page.click('#submit-btn');
 
     await expect(page.locator('#e-firstName')).toBeVisible();
@@ -66,10 +71,11 @@ test.describe('Client management', () => {
   test('lastName required', async ({ page }) => {
     const app = new AppPage(page);
     await app.goto();
+    await app.switchTab('Clients');
 
     await page.fill('#f-firstName', 'SomeFirst');
     await page.fill('#f-lastName', '');
-    await page.fill('#f-phone', '+12125550003');
+    await page.fill('#f-phone', uniquePhone());
     await page.click('#submit-btn');
 
     await expect(page.locator('#e-lastName')).toBeVisible();

@@ -1,6 +1,9 @@
 package com.tatalance.customtable;
 
 import com.tatalance.SecurityConfig;
+import com.tatalance.user.AuthHelper;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -9,6 +12,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,6 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 class CustomTableControllerTest {
 
+    private static final String TEST_USER_ID = "user123";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -35,6 +43,17 @@ class CustomTableControllerTest {
 
     @MockBean
     private CustomTableRowRepository rowRepository;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
+    private AuthHelper authHelper;
+
+    @BeforeEach
+    void setUp() {
+        when(authHelper.getCurrentUserId()).thenReturn(TEST_USER_ID);
+    }
 
     private CustomTable sampleTable() {
         var table = new CustomTable();
@@ -87,17 +106,18 @@ class CustomTableControllerTest {
 
     @Test
     void should_listTables() throws Exception {
-        when(tableRepository.findAll()).thenReturn(List.of(sampleTable()));
+        when(tableRepository.findByUserId(eq(TEST_USER_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleTable())));
 
         mockMvc.perform(get("/api/tables"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("Contacts"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Contacts"));
     }
 
     @Test
     void should_getTableById() throws Exception {
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(sampleTable()));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(sampleTable()));
 
         mockMvc.perform(get("/api/tables/tbl001"))
                 .andExpect(status().isOk())
@@ -106,7 +126,7 @@ class CustomTableControllerTest {
 
     @Test
     void should_return404_when_tableNotFound() throws Exception {
-        when(tableRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(tableRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/tables/unknown"))
                 .andExpect(status().isNotFound());
@@ -115,7 +135,7 @@ class CustomTableControllerTest {
     @Test
     void should_renameTable() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
         when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(put("/api/tables/tbl001")
@@ -129,7 +149,7 @@ class CustomTableControllerTest {
 
     @Test
     void should_deleteTable() throws Exception {
-        when(tableRepository.existsById("tbl001")).thenReturn(true);
+        when(tableRepository.existsByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(true);
 
         mockMvc.perform(delete("/api/tables/tbl001"))
                 .andExpect(status().isNoContent());
@@ -139,7 +159,7 @@ class CustomTableControllerTest {
 
     @Test
     void should_return404_when_deletingNonexistentTable() throws Exception {
-        when(tableRepository.existsById("unknown")).thenReturn(false);
+        when(tableRepository.existsByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(false);
 
         mockMvc.perform(delete("/api/tables/unknown"))
                 .andExpect(status().isNotFound());
@@ -147,7 +167,7 @@ class CustomTableControllerTest {
 
     @Test
     void should_addRow() throws Exception {
-        when(tableRepository.existsById("tbl001")).thenReturn(true);
+        when(tableRepository.existsByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(true);
         when(rowRepository.save(any(CustomTableRow.class))).thenAnswer(inv -> {
             CustomTableRow r = inv.getArgument(0);
             r.setId("row001");
@@ -167,7 +187,7 @@ class CustomTableControllerTest {
 
     @Test
     void should_return404_when_addingRowToNonexistentTable() throws Exception {
-        when(tableRepository.existsById("unknown")).thenReturn(false);
+        when(tableRepository.existsByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(false);
 
         mockMvc.perform(post("/api/tables/unknown/rows")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -183,12 +203,13 @@ class CustomTableControllerTest {
         row.setId("row001");
         row.setTableId("tbl001");
         row.setData(Map.of("Name", "John", "Age", 30));
-        when(rowRepository.findByTableId("tbl001")).thenReturn(List.of(row));
+        when(rowRepository.findByTableId(eq("tbl001"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(row)));
 
         mockMvc.perform(get("/api/tables/tbl001/rows"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].data.Name").value("John"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].data.Name").value("John"));
     }
 
     @Test
@@ -197,7 +218,7 @@ class CustomTableControllerTest {
         row.setId("row001");
         row.setTableId("tbl001");
         row.setData(Map.of("Name", "John"));
-        when(rowRepository.findById("row001")).thenReturn(Optional.of(row));
+        when(rowRepository.findByIdAndUserId("row001", TEST_USER_ID)).thenReturn(Optional.of(row));
         when(rowRepository.save(any(CustomTableRow.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(put("/api/tables/tbl001/rows/row001")
@@ -215,7 +236,7 @@ class CustomTableControllerTest {
         var row = new CustomTableRow();
         row.setId("row001");
         row.setTableId("tbl001");
-        when(rowRepository.findById("row001")).thenReturn(Optional.of(row));
+        when(rowRepository.findByIdAndUserId("row001", TEST_USER_ID)).thenReturn(Optional.of(row));
 
         mockMvc.perform(delete("/api/tables/tbl001/rows/row001"))
                 .andExpect(status().isNoContent());
@@ -227,7 +248,7 @@ class CustomTableControllerTest {
         var row = new CustomTableRow();
         row.setId("row001");
         row.setTableId("other-table");
-        when(rowRepository.findById("row001")).thenReturn(Optional.of(row));
+        when(rowRepository.findByIdAndUserId("row001", TEST_USER_ID)).thenReturn(Optional.of(row));
 
         mockMvc.perform(delete("/api/tables/tbl001/rows/row001"))
                 .andExpect(status().isNotFound());
@@ -238,7 +259,7 @@ class CustomTableControllerTest {
     @Test
     void should_addColumn() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
         when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/tables/tbl001/columns")
@@ -254,7 +275,7 @@ class CustomTableControllerTest {
     @Test
     void should_return400_when_duplicateColumnName() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
 
         mockMvc.perform(post("/api/tables/tbl001/columns")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -266,7 +287,7 @@ class CustomTableControllerTest {
 
     @Test
     void should_return404_when_addingColumnToNonexistentTable() throws Exception {
-        when(tableRepository.findById("unknown")).thenReturn(Optional.empty());
+        when(tableRepository.findByIdAndUserId("unknown", TEST_USER_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/tables/unknown/columns")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -279,7 +300,7 @@ class CustomTableControllerTest {
     @Test
     void should_renameColumn() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
         when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(put("/api/tables/tbl001/columns/Name")
@@ -299,7 +320,7 @@ class CustomTableControllerTest {
         boolCol.setName("Active");
         boolCol.setType(ColumnType.BOOLEAN);
         table.getColumns().add(boolCol);
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
         when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(put("/api/tables/tbl001/columns/Active")
@@ -315,7 +336,7 @@ class CustomTableControllerTest {
     @Test
     void should_return404_when_updatingNonexistentColumn() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
 
         mockMvc.perform(put("/api/tables/tbl001/columns/Missing")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -328,7 +349,7 @@ class CustomTableControllerTest {
     @Test
     void should_deleteColumn() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
         when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(delete("/api/tables/tbl001/columns/Age"))
@@ -341,7 +362,7 @@ class CustomTableControllerTest {
     void should_return400_when_deletingLastColumn() throws Exception {
         var table = sampleTable();
         table.setColumns(new ArrayList<>(List.of(table.getColumns().get(0))));
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
 
         mockMvc.perform(delete("/api/tables/tbl001/columns/Name"))
                 .andExpect(status().isBadRequest());
@@ -350,7 +371,7 @@ class CustomTableControllerTest {
     @Test
     void should_return404_when_deletingNonexistentColumn() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
 
         mockMvc.perform(delete("/api/tables/tbl001/columns/Missing"))
                 .andExpect(status().isNotFound());
@@ -359,7 +380,7 @@ class CustomTableControllerTest {
     @Test
     void should_return400_when_blankTrueLabel() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
 
         mockMvc.perform(post("/api/tables/tbl001/columns")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -372,8 +393,8 @@ class CustomTableControllerTest {
     @Test
     void should_addLinkColumn() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
-        when(tableRepository.existsById("tbl002")).thenReturn(true);
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
+        when(tableRepository.existsByIdAndUserId("tbl002", TEST_USER_ID)).thenReturn(true);
         when(tableRepository.save(any(CustomTable.class))).thenAnswer(inv -> inv.getArgument(0));
 
         mockMvc.perform(post("/api/tables/tbl001/columns")
@@ -390,7 +411,7 @@ class CustomTableControllerTest {
     @Test
     void should_return400_when_linkMissingTableId() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
 
         mockMvc.perform(post("/api/tables/tbl001/columns")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -403,7 +424,7 @@ class CustomTableControllerTest {
     @Test
     void should_return400_when_linkToSelf() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
 
         mockMvc.perform(post("/api/tables/tbl001/columns")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -416,8 +437,8 @@ class CustomTableControllerTest {
     @Test
     void should_return400_when_linkToNonexistentTable() throws Exception {
         var table = sampleTable();
-        when(tableRepository.findById("tbl001")).thenReturn(Optional.of(table));
-        when(tableRepository.existsById("missing")).thenReturn(false);
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
+        when(tableRepository.existsByIdAndUserId("missing", TEST_USER_ID)).thenReturn(false);
 
         mockMvc.perform(post("/api/tables/tbl001/columns")
                         .contentType(MediaType.APPLICATION_JSON)

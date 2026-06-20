@@ -1,11 +1,16 @@
 package com.tatalance;
 
+import com.tatalance.activity.ActivityLogRepository;
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.client.ClientRepository;
 import com.tatalance.customtable.CustomTableRepository;
 import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository;
+import com.tatalance.user.AppUserRepository;
+import com.tatalance.user.AuthHelper;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -16,8 +21,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import org.springframework.http.MediaType;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -49,6 +58,21 @@ class SecurityConfigTest {
     @MockBean
     InvoiceRepository invoiceRepository;
 
+    @MockBean
+    UserDetailsService userDetailsService;
+
+    @MockBean
+    AppUserRepository appUserRepository;
+
+    @MockBean
+    AuthHelper authHelper;
+
+    @MockBean
+    ActivityLogger activityLogger;
+
+    @MockBean
+    ActivityLogRepository activityLogRepository;
+
     @Test
     void should_return401_when_apiRequestUnauthenticated() throws Exception {
         mockMvc.perform(get("/api/clients"))
@@ -67,7 +91,8 @@ class SecurityConfigTest {
     @Test
     @WithMockUser
     void should_returnOk_when_authenticated() throws Exception {
-        when(repository.findAll()).thenReturn(List.of());
+        when(authHelper.getCurrentUserId()).thenReturn("testuser");
+        when(repository.findByUserId(any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
         mockMvc.perform(get("/api/clients"))
             .andExpect(status().isOk());
     }

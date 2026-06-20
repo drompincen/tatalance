@@ -49,9 +49,9 @@ class DriverIntegrationTest {
         assertThat(createResponse.getBody().get("firstName")).isEqualTo("Carlos");
         assertThat(createResponse.getBody().get("availability")).isEqualTo("AVAILABLE");
 
-        var listResponse = restTemplate.getForEntity("/api/drivers", List.class);
+        var listResponse = restTemplate.getForEntity("/api/drivers", Map.class);
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(listResponse.getBody()).hasSize(1);
+        assertThat((List<?>) listResponse.getBody().get("content")).hasSize(1);
     }
 
     @Test
@@ -137,8 +137,8 @@ class DriverIntegrationTest {
         var response = restTemplate.exchange("/api/drivers/" + id, HttpMethod.DELETE, null, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        var list = restTemplate.getForEntity("/api/drivers", List.class);
-        assertThat(list.getBody()).isEmpty();
+        var list = restTemplate.getForEntity("/api/drivers", Map.class);
+        assertThat((List<?>) list.getBody().get("content")).isEmpty();
     }
 
     @Test

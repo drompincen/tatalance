@@ -98,6 +98,28 @@
         .form-feedback.ok { color: #38a169; }
         .form-feedback.fail { color: #e53e3e; }
 
+        /* ── Dashboard ── */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .stat-card .stat-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 8px; }
+        .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; }
+        .stat-card .stat-sub { font-size: 0.78rem; color: #6b7280; margin-top: 4px; }
+        .stat-card.accent-blue { border-left: 4px solid #3b82f6; }
+        .stat-card.accent-green { border-left: 4px solid #10b981; }
+        .stat-card.accent-orange { border-left: 4px solid #f59e0b; }
+        .stat-card.accent-purple { border-left: 4px solid #8b5cf6; }
+        .stat-card.accent-red { border-left: 4px solid #ef4444; }
+        .status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .status-bar-label { font-size: 0.82rem; width: 110px; text-align: right; color: #374151; font-weight: 500; }
+        .status-bar-track { flex: 1; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden; }
+        .status-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 0.72rem; font-weight: 600; color: white; min-width: fit-content; transition: width .4s ease; }
+        .revenue-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .revenue-line:last-child { border-bottom: none; }
+        .revenue-label { color: #374151; font-weight: 500; }
+        .revenue-value { font-weight: 700; color: #1a1a2e; }
+        .revenue-value.green { color: #10b981; }
+        .revenue-value.red { color: #ef4444; }
+
         /* ── Client list ── */
         .list-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
         .count { font-size: 0.8rem; color: #6b7280; font-weight: 400; }
@@ -111,6 +133,18 @@
         .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
         .empty-state p { font-size: 0.85rem; }
         .refresh-ts { font-size: 0.72rem; color: #6b7280; margin-top: 12px; text-align: right; }
+
+        /* ── Pagination ── */
+        .pagination-bar {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            padding: 10px 0; font-size: 0.82rem; color: #6b7280;
+        }
+        .pagination-bar button {
+            padding: 4px 12px; font-size: 0.8rem; border: 1px solid #e2e8f0; border-radius: 6px;
+            background: #fff; color: #1a1a2e; cursor: pointer; font-weight: 500; transition: all .15s;
+        }
+        .pagination-bar button:hover:not(:disabled) { background: #f0f2f5; }
+        .pagination-bar button:disabled { opacity: .4; cursor: default; }
 
         /* ── Delete mode ── */
         .delete-mode-btn {
@@ -267,6 +301,12 @@
         .help-nav-btn.primary:hover { background: #16213e; }
         .help-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
 
+        /* ── User menu ── */
+        .user-menu { display: flex; align-items: center; gap: 10px; margin-left: 12px; }
+        .user-menu .username { font-size: 0.82rem; color: rgba(255,255,255,.7); font-weight: 500; }
+        .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
+        .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+
         /* ── Hamburger menu ── */
         .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
         .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
@@ -289,6 +329,8 @@
             nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            .user-menu { margin-left: auto; }
+            .user-menu .username { display: none; }
             nav #custom-tab-buttons { display: contents; }
             .page { margin: 16px auto; padding: 0 12px; }
             .grid-2 { grid-template-columns: 1fr; gap: 16px; }
@@ -298,6 +340,8 @@
             .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
             .btn-cancel { width: auto; position: static; box-shadow: none; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
+            #dash-detail-row { grid-template-columns: 1fr !important; }
+            .search-box { display: none; }
         }
 
         @media (max-width: 640px) {
@@ -322,20 +366,51 @@
     <span class="badge badge-poc">POC</span>
     <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
     <nav id="main-nav">
-        <button class="tab-btn active" id="btn-clients" onclick="showTab('clients')">Clients</button>
+        <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')">Dashboard</button>
+        <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
         <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
+        <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
         <span id="custom-tab-buttons"></span>
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
         <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
+    <div class="search-box" style="position:relative;margin-left:12px;">
+        <input type="text" id="global-search" placeholder="Search..." autocomplete="off"
+               style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:white;font-size:.85rem;width:180px;"
+               oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)">
+        <div id="search-results" style="display:none;position:absolute;top:100%;left:0;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
+    </div>
+    <div class="user-menu">
+        <span class="username" id="username-display"></span>
+        <button class="logout-btn" id="link-google-btn" onclick="linkGoogle()" style="display:none">Link Google</button>
+        <button class="logout-btn" onclick="openChangePassword()">Password</button>
+        <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 
+<!-- ── Dashboard tab ── -->
+<div id="tab-dashboard" class="tab-pane active">
+    <div class="page">
+        <div class="dash-grid" id="dash-cards"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px" id="dash-detail-row">
+            <div class="card">
+                <div class="card-title">Rides by status</div>
+                <div id="dash-status-bars"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Revenue summary</div>
+                <div id="dash-revenue"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Clients tab ── -->
-<div id="tab-clients" class="tab-pane active">
+<div id="tab-clients" class="tab-pane">
     <div class="page">
         <div class="grid-2">
             <div class="card">
@@ -361,6 +436,10 @@
                         <div class="field">
                             <label>Email <span class="opt">(optional)</span><span class="schema-type" id="type-email">string · email</span></label>
                             <input type="email" id="f-email" placeholder="name@example.com" autocomplete="off">
+                        </div>
+                        <div class="field">
+                            <label>Notes <span class="opt">(optional)</span></label>
+                            <input type="text" id="f-notes" placeholder="VIP preferences, special requests…" autocomplete="off">
                         </div>
                     </div>
                     <button class="btn" type="submit" id="submit-btn">Add Client</button>
@@ -480,8 +559,20 @@
                         <div class="err" id="re-dropoffLocation">Dropoff location is required</div>
                     </div>
                     <div class="field">
-                        <label>Base Price <span class="opt">(optional)</span></label>
+                        <label>Pricing Mode</label>
+                        <select id="r-pricingMode" onchange="togglePricingFields()" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px">
+                            <option value="FLAT">Flat rate</option>
+                            <option value="HOURLY">Hourly</option>
+                            <option value="FLAT_PLUS_HOURLY">Flat + Hourly</option>
+                        </select>
+                    </div>
+                    <div class="field" id="basePrice-field">
+                        <label>Base Price ($)</label>
                         <input type="number" id="r-basePrice" placeholder="85.00" min="0" step="0.01" autocomplete="off">
+                    </div>
+                    <div class="field" id="hourlyRate-field" style="display:none">
+                        <label>Hourly Rate ($)</label>
+                        <input type="number" id="r-hourlyRate" placeholder="7.50" min="0" step="0.01" autocomplete="off">
                     </div>
                     <div class="field">
                         <label>Notes <span class="opt">(optional)</span></label>
@@ -529,13 +620,27 @@
                 <div class="card-title" style="margin-bottom:0">Invoices</div>
                 <span class="count" id="invoice-count"></span>
             </div>
-            <div id="invoice-status-filter" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <div id="invoice-status-filter" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
                 <button class="filter-btn active" onclick="setInvoiceFilter('ALL')">All</button>
                 <button class="filter-btn" onclick="setInvoiceFilter('OUTSTANDING')">Outstanding</button>
                 <button class="filter-btn" onclick="setInvoiceFilter('PAID')">Paid</button>
+                <a href="/api/invoices/export/csv" class="filter-btn" style="text-decoration:none;margin-left:auto">Export CSV</a>
             </div>
             <div id="invoice-list"></div>
             <div class="refresh-ts" id="invoice-ts"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Activity tab ── -->
+<div id="tab-activity" class="tab-pane">
+    <div class="page">
+        <div class="card">
+            <div class="list-header">
+                <div class="card-title" style="margin-bottom:0">Activity Log</div>
+                <span class="count" id="activity-count"></span>
+            </div>
+            <div id="activity-list"></div>
         </div>
     </div>
 </div>
@@ -568,6 +673,30 @@
             <button class="help-nav-btn" id="help-prev" onclick="helpNav(-1)">Previous</button>
             <div class="help-dots" id="help-dots"></div>
             <button class="help-nav-btn primary" id="help-next" onclick="helpNav(1)">Next</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Change Password Modal ── -->
+<div class="modal-overlay" id="change-password-modal" onclick="if(event.target===this)closeChangePassword()">
+    <div class="modal" style="max-width:380px">
+        <h2>Change Password</h2>
+        <div class="field">
+            <label>Current Password <span class="req">*</span></label>
+            <input type="password" id="cp-current" autocomplete="current-password">
+        </div>
+        <div class="field">
+            <label>New Password <span class="req">*</span></label>
+            <input type="password" id="cp-new" autocomplete="new-password">
+        </div>
+        <div class="field">
+            <label>Confirm New Password <span class="req">*</span></label>
+            <input type="password" id="cp-confirm" autocomplete="new-password">
+        </div>
+        <div class="err show" id="cp-error" style="display:none"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn" style="flex:1" onclick="submitChangePassword()">Change</button>
+            <button class="btn btn-cancel" onclick="closeChangePassword()">Cancel</button>
         </div>
     </div>
 </div>
@@ -636,6 +765,26 @@
         const s = sortState[table];
         if (!s || s.field !== field) return 'sortable';
         return `sortable ${s.dir}`;
+    }
+
+    /* ── Pagination state ── */
+    const pageState = { clients: 0, drivers: 0, rides: 0, invoices: 0, tables: 0 };
+    const pageMeta = { clients: {}, drivers: {}, rides: {}, invoices: {}, tables: {} };
+    const PAGE_SIZE = 20;
+
+    function paginationHtml(tab, onPrev, onNext) {
+        const m = pageMeta[tab];
+        if (!m || m.totalPages <= 1) return '';
+        const page = m.number ?? 0;
+        const total = m.totalPages ?? 1;
+        const totalEl = m.totalElements ?? 0;
+        const from = page * PAGE_SIZE + 1;
+        const to = Math.min((page + 1) * PAGE_SIZE, totalEl);
+        return `<div class="pagination-bar">
+            <button ${page === 0 ? 'disabled' : ''} onclick="${onPrev}">← Prev</button>
+            <span>Showing ${from}–${to} of ${totalEl}</span>
+            <button ${page >= total - 1 ? 'disabled' : ''} onclick="${onNext}">Next →</button>
+        </div>`;
     }
 
     function resolveRef(spec, obj) {
@@ -712,6 +861,8 @@
         // Refresh the client picker when opening the booking tab so newly
         // added clients appear without waiting for the 10s poll.
         if (name === 'rides') loadClientDropdown();
+        if (name === 'dashboard') loadDashboard();
+        if (name === 'activity') loadActivity();
         closeNav();
     }
 
@@ -834,7 +985,18 @@
 
     /* ── Client list ── */
     const esc2 = s => esc(s) || '<span class="muted">—</span>';
+    const mapsLink = s => s ? `<a href="https://www.google.com/maps/search/${encodeURIComponent(s)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${esc(s)}</a>` : '<span class="muted">—</span>';
     let allClientsCache = [];
+    let expandedClientId = null;
+    let clientStatsCache = {};
+    window.toggleClientDetail = function(id) {
+        if (expandedClientId === id) { expandedClientId = null; filterClients(); return; }
+        expandedClientId = id;
+        if (!clientStatsCache[id]) {
+            fetch('/api/clients/' + id + '/stats').then(r => r.json()).then(s => { clientStatsCache[id] = s; filterClients(); });
+        }
+        filterClients();
+    };
 
     function filterClients() {
         const q = document.getElementById('client-search').value.toLowerCase().trim();
@@ -883,28 +1045,61 @@
         const sorted = sortedData('clients', clients);
         const allIds = sorted.map(c => c.id);
         el.innerHTML = `<table>
-            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th>Notes</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
             <tbody>${sorted.map((c, idx) => `<tr class="${dm && sel.has(c.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())" style="cursor:pointer"` : ''}>
                 ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())"></td>` : ''}
-                <td data-label="First Name" style="font-weight:600">${esc(c.firstName)}</td>
+                <td data-label="First Name" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleClientDetail('${c.id}')">${esc(c.firstName)} <span style="font-size:.65rem;color:#6b7280">${expandedClientId === c.id ? '▼' : '▸'}</span></td>
                 <td data-label="Last Name">${esc(c.lastName)}</td>
                 <td data-label="Phone">${esc2(c.phone)}</td>
                 <td data-label="Email">${esc2(c.email)}</td>
+                <td data-label="Notes" class="muted" style="font-size:.8rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.notes)||''}">${esc2(c.notes)}</td>
                 <td data-label="Added" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
                 <td style="white-space:nowrap">
-                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}')">Edit</button>
+                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}','${esc(c.notes)||''}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
                 </td>
-            </tr>`).join('')}</tbody>
-        </table>`;
+            </tr>${expandedClientId === c.id ? `<tr><td colspan="${dm ? 9 : 8}" style="padding:0;background:#f8fafb">
+                <div style="padding:16px 20px;font-size:.82rem">
+                    ${clientStatsCache[c.id] ? (() => { const s = clientStatsCache[c.id]; return `
+                    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+                        <div style="display:flex;gap:16px">
+                            <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                                <div style="font-size:1.4rem;font-weight:700">${s.totalRides}</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Rides</div>
+                            </div>
+                            <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                                <div style="font-size:1.4rem;font-weight:700;color:#10b981">${s.completedRides}</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Completed</div>
+                            </div>
+                            <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                                <div style="font-size:1.4rem;font-weight:700;color:#3b82f6">$${Number(s.totalSpent).toFixed(2)}</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Spent</div>
+                            </div>
+                        </div>
+                        ${s.vip ? '<span style="background:#f59e0b;color:white;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.5px">VIP</span>' : ''}
+                        ${s.lastRideDate ? '<div style="color:#6b7280;font-size:.78rem">Last ride: ' + new Date(s.lastRideDate).toLocaleDateString() + '</div>' : ''}
+                    </div>`; })() : '<span class="muted">Loading stats...</span>'}
+                </div>
+            </td></tr>` : ''}`).join('')}</tbody>
+        </table>` + paginationHtml('clients', 'clientPrev()', 'clientNext()');
+    }
+
+    function clientPrev() { if (pageState.clients > 0) { pageState.clients--; load(); } }
+    function clientNext() { if (pageState.clients < (pageMeta.clients.totalPages || 1) - 1) { pageState.clients++; load(); } }
+
+    function isUserEditingTab(tabId) {
+        const active = document.activeElement;
+        if (!active || active === document.body) return false;
+        return !!active.closest('#' + tabId);
     }
 
     function load() {
-        fetch('/api/clients')
+        fetch(`/api/clients?page=${pageState.clients}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                allClientsCache = data;
-                filterClients();
+                allClientsCache = data.content || [];
+                pageMeta.clients = data;
+                if (!isUserEditingTab('tab-clients')) filterClients();
                 document.getElementById('ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -921,6 +1116,7 @@
         const lastName  = document.getElementById('f-lastName').value.trim();
         const phone = document.getElementById('f-phone').value.trim();
         const email = document.getElementById('f-email').value.trim();
+        const notes = document.getElementById('f-notes').value.trim();
         let valid = true;
         for (const [f, v] of [['firstName', firstName], ['lastName', lastName]]) {
             document.getElementById(`f-${f}`).classList.toggle('invalid', !v);
@@ -944,7 +1140,7 @@
             const r = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, phone, email: email || null })
+                body: JSON.stringify({ firstName, lastName, phone, email: email || null, notes: notes || null })
             });
             if (!r.ok) throw new Error();
             const wasEdit = !!editingClientId;
@@ -971,12 +1167,13 @@
     /* ── Edit / Delete client ── */
     let editingClientId = null;
 
-    window.editClient = function(id, firstName, lastName, phone, email) {
+    window.editClient = function(id, firstName, lastName, phone, email, notes) {
         editingClientId = id;
         document.getElementById('f-firstName').value = firstName;
         document.getElementById('f-lastName').value = lastName;
         document.getElementById('f-phone').value = phone;
         document.getElementById('f-email').value = email;
+        document.getElementById('f-notes').value = notes || '';
         document.getElementById('submit-btn').textContent = 'Update Client';
         document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Edit Client';
         const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -989,6 +1186,7 @@
         document.getElementById('f-lastName').value = '';
         document.getElementById('f-phone').value = '';
         document.getElementById('f-email').value = '';
+        document.getElementById('f-notes').value = '';
         document.getElementById('submit-btn').textContent = 'Add Client';
         document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Add Client';
         const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -1038,6 +1236,16 @@
 
     /* ── Driver list ── */
     const availColors = { AVAILABLE: '#38a169', ON_TRIP: '#d97706', OFF_DUTY: '#999' };
+    let expandedDriverId = null;
+    let driverStatsCache = {};
+    window.toggleDriverDetail = function(id) {
+        if (expandedDriverId === id) { expandedDriverId = null; loadDrivers(); return; }
+        expandedDriverId = id;
+        if (!driverStatsCache[id]) {
+            fetch('/api/drivers/' + id + '/stats').then(r => r.json()).then(s => { driverStatsCache[id] = s; loadDrivers(); });
+        }
+        loadDrivers();
+    };
 
     window.sortDrivers = function(field) { toggleSort('drivers', field); loadDrivers(); };
 
@@ -1071,7 +1279,7 @@
             <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
             <tbody>${sorted.map((d, idx) => `<tr class="${dm && sel.has(d.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)" style="cursor:pointer"` : ''}>
                 ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(d.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)"></td>` : ''}
-                <td data-label="Name" style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
+                <td data-label="Name" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleDriverDetail('${d.id}')">${esc(d.firstName)} ${esc(d.lastName)} <span style="font-size:.65rem;color:#6b7280">${expandedDriverId === d.id ? '▼' : '▸'}</span></td>
                 <td data-label="Phone">${esc2(d.phone)}</td>
                 <td data-label="Vehicle">${esc2(d.vehicle)}</td>
                 <td data-label="Payout">${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
@@ -1087,15 +1295,41 @@
                     <button class="btn-sm" onclick="event.stopPropagation();editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
                 </td>
-            </tr>`).join('')}</tbody>
-        </table>`;
+            </tr>${expandedDriverId === d.id ? `<tr><td colspan="${dm ? 8 : 7}" style="padding:0;background:#f8fafb">
+                <div style="padding:16px 20px;font-size:.82rem">
+                    ${driverStatsCache[d.id] ? (() => { const s = driverStatsCache[d.id]; return `
+                    <div style="display:flex;gap:16px;flex-wrap:wrap">
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700">${s.totalRides}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Rides</div>
+                        </div>
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700;color:#10b981">${s.completedRides}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Completed</div>
+                        </div>
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700;color:#3b82f6">$${Number(s.totalEarned).toFixed(2)}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Earned</div>
+                        </div>
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700;color:${Number(s.unpaidAmount) > 0 ? '#ef4444' : '#10b981'}">$${Number(s.unpaidAmount).toFixed(2)}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Unpaid (${s.unpaidCount})</div>
+                        </div>
+                    </div>`; })() : '<span class="muted">Loading stats...</span>'}
+                </div>
+            </td></tr>` : ''}`).join('')}</tbody>
+        </table>` + paginationHtml('drivers', 'driverPrev()', 'driverNext()');
     }
 
+    function driverPrev() { if (pageState.drivers > 0) { pageState.drivers--; loadDrivers(); } }
+    function driverNext() { if (pageState.drivers < (pageMeta.drivers.totalPages || 1) - 1) { pageState.drivers++; loadDrivers(); } }
+
     function loadDrivers() {
-        fetch('/api/drivers')
+        fetch(`/api/drivers?page=${pageState.drivers}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                renderDrivers(data);
+                pageMeta.drivers = data;
+                if (!isUserEditingTab('tab-drivers')) renderDrivers(data.content || []);
                 document.getElementById('driver-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -1250,7 +1484,8 @@
     let availableDriversCache = [];
 
     function loadClientDropdown() {
-        fetch('/api/clients').then(r => r.json()).then(clients => {
+        fetch('/api/clients?page=0&size=500').then(r => r.json()).then(data => {
+            const clients = data.content || [];
             const sel = document.getElementById('r-clientId');
             const current = sel.value;
             sel.innerHTML = '<option value="">Select a client…</option>' +
@@ -1309,10 +1544,40 @@
         btn.textContent = document.getElementById('cp-extras').classList.contains('open') ? '▾ Hide extras' : '▸ More details (tolls, extras)';
     };
 
-    window.updateCompleteTotal = function(basePrice) {
+    window.updateCompleteTotal = function(pricingMode, basePrice, hourlyRate) {
         const tolls = Number(document.getElementById('cp-tolls').value) || 0;
         const additional = Number(document.getElementById('cp-additional').value) || 0;
-        const total = (basePrice || 0) + tolls + additional;
+        let timeCost = 0;
+        let durationText = '';
+        if (pricingMode !== 'FLAT' && hourlyRate) {
+            const s = document.getElementById('cp-start').value;
+            const e = document.getElementById('cp-end').value;
+            if (s && e) {
+                const mins = Math.round((new Date(e) - new Date(s)) / 60000);
+                if (mins > 0) {
+                    timeCost = (mins / 60) * hourlyRate;
+                    const h = Math.floor(mins / 60);
+                    const m = mins % 60;
+                    durationText = (h > 0 ? h + 'h ' : '') + m + 'm';
+                }
+            }
+        }
+        const bd = document.getElementById('cp-time-breakdown');
+        if (bd) {
+            if (durationText) {
+                const parts = [];
+                if (pricingMode === 'FLAT_PLUS_HOURLY') parts.push(`$${(basePrice||0).toFixed(2)} flat`);
+                parts.push(`${durationText} @ $${hourlyRate.toFixed(2)}/hr = $${timeCost.toFixed(2)}`);
+                bd.textContent = parts.join(' + ');
+            } else {
+                bd.textContent = '';
+            }
+        }
+        let base = 0;
+        if (pricingMode === 'FLAT') base = basePrice || 0;
+        else if (pricingMode === 'FLAT_PLUS_HOURLY') base = (basePrice || 0) + timeCost;
+        else base = timeCost;
+        const total = base + tolls + additional;
         document.getElementById('cp-total').textContent = `Total: $${total.toFixed(2)}`;
     };
 
@@ -1356,6 +1621,8 @@
     let lastRidesCache = [];
     let allRidesCache = [];
     let rideStatusFilter = 'ALL';
+    let expandedRideId = null;
+    window.toggleRideDetail = function(id) { expandedRideId = expandedRideId === id ? null : id; applyRideFilter(); };
 
     window.setRideFilter = function(status) {
         rideStatusFilter = status;
@@ -1405,12 +1672,12 @@
         window.sortRides = function(field) { toggleSort('rides', field); applyRideFilter(); };
         const sorted = sortedData('rides', rides);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th></th></tr></thead>
+            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th>Payout</th><th></th></tr></thead>
             <tbody>${sorted.map(r => `<tr>
-                <td data-label="Client" style="font-weight:600">${esc(r.clientName)}</td>
+                <td data-label="Client" style="font-weight:600;cursor:pointer" onclick="toggleRideDetail('${r.id}')">${esc(r.clientName)} <span style="font-size:.65rem;color:#6b7280">${expandedRideId === r.id ? '▼' : '▸'}</span></td>
                 <td data-label="Pickup" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
-                <td data-label="From">${esc2(r.pickupLocation)}</td>
-                <td data-label="To">${esc2(r.dropoffLocation)}</td>
+                <td data-label="From">${mapsLink(r.pickupLocation)}</td>
+                <td data-label="To">${mapsLink(r.dropoffLocation)}</td>
                 <td>${r.assignedDriverName ? esc(r.assignedDriverName) :
                     (r.status === 'SCHEDULED' && availableDriversCache.length ?
                         `<select onchange="if(this.value)assignDriver('${r.id}',this.value)" style="font-size:.78rem;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">
@@ -1418,49 +1685,83 @@
                             ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
-                <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
-                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}</td>
-            </tr>${completingRideId === r.id ? `<tr><td colspan="7" style="padding:0">
+                <td style="font-size:.8rem">${r.status === 'COMPLETED' && r.driverPayout ? (r.payoutPaid ? `<span style="color:#10b981;font-weight:600">$${Number(r.driverPayout).toFixed(2)} Paid</span>` : `<span style="color:#ef4444;font-weight:600">$${Number(r.driverPayout).toFixed(2)}</span> <button class="btn-sm" onclick="markPayoutPaid('${r.id}')" style="font-size:.7rem">Pay</button>`) : '<span class="muted">—</span>'}</td>
+                <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
+                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Rebook</button>` : ''}</td>
+            </tr>${completingRideId === r.id ? `<tr><td colspan="8" style="padding:0">
                 <div class="complete-panel">
-                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · Base: $${r.basePrice || 0}</div>
+                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} flat`}</div>
                     <div class="field-row">
                         <div>
                             <label>Actual Start *</label>
-                            <input type="datetime-local" id="cp-start" onchange="document.getElementById('cp-err-start').classList.remove('show')">
+                            <input type="datetime-local" id="cp-start" onchange="document.getElementById('cp-err-start').classList.remove('show');updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})">
                             <div class="err-inline" id="cp-err-start">Required</div>
                         </div>
                         <div>
                             <label>Actual End *</label>
-                            <input type="datetime-local" id="cp-end" onchange="document.getElementById('cp-err-end').classList.remove('show')">
+                            <input type="datetime-local" id="cp-end" onchange="document.getElementById('cp-err-end').classList.remove('show');updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})">
                             <div class="err-inline" id="cp-err-end">Required</div>
                         </div>
                     </div>
                     <button id="cp-extras-toggle" class="extras-toggle" onclick="toggleExtras()">▸ More details (tolls, extras)</button>
                     <div class="extras" id="cp-extras">
                         <div class="field-row">
-                            <div><label>Tolls ($)</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
-                            <div><label>Additional ($)</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal(${r.basePrice||0})"></div>
+                            <div><label>Tolls ($)</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
+                            <div><label>Additional ($)</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
                         </div>
                         <div class="field-row">
                             <div><label>Description</label><input type="text" id="cp-desc" placeholder="Extra stop, waiting, etc."></div>
                         </div>
                     </div>
+                    ${(r.pricingMode === 'HOURLY' || r.pricingMode === 'FLAT_PLUS_HOURLY') ? `<div class="total-line" id="cp-time-breakdown" style="font-size:.85rem;color:#4b5563;margin-bottom:4px"></div>` : ''}
                     <div class="total-line" id="cp-total">Total: $${(r.basePrice || 0).toFixed ? Number(r.basePrice || 0).toFixed(2) : '0.00'}</div>
                     <div class="panel-actions">
                         <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">Confirm Complete</button>
                         <button class="btn-sm" onclick="cancelComplete()">Cancel</button>
                     </div>
                 </div>
+            </td></tr>` : ''}${expandedRideId === r.id ? `<tr><td colspan="8" style="padding:0;background:#f8fafb">
+                <div style="padding:16px 20px;font-size:.82rem">
+                    <div style="display:flex;gap:32px;flex-wrap:wrap">
+                        <div>
+                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Status Timeline</div>
+                            ${(r.statusHistory && r.statusHistory.length) ? r.statusHistory.map((e,i) => '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+                                + '<div style="width:8px;height:8px;border-radius:50%;background:' + (statusColors[e.status]||'#6b7280') + '"></div>'
+                                + '<span style="font-weight:600;color:' + (statusColors[e.status]||'#555') + '">' + e.status + '</span>'
+                                + '<span style="color:#6b7280"> ' + new Date(e.timestamp).toLocaleString() + '</span>'
+                                + '</div>').join('') : '<span class="muted">No history (created before tracking)</span>'}
+                        </div>
+                        <div>
+                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pricing</div>
+                            <div>Mode: <strong>${r.pricingMode || 'FLAT'}</strong></div>
+                            ${r.basePrice ? '<div>Base: $' + Number(r.basePrice).toFixed(2) + '</div>' : ''}
+                            ${r.hourlyRate ? '<div>Hourly rate: $' + Number(r.hourlyRate).toFixed(2) + '/hr</div>' : ''}
+                            ${r.durationMinutes ? '<div>Duration: ' + r.durationMinutes + ' min</div>' : ''}
+                            ${r.tolls && Number(r.tolls) > 0 ? '<div>Tolls: $' + Number(r.tolls).toFixed(2) + '</div>' : ''}
+                            ${r.additionalCharges && Number(r.additionalCharges) > 0 ? '<div>Extras: $' + Number(r.additionalCharges).toFixed(2) + '</div>' : ''}
+                            ${r.totalAmount ? '<div style="font-weight:600;margin-top:4px">Total: $' + Number(r.totalAmount).toFixed(2) + '</div>' : ''}
+                            ${r.billableAmount ? '<div style="font-weight:600">Billable: $' + Number(r.billableAmount).toFixed(2) + '</div>' : ''}
+                        </div>
+                        ${r.driverPayout ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Driver Payout</div><div style="font-size:1.1rem;font-weight:700;color:' + (r.payoutPaid ? '#10b981' : '#ef4444') + '">$' + Number(r.driverPayout).toFixed(2) + ' ' + (r.payoutPaid ? 'PAID' : 'OWED') + '</div>' + (r.assignedDriverName ? '<div class="muted">' + esc(r.assignedDriverName) + '</div>' : '') + '</div>' : ''}
+                        ${r.notes ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Notes</div><div>' + esc(r.notes) + '</div></div>' : ''}
+                    </div>
+                </div>
             </td></tr>` : ''}`).join('')}</tbody>
-        </table>`;
+        </table>` + paginationHtml('rides', 'ridePrev()', 'rideNext()');
     }
 
+    function ridePrev() { if (pageState.rides > 0) { pageState.rides--; loadRides(); } }
+    function rideNext() { if (pageState.rides < (pageMeta.rides.totalPages || 1) - 1) { pageState.rides++; loadRides(); } }
+
     function loadRides() {
-        fetch('/api/rides')
+        fetch(`/api/rides?page=${pageState.rides}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                allRidesCache = data;
-                applyRideFilter();
+                allRidesCache = data.content || [];
+                pageMeta.rides = data;
+                if (!isUserEditingTab('tab-rides')) {
+                    applyRideFilter();
+                }
                 document.getElementById('ride-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -1470,13 +1771,21 @@
             });
     }
 
+    window.togglePricingFields = function() {
+        const mode = document.getElementById('r-pricingMode').value;
+        document.getElementById('basePrice-field').style.display = mode === 'HOURLY' ? 'none' : '';
+        document.getElementById('hourlyRate-field').style.display = mode === 'FLAT' ? 'none' : '';
+    };
+
     document.getElementById('ride-form').addEventListener('submit', async e => {
         e.preventDefault();
         const clientId = document.getElementById('r-clientId').value;
         const pickupDateTime = document.getElementById('r-pickupDateTime').value;
         const pickupLocation = document.getElementById('r-pickupLocation').value.trim();
         const dropoffLocation = document.getElementById('r-dropoffLocation').value.trim();
+        const pricingMode = document.getElementById('r-pricingMode').value;
         const basePrice = document.getElementById('r-basePrice').value.trim();
+        const hourlyRate = document.getElementById('r-hourlyRate').value.trim();
         const notes = document.getElementById('r-notes').value.trim();
 
         let valid = true;
@@ -1498,9 +1807,11 @@
                 clientId,
                 pickupDateTime: new Date(pickupDateTime).toISOString(),
                 pickupLocation,
-                dropoffLocation
+                dropoffLocation,
+                pricingMode
             };
             if (basePrice) body.basePrice = Number(basePrice);
+            if (hourlyRate) body.hourlyRate = Number(hourlyRate);
             if (notes) body.notes = notes;
 
             const url = editingRideId ? `/api/rides/${editingRideId}` : '/api/rides';
@@ -1536,7 +1847,7 @@
     /* ── Edit / Cancel ride ── */
     let editingRideId = null;
 
-    window.editRide = function(id, clientId, pickupDateTime, pickupLocation, dropoffLocation, basePrice, notes) {
+    window.editRide = function(id, clientId, pickupDateTime, pickupLocation, dropoffLocation, basePrice, notes, pricingMode, hourlyRate) {
         editingRideId = id;
         document.getElementById('r-clientId').value = clientId;
         const dt = new Date(pickupDateTime);
@@ -1544,16 +1855,37 @@
         document.getElementById('r-pickupDateTime').value = local;
         document.getElementById('r-pickupLocation').value = pickupLocation;
         document.getElementById('r-dropoffLocation').value = dropoffLocation;
+        document.getElementById('r-pricingMode').value = pricingMode || 'FLAT';
         document.getElementById('r-basePrice').value = basePrice;
+        document.getElementById('r-hourlyRate').value = hourlyRate;
         document.getElementById('r-notes').value = notes;
+        togglePricingFields();
         document.getElementById('ride-submit-btn').textContent = 'Update Ride';
         document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Edit Ride';
         document.getElementById('cancel-ride-edit-btn').style.display = 'inline-block';
     };
 
+    window.rebookRide = function(clientId, pickupLocation, dropoffLocation, basePrice, notes, pricingMode, hourlyRate) {
+        cancelRideEdit();
+        showTab('rides');
+        document.getElementById('r-clientId').value = clientId;
+        document.getElementById('r-pickupLocation').value = pickupLocation;
+        document.getElementById('r-dropoffLocation').value = dropoffLocation;
+        document.getElementById('r-pricingMode').value = pricingMode || 'FLAT';
+        document.getElementById('r-basePrice').value = basePrice;
+        document.getElementById('r-hourlyRate').value = hourlyRate;
+        document.getElementById('r-notes').value = notes;
+        togglePricingFields();
+        document.getElementById('ride-fb').className = 'form-feedback ok';
+        document.getElementById('ride-fb').textContent = 'Rebooked — pick a new date/time and submit.';
+        document.getElementById('r-pickupDateTime').focus();
+    };
+
     window.cancelRideEdit = function() {
         editingRideId = null;
-        ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-notes'].forEach(id => document.getElementById(id).value = '');
+        ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-hourlyRate','r-notes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('r-pricingMode').value = 'FLAT';
+        togglePricingFields();
         document.getElementById('ride-submit-btn').textContent = 'Book Ride';
         document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Book a Ride';
         document.getElementById('cancel-ride-edit-btn').style.display = 'none';
@@ -1574,6 +1906,15 @@
         } catch {
             alert('Cancel failed — check server logs');
         }
+    };
+
+    window.markPayoutPaid = async function(rideId) {
+        if (!confirm('Mark this driver payout as paid?')) return;
+        try {
+            const r = await fetch(`/api/rides/${rideId}/mark-payout-paid`, { method: 'POST' });
+            if (!r.ok) { alert('Failed to mark payout'); return; }
+            loadRides(); loadDashboard();
+        } catch { alert('Failed — check server logs'); }
     };
 
     loadClientDropdown();
@@ -1624,6 +1965,18 @@
         }).catch(e => alert('Failed: ' + e.message));
     }
 
+    function invoiceChargeLabel(i) {
+        const mode = i.pricingMode || 'FLAT';
+        if (mode === 'FLAT' || !i.durationMinutes) return `$${i.baseCharge}`;
+        const h = Math.floor(i.durationMinutes / 60);
+        const m = i.durationMinutes % 60;
+        const dur = (h > 0 ? h + 'h ' : '') + m + 'm';
+        const timePart = `${dur} @ $${Number(i.hourlyRate).toFixed(2)}/hr`;
+        if (mode === 'HOURLY') return timePart;
+        const basePrice = (Number(i.baseCharge) - (i.durationMinutes / 60) * Number(i.hourlyRate)).toFixed(2);
+        return `$${basePrice} + ${timePart}`;
+    }
+
     function renderInvoices(invoices) {
         document.getElementById('invoice-count').textContent = `(${invoices.length})`;
         const el = document.getElementById('invoice-list');
@@ -1636,11 +1989,11 @@
         window.sortInvoices = function(field) { toggleSort('invoices', field); applyInvoiceFilter(); };
         const sorted = sortedData('invoices', invoices);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Base</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
+            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Charge</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
             <tbody>${sorted.map(i => `<tr>
                 <td data-label="Invoice #" style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
                 <td data-label="Client">${esc(i.clientName)}</td>
-                <td data-label="Base">$${i.baseCharge}</td>
+                <td data-label="Charge" style="font-size:.8rem">${invoiceChargeLabel(i)}</td>
                 <td data-label="Extras">$${i.additionalCharges}</td>
                 <td data-label="Tax">$${i.tax}</td>
                 <td style="font-weight:700">$${i.total}</td>
@@ -1649,15 +2002,19 @@
                     `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">Mark Paid</button>` :
                     `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">Mark Unpaid</button>`}</td>
             </tr>`).join('')}</tbody>
-        </table>`;
+        </table>` + paginationHtml('invoices', 'invoicePrev()', 'invoiceNext()');
     }
 
+    function invoicePrev() { if (pageState.invoices > 0) { pageState.invoices--; loadInvoices(); } }
+    function invoiceNext() { if (pageState.invoices < (pageMeta.invoices.totalPages || 1) - 1) { pageState.invoices++; loadInvoices(); } }
+
     function loadInvoices() {
-        fetch('/api/invoices')
+        fetch(`/api/invoices?page=${pageState.invoices}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
-                allInvoicesCache = data;
-                applyInvoiceFilter();
+                allInvoicesCache = data.content || [];
+                pageMeta.invoices = data;
+                if (!isUserEditingTab('tab-invoices')) applyInvoiceFilter();
                 document.getElementById('invoice-ts').textContent =
                     `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
             })
@@ -2046,13 +2403,15 @@
             // Remember which custom tab is active before re-rendering
             const activeTableId = getActiveCustomTabId();
 
-            const r = await fetch('/api/tables');
-            customTables = await r.json();
+            const r = await fetch(`/api/tables?page=0&size=100`);
+            const tableData = await r.json();
+            customTables = tableData.content || [];
             renderCustomTabButtons();
             // Load rows for each table
             await Promise.all(customTables.map(async t => {
-                const rr = await fetch(`/api/tables/${t.id}/rows`);
-                customTableRows[t.id] = await rr.json();
+                const rr = await fetch(`/api/tables/${t.id}/rows?page=0&size=100`);
+                const rowData = await rr.json();
+                customTableRows[t.id] = rowData.content || [];
             }));
             // Skip DOM re-render if user is typing in a custom table form (unless forced)
             if (!forceRender && isUserEditingCustomTable()) {
@@ -2159,6 +2518,16 @@
         })
         .catch(() => {});
 
+    fetch('/api/users/me')
+        .then(r => r.json())
+        .then(data => {
+            const el = document.getElementById('username-display');
+            if (el) el.textContent = data.username;
+            const linkBtn = document.getElementById('link-google-btn');
+            if (linkBtn && data.googleLinked === false) linkBtn.style.display = '';
+        })
+        .catch(() => {});
+
     /* ── Help Overlay ── */
     const helpPanels = [
         {
@@ -2254,6 +2623,213 @@
     window.helpGoTo = function(i) {
         helpIndex = i;
         renderHelpPanel();
+    };
+
+    /* ── Logout (POST with CSRF) ── */
+    window.doLogout = async function() {
+        var headers = {};
+        var m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (m) headers['X-XSRF-TOKEN'] = decodeURIComponent(m[1]);
+        await fetch('/logout', { method: 'POST', headers: headers, credentials: 'same-origin' });
+        window.location.href = '/login.html?logout';
+    };
+
+    /* ── Dashboard ── */
+    function loadDashboard() {
+        fetch('/api/stats')
+            .then(r => r.json())
+            .then(renderDashboard)
+            .catch(() => {
+                document.getElementById('dash-cards').innerHTML = '<p style="color:#6b7280">Could not load stats.</p>';
+            });
+    }
+
+    function renderDashboard(s) {
+        var cards = document.getElementById('dash-cards');
+        cards.innerHTML = `
+            <div class="stat-card accent-blue">
+                <div class="stat-label">Clients</div>
+                <div class="stat-value">${s.totalClients}</div>
+            </div>
+            <div class="stat-card accent-purple">
+                <div class="stat-label">Drivers</div>
+                <div class="stat-value">${s.totalDrivers}</div>
+            </div>
+            <div class="stat-card accent-blue">
+                <div class="stat-label">Rides today</div>
+                <div class="stat-value">${s.ridesToday}</div>
+                <div class="stat-sub">${s.ridesThisWeek} this week &middot; ${s.ridesThisMonth} this month</div>
+            </div>
+            <div class="stat-card accent-green">
+                <div class="stat-label">Revenue this month</div>
+                <div class="stat-value">$${Number(s.revenueThisMonth).toFixed(2)}</div>
+                <div class="stat-sub">$${Number(s.revenueTotal).toFixed(2)} all time</div>
+            </div>
+            <div class="stat-card accent-orange">
+                <div class="stat-label">Outstanding</div>
+                <div class="stat-value">$${Number(s.outstandingAmount).toFixed(2)}</div>
+                <div class="stat-sub">${s.outstandingCount} invoice${s.outstandingCount === 1 ? '' : 's'}</div>
+            </div>
+            <div class="stat-card accent-red">
+                <div class="stat-label">Driver Payouts Owed</div>
+                <div class="stat-value">$${Number(s.payoutsOwed || 0).toFixed(2)}</div>
+                <div class="stat-sub">${s.payoutsOwedCount || 0} ride${(s.payoutsOwedCount || 0) === 1 ? '' : 's'} unpaid</div>
+            </div>
+        `;
+
+        // Status bars
+        var statusBars = document.getElementById('dash-status-bars');
+        var statuses = s.ridesByStatus || {};
+        var maxCount = Math.max(1, ...Object.values(statuses));
+        var colors = { SCHEDULED: '#3b82f6', ASSIGNED: '#8b5cf6', ACCEPTED: '#06b6d4', IN_PROGRESS: '#f59e0b', COMPLETED: '#10b981', CANCELLED: '#ef4444' };
+        var html = '';
+        for (var st in statuses) {
+            var count = statuses[st];
+            var pct = Math.round((count / maxCount) * 100);
+            var color = colors[st] || '#6b7280';
+            html += '<div class="status-bar-row">' +
+                '<span class="status-bar-label">' + st.replace('_', ' ') + '</span>' +
+                '<div class="status-bar-track"><div class="status-bar-fill" style="width:' + (count > 0 ? Math.max(pct, 8) : 0) + '%;background:' + color + '">' + count + '</div></div>' +
+                '</div>';
+        }
+        statusBars.innerHTML = html || '<p class="muted">No rides yet</p>';
+
+        // Revenue summary
+        var rev = document.getElementById('dash-revenue');
+        rev.innerHTML = `
+            <div class="revenue-line"><span class="revenue-label">Paid (this month)</span><span class="revenue-value green">$${Number(s.revenueThisMonth).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Paid (all time)</span><span class="revenue-value green">$${Number(s.revenueTotal).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Outstanding</span><span class="revenue-value red">$${Number(s.outstandingAmount).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Driver payouts owed</span><span class="revenue-value red">$${Number(s.payoutsOwed || 0).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Total rides</span><span class="revenue-value">${s.totalRides}</span></div>
+        `;
+    }
+
+    // Load dashboard on page load
+    loadDashboard();
+
+    /* ── Activity Log ── */
+    function loadActivity() {
+        fetch('/api/activity?size=100')
+            .then(r => r.json())
+            .then(data => {
+                var entries = data.content || [];
+                var el = document.getElementById('activity-list');
+                var countEl = document.getElementById('activity-count');
+                countEl.textContent = entries.length + ' entries';
+                if (entries.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No activity yet. Actions will appear here as you use the app.</p></div>';
+                    return;
+                }
+                var actionIcons = { CREATE: '➕', UPDATE: '✏️', DELETE: '🗑️', CANCEL: '❌', COMPLETE: '✅' };
+                var html = '<table><thead><tr><th>Time</th><th>Action</th><th>Type</th><th>Details</th></tr></thead><tbody>';
+                entries.forEach(function(e) {
+                    var t = e.timestamp ? new Date(e.timestamp) : null;
+                    var timeStr = t ? t.toLocaleDateString() + ' ' + t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+                    var icon = actionIcons[e.action] || '📝';
+                    html += '<tr><td>' + timeStr + '</td><td>' + icon + ' ' + e.action + '</td><td>' + e.entityType + '</td><td>' + (e.summary || '') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                el.innerHTML = html;
+            })
+            .catch(() => {
+                document.getElementById('activity-list').innerHTML = '<p style="color:#6b7280">Could not load activity log.</p>';
+            });
+    }
+
+    /* ── Global Search ── */
+    var searchTimer = null;
+    window.doSearch = function(q) {
+        clearTimeout(searchTimer);
+        var el = document.getElementById('search-results');
+        if (!q || q.trim().length < 2) { el.style.display = 'none'; return; }
+        searchTimer = setTimeout(function() {
+            fetch('/api/search?q=' + encodeURIComponent(q.trim()))
+                .then(r => r.json())
+                .then(data => {
+                    var html = '';
+                    var sections = { clients: 'Clients', rides: 'Rides', invoices: 'Invoices' };
+                    for (var key in sections) {
+                        if (data[key] && data[key].length > 0) {
+                            html += '<div style="padding:6px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #f0f0f0">' + sections[key] + '</div>';
+                            data[key].forEach(function(item) {
+                                html += '<div class="search-item" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f5f5f5" onmousedown="goToResult(\'' + key + '\',\'' + item.id + '\')">' +
+                                    '<div style="font-size:.85rem;font-weight:500;color:#1a1a2e">' + escHtml(item.text) + '</div>' +
+                                    '<div style="font-size:.75rem;color:#6b7280">' + escHtml(item.detail) + '</div>' +
+                                    '</div>';
+                            });
+                        }
+                    }
+                    if (!html) html = '<div style="padding:12px;color:#6b7280;font-size:.85rem">No results</div>';
+                    el.innerHTML = html;
+                    el.style.display = 'block';
+                });
+        }, 250);
+    };
+
+    window.goToResult = function(type, id) {
+        document.getElementById('search-results').style.display = 'none';
+        document.getElementById('global-search').value = '';
+        if (type === 'clients') showTab('clients');
+        else if (type === 'rides') showTab('rides');
+        else if (type === 'invoices') showTab('invoices');
+    };
+
+    function escHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    /* ── Link Google Account ── */
+    window.linkGoogle = async function() {
+        var headers = { 'Content-Type': 'application/json' };
+        var m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (m) headers['X-XSRF-TOKEN'] = decodeURIComponent(m[1]);
+        try {
+            var res = await fetch('/api/users/link-google', { method: 'POST', headers: headers, credentials: 'same-origin' });
+            var data = await res.json();
+            if (data.redirect) window.location.href = data.redirect;
+        } catch (err) {
+            alert('Could not start Google linking. Try again.');
+        }
+    };
+
+    /* ── Change Password ── */
+    window.openChangePassword = function() {
+        document.getElementById('cp-current').value = '';
+        document.getElementById('cp-new').value = '';
+        document.getElementById('cp-confirm').value = '';
+        document.getElementById('cp-error').style.display = 'none';
+        document.getElementById('change-password-modal').classList.add('open');
+    };
+    window.closeChangePassword = function() {
+        document.getElementById('change-password-modal').classList.remove('open');
+    };
+    window.submitChangePassword = async function() {
+        const current = document.getElementById('cp-current').value;
+        const newPw = document.getElementById('cp-new').value;
+        const confirm = document.getElementById('cp-confirm').value;
+        const errEl = document.getElementById('cp-error');
+
+        if (!current) { errEl.textContent = 'Current password is required'; errEl.style.display = 'block'; return; }
+        if (newPw.length < 4) { errEl.textContent = 'New password must be at least 4 characters'; errEl.style.display = 'block'; return; }
+        if (newPw !== confirm) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+
+        const res = await fetch('/api/users/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            closeChangePassword();
+            alert('Password changed successfully');
+        } else {
+            errEl.textContent = data.message || 'Failed to change password';
+            errEl.style.display = 'block';
+        }
     };
 </script>
 </body>

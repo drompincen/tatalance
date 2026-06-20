@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { AppPage } from './pages/app.page';
+import { AppPage, uniquePhone, futureDateTime, futureDateTimeLocal } from './pages/app.page';
 
 test.describe('Ride booking', () => {
   const uniqueId = () => Date.now().toString(36);
@@ -11,10 +11,10 @@ test.describe('Ride booking', () => {
     // seed client + driver via API
     const tag = uniqueId();
     const client = await app.apiPost('/api/clients', {
-      firstName: `RC${tag}`, lastName: `CL${tag}`, phone: '+12125550020'
+      firstName: `RC${tag}`, lastName: `CL${tag}`, phone: uniquePhone()
     }) as { id: string; firstName: string; lastName: string };
     const driver = await app.apiPost('/api/drivers', {
-      firstName: `RD${tag}`, lastName: `DR${tag}`, phone: '+12125550021',
+      firstName: `RD${tag}`, lastName: `DR${tag}`, phone: uniquePhone(),
       payoutType: 'PERCENTAGE', payoutRate: 70
     }) as { id: string };
 
@@ -24,7 +24,7 @@ test.describe('Ride booking', () => {
 
     // fill ride form
     await page.selectOption('#r-clientId', client.id);
-    await page.fill('#r-pickupDateTime', '2026-06-15T10:00');
+    await page.fill('#r-pickupDateTime', futureDateTimeLocal());
     await page.fill('#r-pickupLocation', 'Miami Airport');
     await page.fill('#r-dropoffLocation', 'South Beach Hotel');
     await page.fill('#r-basePrice', '85');
@@ -32,8 +32,8 @@ test.describe('Ride booking', () => {
 
     await expect(page.locator('#ride-fb')).toContainText('booked');
 
-    // verify via API
-    const rides = await app.apiGet('/api/rides') as { id: string; clientId: string; status: string; clientName: string }[];
+    // verify via API (large page so the new ride isn't past the default page size)
+    const rides = await app.apiGet('/api/rides?size=1000') as { id: string; clientId: string; status: string; clientName: string }[];
     const created = rides.find(r => r.clientId === client.id);
     expect(created).toBeTruthy();
     expect(created!.status).toBe('SCHEDULED');
@@ -52,14 +52,14 @@ test.describe('Ride booking', () => {
     // seed client, driver, and ride via API
     const tag = uniqueId();
     const client = await app.apiPost('/api/clients', {
-      firstName: `AC${tag}`, lastName: `CL${tag}`, phone: '+12125550030'
+      firstName: `AC${tag}`, lastName: `CL${tag}`, phone: uniquePhone()
     }) as { id: string };
     const driver = await app.apiPost('/api/drivers', {
-      firstName: `AD${tag}`, lastName: `DR${tag}`, phone: '+12125550031',
+      firstName: `AD${tag}`, lastName: `DR${tag}`, phone: uniquePhone(),
       payoutType: 'PERCENTAGE', payoutRate: 60
     }) as { id: string };
     const ride = await app.apiPost('/api/rides', {
-      clientId: client.id, pickupDateTime: '2026-06-16T14:00:00Z',
+      clientId: client.id, pickupDateTime: futureDateTime(),
       pickupLocation: 'Downtown', dropoffLocation: 'Airport', basePrice: 100
     }) as { id: string };
 
@@ -68,8 +68,8 @@ test.describe('Ride booking', () => {
       data: { driverId: driver.id }
     });
 
-    // verify
-    const rides = await app.apiGet('/api/rides') as { id: string; status: string; assignedDriverName: string }[];
+    // verify (large page so the ride isn't past the default page size)
+    const rides = await app.apiGet('/api/rides?size=1000') as { id: string; status: string; assignedDriverName: string }[];
     const updated = rides.find(r => r.id === ride.id);
     expect(updated!.status).toBe('ASSIGNED');
     expect(updated!.assignedDriverName).toContain(`AD${tag}`);
@@ -100,14 +100,14 @@ test.describe('Ride booking', () => {
 
     const tag = uniqueId();
     const client = await app.apiPost('/api/clients', {
-      firstName: `VC${tag}`, lastName: `CL${tag}`, phone: '+12125550040'
+      firstName: `VC${tag}`, lastName: `CL${tag}`, phone: uniquePhone()
     }) as { id: string };
 
     await app.switchTab('Rides');
     await expect(page.locator(`#r-clientId option[value="${client.id}"]`)).toBeAttached({ timeout: 10000 });
 
     await page.selectOption('#r-clientId', client.id);
-    await page.fill('#r-pickupDateTime', '2026-06-15T10:00');
+    await page.fill('#r-pickupDateTime', futureDateTimeLocal());
     await page.fill('#r-pickupLocation', '');
     await page.fill('#r-dropoffLocation', 'Somewhere');
     await page.click('#ride-submit-btn');
