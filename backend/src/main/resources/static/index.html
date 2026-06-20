@@ -1236,6 +1236,16 @@
 
     /* ── Driver list ── */
     const availColors = { AVAILABLE: '#38a169', ON_TRIP: '#d97706', OFF_DUTY: '#999' };
+    let expandedDriverId = null;
+    let driverStatsCache = {};
+    window.toggleDriverDetail = function(id) {
+        if (expandedDriverId === id) { expandedDriverId = null; loadDrivers(); return; }
+        expandedDriverId = id;
+        if (!driverStatsCache[id]) {
+            fetch('/api/drivers/' + id + '/stats').then(r => r.json()).then(s => { driverStatsCache[id] = s; loadDrivers(); });
+        }
+        loadDrivers();
+    };
 
     window.sortDrivers = function(field) { toggleSort('drivers', field); loadDrivers(); };
 
@@ -1269,7 +1279,7 @@
             <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
             <tbody>${sorted.map((d, idx) => `<tr class="${dm && sel.has(d.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)" style="cursor:pointer"` : ''}>
                 ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(d.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)"></td>` : ''}
-                <td data-label="Name" style="font-weight:600">${esc(d.firstName)} ${esc(d.lastName)}</td>
+                <td data-label="Name" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleDriverDetail('${d.id}')">${esc(d.firstName)} ${esc(d.lastName)} <span style="font-size:.65rem;color:#6b7280">${expandedDriverId === d.id ? '▼' : '▸'}</span></td>
                 <td data-label="Phone">${esc2(d.phone)}</td>
                 <td data-label="Vehicle">${esc2(d.vehicle)}</td>
                 <td data-label="Payout">${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
@@ -1285,7 +1295,29 @@
                     <button class="btn-sm" onclick="event.stopPropagation();editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
                 </td>
-            </tr>`).join('')}</tbody>
+            </tr>${expandedDriverId === d.id ? `<tr><td colspan="${dm ? 8 : 7}" style="padding:0;background:#f8fafb">
+                <div style="padding:16px 20px;font-size:.82rem">
+                    ${driverStatsCache[d.id] ? (() => { const s = driverStatsCache[d.id]; return `
+                    <div style="display:flex;gap:16px;flex-wrap:wrap">
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700">${s.totalRides}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Rides</div>
+                        </div>
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700;color:#10b981">${s.completedRides}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Completed</div>
+                        </div>
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700;color:#3b82f6">$${Number(s.totalEarned).toFixed(2)}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Earned</div>
+                        </div>
+                        <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                            <div style="font-size:1.4rem;font-weight:700;color:${Number(s.unpaidAmount) > 0 ? '#ef4444' : '#10b981'}">$${Number(s.unpaidAmount).toFixed(2)}</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Unpaid (${s.unpaidCount})</div>
+                        </div>
+                    </div>`; })() : '<span class="muted">Loading stats...</span>'}
+                </div>
+            </td></tr>` : ''}`).join('')}</tbody>
         </table>` + paginationHtml('drivers', 'driverPrev()', 'driverNext()');
     }
 

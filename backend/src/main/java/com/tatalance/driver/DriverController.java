@@ -15,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +50,38 @@ public class DriverController {
     public Driver getById(@PathVariable String id) {
         return repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
+    }
+
+    @Operation(summary = "Get driver ride and earnings statistics")
+    @ApiResponse(responseCode = "200", description = "Driver stats")
+    @ApiResponse(responseCode = "404", description = "Driver not found")
+    @GetMapping("/{id}/stats")
+    public Map<String, Object> getDriverStats(@PathVariable String id) {
+        if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
+        }
+        var rides = rideRepository.findByAssignedDriverId(id);
+        long totalRides = rides.size();
+        long completedRides = rides.stream().filter(r -> r.getStatus() == RideStatus.COMPLETED).count();
+        BigDecimal totalEarned = rides.stream()
+                .filter(r -> r.getDriverPayout() != null && r.isPayoutPaid())
+                .map(r -> r.getDriverPayout())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal unpaidAmount = rides.stream()
+                .filter(r -> r.getDriverPayout() != null && !r.isPayoutPaid())
+                .map(r -> r.getDriverPayout())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long unpaidCount = rides.stream()
+                .filter(r -> r.getDriverPayout() != null && !r.isPayoutPaid()
+                        && r.getDriverPayout().compareTo(BigDecimal.ZERO) > 0)
+                .count();
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("totalRides", totalRides);
+        stats.put("completedRides", completedRides);
+        stats.put("totalEarned", totalEarned);
+        stats.put("unpaidAmount", unpaidAmount);
+        stats.put("unpaidCount", unpaidCount);
+        return stats;
     }
 
     @Operation(summary = "Create a driver")

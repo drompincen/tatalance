@@ -21,4 +21,5 @@ public interface RideRepository extends MongoRepository<Ride, String> {
     long countByUserIdAndPickupDateTimeBetween(String userId, java.time.Instant from, java.time.Instant to);
     List<Ride> findByUserIdAndStatusIn(String userId, Collection<RideStatus> statuses);
     List<Ride> findByUserIdAndStatusAndPayoutPaid(String userId, RideStatus status, boolean payoutPaid);
+    List<Ride> findByAssignedDriverId(String assignedDriverId);
 }
