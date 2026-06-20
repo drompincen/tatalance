@@ -8,6 +8,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "rides")
 public class Ride {
@@ -48,6 +50,9 @@ public class Ride {
     // Driver payout (#87)
     private BigDecimal driverPayout;
     private boolean payoutPaid;
+
+    // Status history (#88)
+    private List<StatusEvent> statusHistory = new ArrayList<>();
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -103,4 +108,21 @@ public class Ride {
     public void setDriverPayout(BigDecimal driverPayout) { this.driverPayout = driverPayout; }
     public boolean isPayoutPaid() { return payoutPaid; }
     public void setPayoutPaid(boolean payoutPaid) { this.payoutPaid = payoutPaid; }
+    public List<StatusEvent> getStatusHistory() { return statusHistory; }
+    public void setStatusHistory(List<StatusEvent> statusHistory) { this.statusHistory = statusHistory; }
+    public void addStatusEvent(RideStatus status) {
+        if (this.statusHistory == null) this.statusHistory = new ArrayList<>();
+        this.statusHistory.add(new StatusEvent(status, Instant.now()));
+    }
+
+    public static class StatusEvent {
+        private RideStatus status;
+        private Instant timestamp;
+        public StatusEvent() {}
+        public StatusEvent(RideStatus status, Instant timestamp) { this.status = status; this.timestamp = timestamp; }
+        public RideStatus getStatus() { return status; }
+        public void setStatus(RideStatus status) { this.status = status; }
+        public Instant getTimestamp() { return timestamp; }
+        public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
+    }
 }

@@ -1557,6 +1557,8 @@
     let lastRidesCache = [];
     let allRidesCache = [];
     let rideStatusFilter = 'ALL';
+    let expandedRideId = null;
+    window.toggleRideDetail = function(id) { expandedRideId = expandedRideId === id ? null : id; applyRideFilter(); };
 
     window.setRideFilter = function(status) {
         rideStatusFilter = status;
@@ -1608,7 +1610,7 @@
         el.innerHTML = `<table>
             <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th>Payout</th><th></th></tr></thead>
             <tbody>${sorted.map(r => `<tr>
-                <td data-label="Client" style="font-weight:600">${esc(r.clientName)}</td>
+                <td data-label="Client" style="font-weight:600;cursor:pointer" onclick="toggleRideDetail('${r.id}')">${esc(r.clientName)} <span style="font-size:.65rem;color:#6b7280">${expandedRideId === r.id ? '▼' : '▸'}</span></td>
                 <td data-label="Pickup" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
                 <td data-label="From">${mapsLink(r.pickupLocation)}</td>
                 <td data-label="To">${mapsLink(r.dropoffLocation)}</td>
@@ -1652,6 +1654,32 @@
                     <div class="panel-actions">
                         <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">Confirm Complete</button>
                         <button class="btn-sm" onclick="cancelComplete()">Cancel</button>
+                    </div>
+                </div>
+            </td></tr>` : ''}${expandedRideId === r.id ? `<tr><td colspan="8" style="padding:0;background:#f8fafb">
+                <div style="padding:16px 20px;font-size:.82rem">
+                    <div style="display:flex;gap:32px;flex-wrap:wrap">
+                        <div>
+                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Status Timeline</div>
+                            ${(r.statusHistory && r.statusHistory.length) ? r.statusHistory.map((e,i) => '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+                                + '<div style="width:8px;height:8px;border-radius:50%;background:' + (statusColors[e.status]||'#6b7280') + '"></div>'
+                                + '<span style="font-weight:600;color:' + (statusColors[e.status]||'#555') + '">' + e.status + '</span>'
+                                + '<span style="color:#6b7280"> ' + new Date(e.timestamp).toLocaleString() + '</span>'
+                                + '</div>').join('') : '<span class="muted">No history (created before tracking)</span>'}
+                        </div>
+                        <div>
+                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pricing</div>
+                            <div>Mode: <strong>${r.pricingMode || 'FLAT'}</strong></div>
+                            ${r.basePrice ? '<div>Base: $' + Number(r.basePrice).toFixed(2) + '</div>' : ''}
+                            ${r.hourlyRate ? '<div>Hourly rate: $' + Number(r.hourlyRate).toFixed(2) + '/hr</div>' : ''}
+                            ${r.durationMinutes ? '<div>Duration: ' + r.durationMinutes + ' min</div>' : ''}
+                            ${r.tolls && Number(r.tolls) > 0 ? '<div>Tolls: $' + Number(r.tolls).toFixed(2) + '</div>' : ''}
+                            ${r.additionalCharges && Number(r.additionalCharges) > 0 ? '<div>Extras: $' + Number(r.additionalCharges).toFixed(2) + '</div>' : ''}
+                            ${r.totalAmount ? '<div style="font-weight:600;margin-top:4px">Total: $' + Number(r.totalAmount).toFixed(2) + '</div>' : ''}
+                            ${r.billableAmount ? '<div style="font-weight:600">Billable: $' + Number(r.billableAmount).toFixed(2) + '</div>' : ''}
+                        </div>
+                        ${r.driverPayout ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Driver Payout</div><div style="font-size:1.1rem;font-weight:700;color:' + (r.payoutPaid ? '#10b981' : '#ef4444') + '">$' + Number(r.driverPayout).toFixed(2) + ' ' + (r.payoutPaid ? 'PAID' : 'OWED') + '</div>' + (r.assignedDriverName ? '<div class="muted">' + esc(r.assignedDriverName) + '</div>' : '') + '</div>' : ''}
+                        ${r.notes ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Notes</div><div>' + esc(r.notes) + '</div></div>' : ''}
                     </div>
                 </div>
             </td></tr>` : ''}`).join('')}</tbody>

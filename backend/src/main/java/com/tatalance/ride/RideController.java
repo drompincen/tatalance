@@ -61,6 +61,7 @@ public class RideController {
         ride.setUserId(userId);
         ride.setClientName(client.getFirstName() + " " + client.getLastName());
         ride.setStatus(RideStatus.SCHEDULED);
+        ride.addStatusEvent(RideStatus.SCHEDULED);
         ride.setCreatedAt(Instant.now());
         Ride saved = rideRepository.save(ride);
         activityLog.log(userId, "CREATE", "Ride", saved.getId(),
@@ -133,6 +134,7 @@ public class RideController {
         ride.setAssignedDriverId(driverId);
         ride.setAssignedDriverName(driver.getFirstName() + " " + driver.getLastName());
         ride.setStatus(RideStatus.ASSIGNED);
+        ride.addStatusEvent(RideStatus.ASSIGNED);
 
         driver.setAvailability(Availability.ON_TRIP);
         driverRepository.save(driver);
@@ -191,6 +193,7 @@ public class RideController {
             });
         }
         ride.setStatus(RideStatus.CANCELLED);
+        ride.addStatusEvent(RideStatus.CANCELLED);
         Ride saved = rideRepository.save(ride);
         activityLog.log(userId, "CANCEL", "Ride", id, "Cancelled ride for " + ride.getClientName());
         return saved;
@@ -208,6 +211,7 @@ public class RideController {
                     "Cannot start a ride in status " + ride.getStatus());
         }
         ride.setStatus(RideStatus.IN_PROGRESS);
+        ride.addStatusEvent(RideStatus.IN_PROGRESS);
         ride.setActualStart(Instant.now());
         return rideRepository.save(ride);
     }
@@ -270,6 +274,7 @@ public class RideController {
         }
 
         ride.setStatus(RideStatus.COMPLETED);
+        ride.addStatusEvent(RideStatus.COMPLETED);
         Ride saved = rideRepository.save(ride);
         activityLog.log(authHelper.getCurrentUserId(), "COMPLETE", "Ride", id,
                 "Completed ride for " + ride.getClientName() + " — $" + total);
