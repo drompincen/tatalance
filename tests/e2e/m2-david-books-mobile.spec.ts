@@ -106,7 +106,9 @@ test.describe('M2 — David books a ride from iPhone', () => {
     await page.locator('#ride-submit-btn').scrollIntoViewIfNeeded();
     await page.locator('#ride-form').evaluate((f: HTMLFormElement) => f.requestSubmit());
 
-    // Success feedback (any non-empty text in #ride-fb) or appearance in the list
-    await expect(page.locator('#ride-list')).toContainText(`${first} Test`, { timeout: 5000 });
+    // Confirm the booking via the success feedback. (The ride list is paginated
+    // to the first page and, under parallel workers seeding rides into the shared
+    // DB, the brand-new ride can be pushed past it — so assert on #ride-fb.)
+    await expect(page.locator('#ride-fb')).toContainText('booked', { timeout: 5000 });
   });
 });

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { AppPage } from './pages/app.page';
+import { AppPage, uniquePhone } from './pages/app.page';
 
 test.describe('Driver management', () => {
   const uniqueId = () => Date.now().toString(36);
@@ -12,7 +12,7 @@ test.describe('Driver management', () => {
     const tag = uniqueId();
     const firstName = `D2E${tag}`;
     const lastName = `Bot${tag}`;
-    const phone = '+12125550010';
+    const phone = uniquePhone();
 
     await page.fill('#d-firstName', firstName);
     await page.fill('#d-lastName', lastName);
@@ -22,8 +22,8 @@ test.describe('Driver management', () => {
 
     await expect(page.locator('#driver-fb')).toContainText(`${firstName} ${lastName} added`);
 
-    // verify via API
-    const drivers = await app.apiGet('/api/drivers') as { id: string; firstName: string; availability: string }[];
+    // verify via API (large page so the new row isn't past the default page size)
+    const drivers = await app.apiGet('/api/drivers?size=1000') as { id: string; firstName: string; availability: string }[];
     const created = drivers.find(d => d.firstName === firstName);
     expect(created).toBeTruthy();
     expect(created!.availability).toBe('AVAILABLE');
@@ -40,7 +40,7 @@ test.describe('Driver management', () => {
     const tag = uniqueId();
     const driver = await app.apiPost('/api/drivers', {
       firstName: `Avail${tag}`, lastName: `Test${tag}`,
-      phone: '+12125550011', payoutType: 'PERCENTAGE', payoutRate: 60
+      phone: uniquePhone(), payoutType: 'PERCENTAGE', payoutRate: 60
     }) as { id: string };
 
     // change availability via API
@@ -48,8 +48,8 @@ test.describe('Driver management', () => {
       data: { availability: 'OFF_DUTY' }
     });
 
-    // verify it persisted
-    const drivers = await app.apiGet('/api/drivers') as { id: string; availability: string }[];
+    // verify it persisted (large page so the row isn't past the default page size)
+    const drivers = await app.apiGet('/api/drivers?size=1000') as { id: string; availability: string }[];
     const updated = drivers.find(d => d.id === driver.id);
     expect(updated!.availability).toBe('OFF_DUTY');
 

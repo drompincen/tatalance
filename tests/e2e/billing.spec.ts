@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { AppPage } from './pages/app.page';
+import { AppPage, uniquePhone, futureDateTime } from './pages/app.page';
 
 test.describe('Billing', () => {
   const uniqueId = () => Date.now().toString(36);
@@ -8,14 +8,14 @@ test.describe('Billing', () => {
   async function seedCompletedRide(app: AppPage) {
     const tag = uniqueId();
     const client = await app.apiPost('/api/clients', {
-      firstName: `BC${tag}`, lastName: `CL${tag}`, phone: '+12125550060'
+      firstName: `BC${tag}`, lastName: `CL${tag}`, phone: uniquePhone()
     }) as { id: string };
     const driver = await app.apiPost('/api/drivers', {
-      firstName: `BD${tag}`, lastName: `DR${tag}`, phone: '+12125550061',
+      firstName: `BD${tag}`, lastName: `DR${tag}`, phone: uniquePhone(),
       payoutType: 'PERCENTAGE', payoutRate: 70
     }) as { id: string };
     const ride = await app.apiPost('/api/rides', {
-      clientId: client.id, pickupDateTime: '2026-06-25T08:00:00Z',
+      clientId: client.id, pickupDateTime: futureDateTime(),
       pickupLocation: 'Office', dropoffLocation: 'Airport', basePrice: 100
     }) as { id: string };
 
@@ -50,8 +50,8 @@ test.describe('Billing', () => {
     // baseCharge=100, extras=15, subtotal=115, tax=115*0.08=9.2, total=124.2
     expect(invoice.total).toBeCloseTo(124.2, 1);
 
-    // verify it appears in the list
-    const invoices = await app.apiGet('/api/invoices') as { id: string }[];
+    // verify it appears in the list (large page so it isn't past the default page size)
+    const invoices = await app.apiGet('/api/invoices?size=1000') as { id: string }[];
     expect(invoices.some(i => i.id === invoice.id)).toBe(true);
 
     // cleanup
@@ -87,10 +87,10 @@ test.describe('Billing', () => {
 
     const tag = uniqueId();
     const client = await app.apiPost('/api/clients', {
-      firstName: `NC${tag}`, lastName: `CL${tag}`, phone: '+12125550062'
+      firstName: `NC${tag}`, lastName: `CL${tag}`, phone: uniquePhone()
     }) as { id: string };
     const ride = await app.apiPost('/api/rides', {
-      clientId: client.id, pickupDateTime: '2026-06-26T10:00:00Z',
+      clientId: client.id, pickupDateTime: futureDateTime(),
       pickupLocation: 'A', dropoffLocation: 'B', basePrice: 50
     }) as { id: string };
 

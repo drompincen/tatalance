@@ -66,6 +66,10 @@ test.describe('M1 — Responsive shell on iPhone SE', () => {
   });
 
   test('form/list grid stacks vertically on mobile (< 768px)', async ({ page }) => {
+    // Dashboard is the default tab; open the Clients tab (behind the hamburger)
+    // so its form/list grid is the active, visible pane.
+    await page.locator('#hamburger').click();
+    await page.locator('#btn-clients').click();
     // The .grid-2 layout is desktop-only — on mobile it should be a single column.
     const grid = page.locator('#tab-clients .grid-2').first();
     await expect(grid).toBeVisible();
