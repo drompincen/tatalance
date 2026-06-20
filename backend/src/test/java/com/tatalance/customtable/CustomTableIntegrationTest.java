@@ -50,9 +50,9 @@ class CustomTableIntegrationTest {
         var tableId = createTable();
         assertThat(tableId).isNotNull();
 
-        var list = restTemplate.getForEntity("/api/tables", List.class);
+        var list = restTemplate.getForEntity("/api/tables", Map.class);
         assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(list.getBody()).hasSize(1);
+        assertThat((List<?>) list.getBody().get("content")).hasSize(1);
     }
 
     @Test
@@ -73,8 +73,8 @@ class CustomTableIntegrationTest {
         var addResponse = restTemplate.postForEntity("/api/tables/" + tableId + "/rows", row, Map.class);
         assertThat(addResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-        var listResponse = restTemplate.getForEntity("/api/tables/" + tableId + "/rows", List.class);
-        assertThat(listResponse.getBody()).hasSize(1);
+        var listResponse = restTemplate.getForEntity("/api/tables/" + tableId + "/rows", Map.class);
+        assertThat((List<?>) listResponse.getBody().get("content")).hasSize(1);
     }
 
     @Test
@@ -102,8 +102,8 @@ class CustomTableIntegrationTest {
                 HttpMethod.DELETE, null, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        var list = restTemplate.getForEntity("/api/tables/" + tableId + "/rows", List.class);
-        assertThat(list.getBody()).isEmpty();
+        var list = restTemplate.getForEntity("/api/tables/" + tableId + "/rows", Map.class);
+        assertThat((List<?>) list.getBody().get("content")).isEmpty();
     }
 
     @Test
@@ -116,8 +116,8 @@ class CustomTableIntegrationTest {
                 HttpMethod.DELETE, null, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        var tables = restTemplate.getForEntity("/api/tables", List.class);
-        assertThat(tables.getBody()).isEmpty();
+        var tables = restTemplate.getForEntity("/api/tables", Map.class);
+        assertThat((List<?>) tables.getBody().get("content")).isEmpty();
     }
 
     @Test

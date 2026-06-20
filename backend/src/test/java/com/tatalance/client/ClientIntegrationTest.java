@@ -45,9 +45,9 @@ class ClientIntegrationTest {
         assertThat(createResponse.getBody().get("firstName")).isEqualTo("John");
         assertThat(createResponse.getBody().get("lastName")).isEqualTo("Doe");
 
-        var listResponse = restTemplate.getForEntity("/api/clients", List.class);
+        var listResponse = restTemplate.getForEntity("/api/clients", Map.class);
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(listResponse.getBody()).hasSize(1);
+        assertThat((List<?>) listResponse.getBody().get("content")).hasSize(1);
     }
 
     @Test
@@ -125,8 +125,8 @@ class ClientIntegrationTest {
         var response = restTemplate.exchange("/api/clients/" + id, HttpMethod.DELETE, null, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        var list = restTemplate.getForEntity("/api/clients", List.class);
-        assertThat(list.getBody()).isEmpty();
+        var list = restTemplate.getForEntity("/api/clients", Map.class);
+        assertThat((List<?>) list.getBody().get("content")).isEmpty();
     }
 
     @Test

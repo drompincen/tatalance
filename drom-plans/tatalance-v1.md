@@ -1,9 +1,9 @@
 ---
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
-status: in-progress
+status: completed
 created: 2026-04-27
-updated: 2026-05-27
-current_chapter: epic-3
+updated: 2026-06-10
+current_chapter: epic-7
 ---
 
 # Tatalance v1 Plan
@@ -182,6 +182,33 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #48 | Filter rides by date range | Epic 4 | feature | completed |
 | #49 | Filter invoices by status | Epic 4 | feature | completed |
 | #50 | Sort tables by column | Epic 4 | feature | completed |
+| #52 | User registration and management | Epic 5 | feature | completed |
+| #53 | Polling wipes form data while editing | Epic 5 | bug | completed |
+| #54 | Per-user data isolation (epic) | Epic 6 | epic | completed |
+| #55 | Foundation: userId + auth helper + migration | Epic 6 | feature | completed |
+| #56 | Scope Client & Driver by userId | Epic 6 | feature | completed |
+| #57 | Scope Ride by userId | Epic 6 | feature | completed |
+| #58 | Scope Invoice by userId | Epic 6 | feature | completed |
+| #59 | Scope Custom Tables by userId | Epic 6 | feature | completed |
+| #60 | Update all tests for data isolation | Epic 6 | qa | completed |
+| #61 | Security hardening (epic) | Epic 7 | epic | completed |
+| #62 | Logout button + username display | Epic 7 | feature | completed |
+| #63 | Password change | Epic 7 | feature | completed |
+| #64 | Forgot password / password reset | Epic 7 | feature | completed |
+| #65 | Re-enable CSRF protection | Epic 7 | feature | completed |
+| #66 | Practical gaps (epic) | Epic 8 | epic | completed |
+| #67 | Prevent booking rides in the past | Epic 8 | bug | completed |
+| #68 | Prevent duplicate clients (same phone) | Epic 8 | bug | completed |
+| #69 | Pagination for all list endpoints | Epic 8 | feature | completed |
+| #70 | Google OAuth + Maps links (epic) | Epic 9 | epic | completed |
+| #71 | Google OAuth2 login | Epic 9 | feature | completed |
+| #72 | Link existing account to Google | Epic 9 | feature | completed |
+| #73 | Pickup/dropoff as Google Maps links | Epic 9 | feature | completed |
+| #74 | Time-based pricing (epic) | Epic 10 | epic | completed |
+| #75 | Pricing mode + hourly rate on rides | Epic 10 | feature | completed |
+| #76 | Live stopwatch on driver queue | Epic 10 | feature | completed |
+| #77 | Duration + cost summary on completion | Epic 10 | feature | completed |
+| #78 | Invoice shows time breakdown | Epic 10 | feature | completed |
 
 ---
 
@@ -201,10 +228,174 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 ---
 
-# What's NOT in v1
+# Epic 5: Bugfixes & User Management
+**Status:** completed
+**Outcome:** Multiple users can register and log in; editing forms no longer wipes data on auto-refresh.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Add user registration and management | completed | luciano | #52 |
+| 2 | Fix: polling wipes form data while editing | completed | luciano | #53 |
+
+## Dependencies
+
+```
+#52 (User registration) — independent, changes SecurityConfig + adds AppUser document
+#53 (Polling fix) — independent, UI-only change (fix already stashed)
+```
+
+---
+
+# Epic 6: Per-user data isolation (multi-tenancy)
+**Status:** completed
+**Outcome:** Each user sees only their own data. User A's clients, drivers, rides, invoices, and custom tables are invisible to User B.
+**Depends on:** Epic 5 (#52 — user registration)
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Foundation: userId field + auth helper + data migration | completed | luciano | #55 |
+| 2 | Scope Client & Driver by userId | completed | luciano | #56 |
+| 3 | Scope Ride by userId | completed | luciano | #57 |
+| 4 | Scope Invoice by userId | completed | luciano | #58 |
+| 5 | Scope Custom Tables by userId | completed | luciano | #59 |
+| 6 | Update all tests for data isolation | completed | luciano | #60 |
+
+## Dependencies
+
+```
+#55 (Foundation) — first, adds userId field + AuthHelper
+  |
+  ├──> #56 (Client & Driver) — independent from #59
+  |       |
+  |       └──> #57 (Ride) — needs Client & Driver scoped
+  |               |
+  |               └──> #58 (Invoice) — needs Ride scoped
+  |
+  └──> #59 (Custom Tables) — independent from #56-#58
+
+#60 (Tests) — last, after all scoping stories
+```
+
+## Key decisions
+- Return 404 (not 403) when accessing another user's data — no information leakage
+- Invoice numbers are per-user (INV-YYYY-001, 002...) to avoid collisions
+- Existing data migrated to admin user on startup (idempotent)
+- LINK columns in custom tables can only reference the current user's tables
+
+---
+
+# Epic 7: Security hardening
+**Status:** completed
+**Outcome:** Users can sign out, change passwords, recover accounts, and the app is protected against CSRF.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Logout button + username display in header | completed | luciano | #62 |
+| 2 | Password change | completed | luciano | #63 |
+| 3 | Forgot password / password reset | completed | luciano | #64 |
+| 4 | Re-enable CSRF protection | completed | luciano | #65 |
+
+## Dependencies
+
+```
+#62 (Logout + username) — first, establishes user menu in header
+  ├──> #63 (Password change) — adds to user menu
+  └──> #64 (Forgot password) — adds to login page
+#65 (CSRF) — independent, can be done anytime
+```
+
+---
+
+# Epic 8: Practical gaps
+**Status:** completed
+**Outcome:** The app handles real-world edge cases — no past dates, no duplicate clients, no performance cliffs.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Prevent booking rides in the past | completed | luciano | #67 |
+| 2 | Prevent duplicate clients (same phone) | completed | luciano | #68 |
+| 3 | Pagination for all list endpoints | completed | luciano | #69 |
+
+## Dependencies
+
+```
+#67 (Past dates) — independent
+#68 (Duplicate clients) — independent (compound index with userId after Epic 6)
+#69 (Pagination) — best done after Epic 6 (queries already scoped by userId)
+```
+
+---
+
+# Epic 9: Google OAuth + Maps links
+**Status:** completed
+**Outcome:** Tata can sign in with Google (in addition to username/password), and pickup/dropoff locations are clickable Google Maps links.
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Google OAuth2 login ("Sign in with Google" button) | completed | luciano | #71 |
+| 2 | Link existing account to Google identity | completed | luciano | #72 |
+| 3 | Pickup/dropoff as clickable Google Maps links | completed | luciano | #73 |
+
+## Dependencies
+
+```
+#71 (Google OAuth) — first, adds Spring Security OAuth2 client + Google Console setup
+  └──> #72 (Link account) — maps Google identity to existing AppUser
+#73 (Maps links) — independent, small UI change
+```
+
+---
+
+# Epic 10: Time-based pricing
+**Status:** completed
+**Outcome:** Tata can book rides with flexible pricing (flat, hourly, or flat + hourly). Drivers see a live stopwatch. Invoices show the time breakdown.
+
+## Pricing modes
+
+| Mode | Formula | Example |
+|---|---|---|
+| FLAT | basePrice | $100 flat |
+| HOURLY | duration × hourlyRate | 2h 15m × $7.50 = $16.88 |
+| FLAT_PLUS_HOURLY | basePrice + (duration × hourlyRate) | $50 + 2h 15m × $7.50 = $66.88 |
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Pricing mode + hourly rate on rides | completed | luciano | #75 |
+| 2 | Live stopwatch on driver queue | completed | luciano | #76 |
+| 3 | Duration + cost summary on completion | completed | luciano | #77 |
+| 4 | Invoice shows time breakdown | completed | luciano | #78 |
+
+## Dependencies
+
+```
+#75 (Pricing mode) — first, adds pricingMode + hourlyRate to Ride model + booking form
+  ├──> #76 (Stopwatch) — needs actualStart from start-ride flow
+  └──> #77 (Completion summary) — needs hourlyRate + duration to calculate cost
+        └──> #78 (Invoice breakdown) — needs duration + rate stored on completed ride
+```
+
+---
+
+# What's NOT in v1 (nice-to-haves for later)
 
 | Feature | Why deferred |
 |---|---|
+| Dashboard stats (rides, revenue, outstanding) | Needs data volume to be meaningful |
+| Export invoices to PDF/CSV | Useful but not blocking core workflow |
+| Ride reminders / notifications | Needs notification infrastructure |
+| Activity log (who changed what) | Audit trail — add when multi-user is stable |
 | Driver self-service UI | David manages everything in MVP |
 | Driver payouts | Not needed for core book-to-pay loop |
 | VIP preferences | Nice-to-have fields for later |
