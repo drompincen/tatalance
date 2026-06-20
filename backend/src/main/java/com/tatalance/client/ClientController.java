@@ -16,8 +16,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Clients", description = "Client management")
 @RestController
@@ -51,6 +54,35 @@ public class ClientController {
     public Client getById(@PathVariable String id) {
         return repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+    }
+
+    @Operation(summary = "Get client ride statistics")
+    @ApiResponse(responseCode = "200", description = "Client stats")
+    @ApiResponse(responseCode = "404", description = "Client not found")
+    @GetMapping("/{id}/stats")
+    public Map<String, Object> getClientStats(@PathVariable String id) {
+        if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
+        }
+        var rides = rideRepository.findByClientId(id);
+        long totalRides = rides.size();
+        long completedRides = rides.stream().filter(r -> r.getStatus() == RideStatus.COMPLETED).count();
+        BigDecimal totalSpent = rides.stream()
+                .filter(r -> r.getBillableAmount() != null)
+                .map(r -> r.getBillableAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Instant lastRide = rides.stream()
+                .map(r -> r.getPickupDateTime())
+                .filter(t -> t != null)
+                .max(Instant::compareTo)
+                .orElse(null);
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("totalRides", totalRides);
+        stats.put("completedRides", completedRides);
+        stats.put("totalSpent", totalSpent);
+        stats.put("lastRideDate", lastRide);
+        stats.put("vip", completedRides >= 5);
+        return stats;
     }
 
     @Operation(summary = "Create a client")

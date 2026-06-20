@@ -987,6 +987,16 @@
     const esc2 = s => esc(s) || '<span class="muted">—</span>';
     const mapsLink = s => s ? `<a href="https://www.google.com/maps/search/${encodeURIComponent(s)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${esc(s)}</a>` : '<span class="muted">—</span>';
     let allClientsCache = [];
+    let expandedClientId = null;
+    let clientStatsCache = {};
+    window.toggleClientDetail = function(id) {
+        if (expandedClientId === id) { expandedClientId = null; filterClients(); return; }
+        expandedClientId = id;
+        if (!clientStatsCache[id]) {
+            fetch('/api/clients/' + id + '/stats').then(r => r.json()).then(s => { clientStatsCache[id] = s; filterClients(); });
+        }
+        filterClients();
+    };
 
     function filterClients() {
         const q = document.getElementById('client-search').value.toLowerCase().trim();
@@ -1038,7 +1048,7 @@
             <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th>Notes</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
             <tbody>${sorted.map((c, idx) => `<tr class="${dm && sel.has(c.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())" style="cursor:pointer"` : ''}>
                 ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())"></td>` : ''}
-                <td data-label="First Name" style="font-weight:600">${esc(c.firstName)}</td>
+                <td data-label="First Name" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleClientDetail('${c.id}')">${esc(c.firstName)} <span style="font-size:.65rem;color:#6b7280">${expandedClientId === c.id ? '▼' : '▸'}</span></td>
                 <td data-label="Last Name">${esc(c.lastName)}</td>
                 <td data-label="Phone">${esc2(c.phone)}</td>
                 <td data-label="Email">${esc2(c.email)}</td>
@@ -1048,7 +1058,29 @@
                     <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}','${esc(c.notes)||''}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
                 </td>
-            </tr>`).join('')}</tbody>
+            </tr>${expandedClientId === c.id ? `<tr><td colspan="${dm ? 9 : 8}" style="padding:0;background:#f8fafb">
+                <div style="padding:16px 20px;font-size:.82rem">
+                    ${clientStatsCache[c.id] ? (() => { const s = clientStatsCache[c.id]; return `
+                    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+                        <div style="display:flex;gap:16px">
+                            <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                                <div style="font-size:1.4rem;font-weight:700">${s.totalRides}</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Rides</div>
+                            </div>
+                            <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                                <div style="font-size:1.4rem;font-weight:700;color:#10b981">${s.completedRides}</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Completed</div>
+                            </div>
+                            <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+                                <div style="font-size:1.4rem;font-weight:700;color:#3b82f6">$${Number(s.totalSpent).toFixed(2)}</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Spent</div>
+                            </div>
+                        </div>
+                        ${s.vip ? '<span style="background:#f59e0b;color:white;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.5px">VIP</span>' : ''}
+                        ${s.lastRideDate ? '<div style="color:#6b7280;font-size:.78rem">Last ride: ' + new Date(s.lastRideDate).toLocaleDateString() + '</div>' : ''}
+                    </div>`; })() : '<span class="muted">Loading stats...</span>'}
+                </div>
+            </td></tr>` : ''}`).join('')}</tbody>
         </table>` + paginationHtml('clients', 'clientPrev()', 'clientNext()');
     }
 
