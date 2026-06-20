@@ -1,5 +1,6 @@
 package com.tatalance.client;
 
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
 import com.tatalance.user.AuthHelper;
@@ -26,11 +27,14 @@ public class ClientController {
     private final ClientRepository repository;
     private final RideRepository rideRepository;
     private final AuthHelper authHelper;
+    private final ActivityLogger activityLog;
 
-    public ClientController(ClientRepository repository, RideRepository rideRepository, AuthHelper authHelper) {
+    public ClientController(ClientRepository repository, RideRepository rideRepository,
+                            AuthHelper authHelper, ActivityLogger activityLog) {
         this.repository = repository;
         this.rideRepository = rideRepository;
         this.authHelper = authHelper;
+        this.activityLog = activityLog;
     }
 
     @Operation(summary = "List all clients")
@@ -61,7 +65,10 @@ public class ClientController {
         }
         client.setUserId(userId);
         client.setCreatedAt(Instant.now());
-        return repository.save(client);
+        Client saved = repository.save(client);
+        activityLog.log(userId, "CREATE", "Client", saved.getId(),
+                "Added client " + saved.getFirstName() + " " + saved.getLastName());
+        return saved;
     }
 
     @Operation(summary = "Update a client")
@@ -81,7 +88,10 @@ public class ClientController {
         existing.setLastName(updates.getLastName());
         existing.setPhone(updates.getPhone());
         existing.setEmail(updates.getEmail());
-        return repository.save(existing);
+        Client saved = repository.save(existing);
+        activityLog.log(userId, "UPDATE", "Client", id,
+                "Updated client " + saved.getFirstName() + " " + saved.getLastName());
+        return saved;
     }
 
     @Operation(summary = "Delete a client")
@@ -101,5 +111,6 @@ public class ClientController {
                     "Cannot delete client with active rides (" + activeRides.size() + " active)");
         }
         repository.deleteById(id);
+        activityLog.log(authHelper.getCurrentUserId(), "DELETE", "Client", id, "Deleted client");
     }
 }

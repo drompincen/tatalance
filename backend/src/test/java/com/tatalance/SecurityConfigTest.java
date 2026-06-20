@@ -1,5 +1,7 @@
 package com.tatalance;
 
+import com.tatalance.activity.ActivityLogRepository;
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.client.ClientRepository;
 import com.tatalance.customtable.CustomTableRepository;
 import com.tatalance.customtable.CustomTableRowRepository;
@@ -64,6 +66,12 @@ class SecurityConfigTest {
 
     @MockBean
     AuthHelper authHelper;
+
+    @MockBean
+    ActivityLogger activityLogger;
+
+    @MockBean
+    ActivityLogRepository activityLogRepository;
 
     @Test
     void should_return401_when_apiRequestUnauthenticated() throws Exception {

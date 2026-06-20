@@ -1,6 +1,7 @@
 package com.tatalance.ride;
 
 import com.tatalance.SecurityConfig;
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.client.Client;
 import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
@@ -58,6 +59,9 @@ class RideControllerTest {
 
     @MockBean
     private AuthHelper authHelper;
+
+    @MockBean
+    private ActivityLogger activityLogger;
 
     @BeforeEach
     void setUp() {

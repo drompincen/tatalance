@@ -1,5 +1,6 @@
 package com.tatalance.ride;
 
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.client.Client;
 import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
@@ -34,13 +35,16 @@ public class RideController {
     private final ClientRepository clientRepository;
     private final DriverRepository driverRepository;
     private final AuthHelper authHelper;
+    private final ActivityLogger activityLog;
 
     public RideController(RideRepository rideRepository, ClientRepository clientRepository,
-                          DriverRepository driverRepository, AuthHelper authHelper) {
+                          DriverRepository driverRepository, AuthHelper authHelper,
+                          ActivityLogger activityLog) {
         this.rideRepository = rideRepository;
         this.clientRepository = clientRepository;
         this.driverRepository = driverRepository;
         this.authHelper = authHelper;
+        this.activityLog = activityLog;
     }
 
     @Operation(summary = "Create a ride")
@@ -58,7 +62,10 @@ public class RideController {
         ride.setClientName(client.getFirstName() + " " + client.getLastName());
         ride.setStatus(RideStatus.SCHEDULED);
         ride.setCreatedAt(Instant.now());
-        return rideRepository.save(ride);
+        Ride saved = rideRepository.save(ride);
+        activityLog.log(userId, "CREATE", "Ride", saved.getId(),
+                "Booked ride for " + saved.getClientName());
+        return saved;
     }
 
     @Operation(summary = "List all rides")
@@ -184,7 +191,9 @@ public class RideController {
             });
         }
         ride.setStatus(RideStatus.CANCELLED);
-        return rideRepository.save(ride);
+        Ride saved = rideRepository.save(ride);
+        activityLog.log(userId, "CANCEL", "Ride", id, "Cancelled ride for " + ride.getClientName());
+        return saved;
     }
 
     @Operation(summary = "Start a ride (mobile driver action)",
@@ -244,7 +253,10 @@ public class RideController {
         ride.setBillableAmount(total.add(tolls).add(parking).add(extras));
         ride.setTotalAmount(total);
         ride.setStatus(RideStatus.COMPLETED);
-        return rideRepository.save(ride);
+        Ride saved = rideRepository.save(ride);
+        activityLog.log(authHelper.getCurrentUserId(), "COMPLETE", "Ride", id,
+                "Completed ride for " + ride.getClientName() + " — $" + total);
+        return saved;
     }
 
     private static BigDecimal asDecimal(Map<String, Object> body, String key) {

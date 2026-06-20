@@ -1,6 +1,7 @@
 package com.tatalance.invoice;
 
 import com.tatalance.SecurityConfig;
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
@@ -52,6 +53,9 @@ class InvoiceControllerTest {
 
     @MockBean
     private AuthHelper authHelper;
+
+    @MockBean
+    private ActivityLogger activityLogger;
 
     @BeforeEach
     void setUp() {

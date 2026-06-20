@@ -370,6 +370,7 @@
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
         <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
+        <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
         <span id="custom-tab-buttons"></span>
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
@@ -620,6 +621,19 @@
     </div>
 </div>
 
+<!-- ── Activity tab ── -->
+<div id="tab-activity" class="tab-pane">
+    <div class="page">
+        <div class="card">
+            <div class="list-header">
+                <div class="card-title" style="margin-bottom:0">Activity Log</div>
+                <span class="count" id="activity-count"></span>
+            </div>
+            <div id="activity-list"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ── API Spec tab ── -->
 <div id="tab-api" class="tab-pane">
     <div class="page">
@@ -837,6 +851,7 @@
         // added clients appear without waiting for the 10s poll.
         if (name === 'rides') loadClientDropdown();
         if (name === 'dashboard') loadDashboard();
+        if (name === 'activity') loadActivity();
         closeNav();
     }
 
@@ -2553,6 +2568,35 @@
 
     // Load dashboard on page load
     loadDashboard();
+
+    /* ── Activity Log ── */
+    function loadActivity() {
+        fetch('/api/activity?size=100')
+            .then(r => r.json())
+            .then(data => {
+                var entries = data.content || [];
+                var el = document.getElementById('activity-list');
+                var countEl = document.getElementById('activity-count');
+                countEl.textContent = entries.length + ' entries';
+                if (entries.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No activity yet. Actions will appear here as you use the app.</p></div>';
+                    return;
+                }
+                var actionIcons = { CREATE: '➕', UPDATE: '✏️', DELETE: '🗑️', CANCEL: '❌', COMPLETE: '✅' };
+                var html = '<table><thead><tr><th>Time</th><th>Action</th><th>Type</th><th>Details</th></tr></thead><tbody>';
+                entries.forEach(function(e) {
+                    var t = e.timestamp ? new Date(e.timestamp) : null;
+                    var timeStr = t ? t.toLocaleDateString() + ' ' + t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+                    var icon = actionIcons[e.action] || '📝';
+                    html += '<tr><td>' + timeStr + '</td><td>' + icon + ' ' + e.action + '</td><td>' + e.entityType + '</td><td>' + (e.summary || '') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                el.innerHTML = html;
+            })
+            .catch(() => {
+                document.getElementById('activity-list').innerHTML = '<p style="color:#6b7280">Could not load activity log.</p>';
+            });
+    }
 
     /* ── Link Google Account ── */
     window.linkGoogle = async function() {

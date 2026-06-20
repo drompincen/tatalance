@@ -1,5 +1,6 @@
 package com.tatalance.invoice;
 
+import com.tatalance.activity.ActivityLogger;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
@@ -37,12 +38,14 @@ public class InvoiceController {
     private final InvoiceRepository invoiceRepository;
     private final RideRepository rideRepository;
     private final AuthHelper authHelper;
+    private final ActivityLogger activityLog;
 
     public InvoiceController(InvoiceRepository invoiceRepository, RideRepository rideRepository,
-                             AuthHelper authHelper) {
+                             AuthHelper authHelper, ActivityLogger activityLog) {
         this.invoiceRepository = invoiceRepository;
         this.rideRepository = rideRepository;
         this.authHelper = authHelper;
+        this.activityLog = activityLog;
     }
 
     @Operation(summary = "Generate invoice from a completed ride")
@@ -91,7 +94,10 @@ public class InvoiceController {
         invoice.setStatus(InvoiceStatus.OUTSTANDING);
         invoice.setCreatedAt(Instant.now());
 
-        return invoiceRepository.save(invoice);
+        Invoice saved = invoiceRepository.save(invoice);
+        activityLog.log(userId, "CREATE", "Invoice", saved.getId(),
+                "Created invoice " + saved.getInvoiceNumber() + " for " + saved.getClientName() + " — $" + saved.getTotal());
+        return saved;
     }
 
     @Operation(summary = "List all invoices")
@@ -124,7 +130,10 @@ public class InvoiceController {
             invoice.setStatus(InvoiceStatus.OUTSTANDING);
         }
 
-        return invoiceRepository.save(invoice);
+        Invoice saved = invoiceRepository.save(invoice);
+        activityLog.log(authHelper.getCurrentUserId(), "UPDATE", "Invoice", id,
+                "Marked " + saved.getInvoiceNumber() + " as " + saved.getStatus());
+        return saved;
     }
 
     @Operation(summary = "Export all invoices as CSV")
