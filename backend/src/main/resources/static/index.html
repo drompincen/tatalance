@@ -437,6 +437,10 @@
                             <label>Email <span class="opt">(optional)</span><span class="schema-type" id="type-email">string · email</span></label>
                             <input type="email" id="f-email" placeholder="name@example.com" autocomplete="off">
                         </div>
+                        <div class="field">
+                            <label>Notes <span class="opt">(optional)</span></label>
+                            <input type="text" id="f-notes" placeholder="VIP preferences, special requests…" autocomplete="off">
+                        </div>
                     </div>
                     <button class="btn" type="submit" id="submit-btn">Add Client</button>
                     <button class="btn btn-cancel" type="button" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancel</button>
@@ -1031,16 +1035,17 @@
         const sorted = sortedData('clients', clients);
         const allIds = sorted.map(c => c.id);
         el.innerHTML = `<table>
-            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th>Notes</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
             <tbody>${sorted.map((c, idx) => `<tr class="${dm && sel.has(c.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())" style="cursor:pointer"` : ''}>
                 ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())"></td>` : ''}
                 <td data-label="First Name" style="font-weight:600">${esc(c.firstName)}</td>
                 <td data-label="Last Name">${esc(c.lastName)}</td>
                 <td data-label="Phone">${esc2(c.phone)}</td>
                 <td data-label="Email">${esc2(c.email)}</td>
+                <td data-label="Notes" class="muted" style="font-size:.8rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.notes)||''}">${esc2(c.notes)}</td>
                 <td data-label="Added" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
                 <td style="white-space:nowrap">
-                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}')">Edit</button>
+                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}','${esc(c.notes)||''}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
                 </td>
             </tr>`).join('')}</tbody>
@@ -1079,6 +1084,7 @@
         const lastName  = document.getElementById('f-lastName').value.trim();
         const phone = document.getElementById('f-phone').value.trim();
         const email = document.getElementById('f-email').value.trim();
+        const notes = document.getElementById('f-notes').value.trim();
         let valid = true;
         for (const [f, v] of [['firstName', firstName], ['lastName', lastName]]) {
             document.getElementById(`f-${f}`).classList.toggle('invalid', !v);
@@ -1102,7 +1108,7 @@
             const r = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, phone, email: email || null })
+                body: JSON.stringify({ firstName, lastName, phone, email: email || null, notes: notes || null })
             });
             if (!r.ok) throw new Error();
             const wasEdit = !!editingClientId;
@@ -1129,12 +1135,13 @@
     /* ── Edit / Delete client ── */
     let editingClientId = null;
 
-    window.editClient = function(id, firstName, lastName, phone, email) {
+    window.editClient = function(id, firstName, lastName, phone, email, notes) {
         editingClientId = id;
         document.getElementById('f-firstName').value = firstName;
         document.getElementById('f-lastName').value = lastName;
         document.getElementById('f-phone').value = phone;
         document.getElementById('f-email').value = email;
+        document.getElementById('f-notes').value = notes || '';
         document.getElementById('submit-btn').textContent = 'Update Client';
         document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Edit Client';
         const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -1147,6 +1154,7 @@
         document.getElementById('f-lastName').value = '';
         document.getElementById('f-phone').value = '';
         document.getElementById('f-email').value = '';
+        document.getElementById('f-notes').value = '';
         document.getElementById('submit-btn').textContent = 'Add Client';
         document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Add Client';
         const cancelBtn = document.getElementById('cancel-edit-btn');

@@ -22,6 +22,7 @@ public class Client {
     @Pattern(regexp = "^\\+[1-9]\\d{9,14}$", message = "Phone must be E.164 format: + followed by 10-15 digits")
     private String phone;
     private String email;
+    private String notes;
     private Instant createdAt;
 
     public String getId() { return id; }
@@ -36,6 +37,8 @@ public class Client {
     public void setPhone(String phone) { this.phone = phone; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

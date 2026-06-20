@@ -88,6 +88,7 @@ public class ClientController {
         existing.setLastName(updates.getLastName());
         existing.setPhone(updates.getPhone());
         existing.setEmail(updates.getEmail());
+        existing.setNotes(updates.getNotes());
         Client saved = repository.save(existing);
         activityLog.log(userId, "UPDATE", "Client", id,
                 "Updated client " + saved.getFirstName() + " " + saved.getLastName());
