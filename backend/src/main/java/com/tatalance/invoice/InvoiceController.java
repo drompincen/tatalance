@@ -7,6 +7,7 @@ import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -15,10 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.Year;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -120,6 +125,43 @@ public class InvoiceController {
         }
 
         return invoiceRepository.save(invoice);
+    }
+
+    @Operation(summary = "Export all invoices as CSV")
+    @GetMapping("/export/csv")
+    public void exportCsv(HttpServletResponse response) throws IOException {
+        String userId = authHelper.getCurrentUserId();
+        List<Invoice> invoices = invoiceRepository.findByUserId(userId);
+
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=invoices.csv");
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                .withZone(ZoneId.systemDefault());
+
+        PrintWriter w = response.getWriter();
+        w.println("Invoice #,Client,Status,Base Charge,Additional,Tax,Total,Pricing Mode,Date");
+        for (Invoice inv : invoices) {
+            w.printf("%s,%s,%s,%s,%s,%s,%s,%s,%s%n",
+                    csvSafe(inv.getInvoiceNumber()),
+                    csvSafe(inv.getClientName()),
+                    inv.getStatus(),
+                    inv.getBaseCharge(),
+                    inv.getAdditionalCharges(),
+                    inv.getTax(),
+                    inv.getTotal(),
+                    inv.getPricingMode() != null ? inv.getPricingMode() : "FLAT",
+                    inv.getCreatedAt() != null ? fmt.format(inv.getCreatedAt()) : "");
+        }
+        w.flush();
+    }
+
+    private static String csvSafe(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     private String generateInvoiceNumber(String userId) {
