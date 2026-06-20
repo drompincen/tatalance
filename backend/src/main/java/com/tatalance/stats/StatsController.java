@@ -83,6 +83,15 @@ public class StatsController {
                 .map(i -> i.getTotal() != null ? i.getTotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Driver payouts (#87)
+        var unpaidPayoutRides = rideRepo.findByUserIdAndStatusAndPayoutPaid(userId, RideStatus.COMPLETED, false);
+        BigDecimal payoutsOwed = unpaidPayoutRides.stream()
+                .map(r -> r.getDriverPayout() != null ? r.getDriverPayout() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long payoutsOwedCount = unpaidPayoutRides.stream()
+                .filter(r -> r.getDriverPayout() != null && r.getDriverPayout().compareTo(BigDecimal.ZERO) > 0)
+                .count();
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("totalClients", totalClients);
         result.put("totalDrivers", totalDrivers);
@@ -95,6 +104,8 @@ public class StatsController {
         result.put("revenueThisMonth", revenueThisMonth);
         result.put("outstandingAmount", outstandingAmount);
         result.put("outstandingCount", outstandingInvoices.size());
+        result.put("payoutsOwed", payoutsOwed);
+        result.put("payoutsOwedCount", payoutsOwedCount);
         return result;
     }
 }

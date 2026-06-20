@@ -45,6 +45,10 @@ public class Ride {
     private BigDecimal totalAmount;
     private BigDecimal billableAmount;
 
+    // Driver payout (#87)
+    private BigDecimal driverPayout;
+    private boolean payoutPaid;
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getUserId() { return userId; }
@@ -95,4 +99,8 @@ public class Ride {
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public BigDecimal getBillableAmount() { return billableAmount; }
     public void setBillableAmount(BigDecimal billableAmount) { this.billableAmount = billableAmount; }
+    public BigDecimal getDriverPayout() { return driverPayout; }
+    public void setDriverPayout(BigDecimal driverPayout) { this.driverPayout = driverPayout; }
+    public boolean isPayoutPaid() { return payoutPaid; }
+    public void setPayoutPaid(boolean payoutPaid) { this.payoutPaid = payoutPaid; }
 }

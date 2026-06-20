@@ -1606,7 +1606,7 @@
         window.sortRides = function(field) { toggleSort('rides', field); applyRideFilter(); };
         const sorted = sortedData('rides', rides);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th></th></tr></thead>
+            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th>Payout</th><th></th></tr></thead>
             <tbody>${sorted.map(r => `<tr>
                 <td data-label="Client" style="font-weight:600">${esc(r.clientName)}</td>
                 <td data-label="Pickup" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
@@ -1619,9 +1619,10 @@
                             ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
+                <td style="font-size:.8rem">${r.status === 'COMPLETED' && r.driverPayout ? (r.payoutPaid ? `<span style="color:#10b981;font-weight:600">$${Number(r.driverPayout).toFixed(2)} Paid</span>` : `<span style="color:#ef4444;font-weight:600">$${Number(r.driverPayout).toFixed(2)}</span> <button class="btn-sm" onclick="markPayoutPaid('${r.id}')" style="font-size:.7rem">Pay</button>`) : '<span class="muted">—</span>'}</td>
                 <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
                     (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Rebook</button>` : ''}</td>
-            </tr>${completingRideId === r.id ? `<tr><td colspan="7" style="padding:0">
+            </tr>${completingRideId === r.id ? `<tr><td colspan="8" style="padding:0">
                 <div class="complete-panel">
                     <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} flat`}</div>
                     <div class="field-row">
@@ -1813,6 +1814,15 @@
         } catch {
             alert('Cancel failed — check server logs');
         }
+    };
+
+    window.markPayoutPaid = async function(rideId) {
+        if (!confirm('Mark this driver payout as paid?')) return;
+        try {
+            const r = await fetch(`/api/rides/${rideId}/mark-payout-paid`, { method: 'POST' });
+            if (!r.ok) { alert('Failed to mark payout'); return; }
+            loadRides(); loadDashboard();
+        } catch { alert('Failed — check server logs'); }
     };
 
     loadClientDropdown();
@@ -2568,6 +2578,11 @@
                 <div class="stat-value">$${Number(s.outstandingAmount).toFixed(2)}</div>
                 <div class="stat-sub">${s.outstandingCount} invoice${s.outstandingCount === 1 ? '' : 's'}</div>
             </div>
+            <div class="stat-card accent-red">
+                <div class="stat-label">Driver Payouts Owed</div>
+                <div class="stat-value">$${Number(s.payoutsOwed || 0).toFixed(2)}</div>
+                <div class="stat-sub">${s.payoutsOwedCount || 0} ride${(s.payoutsOwedCount || 0) === 1 ? '' : 's'} unpaid</div>
+            </div>
         `;
 
         // Status bars
@@ -2593,6 +2608,7 @@
             <div class="revenue-line"><span class="revenue-label">Paid (this month)</span><span class="revenue-value green">$${Number(s.revenueThisMonth).toFixed(2)}</span></div>
             <div class="revenue-line"><span class="revenue-label">Paid (all time)</span><span class="revenue-value green">$${Number(s.revenueTotal).toFixed(2)}</span></div>
             <div class="revenue-line"><span class="revenue-label">Outstanding</span><span class="revenue-value red">$${Number(s.outstandingAmount).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">Driver payouts owed</span><span class="revenue-value red">$${Number(s.payoutsOwed || 0).toFixed(2)}</span></div>
             <div class="revenue-line"><span class="revenue-label">Total rides</span><span class="revenue-value">${s.totalRides}</span></div>
         `;
     }

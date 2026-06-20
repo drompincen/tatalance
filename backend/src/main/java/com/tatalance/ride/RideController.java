@@ -250,8 +250,25 @@ public class RideController {
             case FLAT_PLUS_HOURLY -> total = base.add(timeCost);
             default -> total = base;
         }
-        ride.setBillableAmount(total.add(tolls).add(parking).add(extras));
+        BigDecimal billable = total.add(tolls).add(parking).add(extras);
+        ride.setBillableAmount(billable);
         ride.setTotalAmount(total);
+
+        // Calculate driver payout (#87)
+        if (ride.getAssignedDriverId() != null) {
+            driverRepository.findByIdAndUserId(ride.getAssignedDriverId(), authHelper.getCurrentUserId())
+                    .ifPresent(driver -> {
+                        if (driver.getPayoutType() != null && driver.getPayoutRate() != null) {
+                            BigDecimal payout = switch (driver.getPayoutType()) {
+                                case FLAT -> driver.getPayoutRate();
+                                case PERCENTAGE -> billable.multiply(driver.getPayoutRate())
+                                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                            };
+                            ride.setDriverPayout(payout);
+                        }
+                    });
+        }
+
         ride.setStatus(RideStatus.COMPLETED);
         Ride saved = rideRepository.save(ride);
         activityLog.log(authHelper.getCurrentUserId(), "COMPLETE", "Ride", id,
@@ -264,6 +281,25 @@ public class RideController {
         Object v = body.get(key);
         if (v instanceof Number n) return new BigDecimal(n.toString());
         return new BigDecimal(v.toString());
+    }
+
+    @Operation(summary = "Mark driver payout as paid")
+    @ApiResponse(responseCode = "200", description = "Payout marked as paid")
+    @ApiResponse(responseCode = "404", description = "Ride not found")
+    @PostMapping("/rides/{id}/mark-payout-paid")
+    public Ride markPayoutPaid(@PathVariable String id) {
+        String userId = authHelper.getCurrentUserId();
+        Ride ride = rideRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        if (ride.getStatus() != RideStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only completed rides can have payouts marked");
+        }
+        ride.setPayoutPaid(true);
+        Ride saved = rideRepository.save(ride);
+        activityLog.log(userId, "UPDATE", "Ride", id,
+                "Marked payout paid for " + ride.getClientName()
+                        + (ride.getDriverPayout() != null ? " — $" + ride.getDriverPayout() : ""));
+        return saved;
     }
 
     @Operation(summary = "List available drivers")
