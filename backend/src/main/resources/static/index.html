@@ -1620,7 +1620,7 @@
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
                 <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
-                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}</td>
+                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Rebook</button>` : ''}</td>
             </tr>${completingRideId === r.id ? `<tr><td colspan="7" style="padding:0">
                 <div class="complete-panel">
                     <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} flat`}</div>
@@ -1770,6 +1770,22 @@
         document.getElementById('ride-submit-btn').textContent = 'Update Ride';
         document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Edit Ride';
         document.getElementById('cancel-ride-edit-btn').style.display = 'inline-block';
+    };
+
+    window.rebookRide = function(clientId, pickupLocation, dropoffLocation, basePrice, notes, pricingMode, hourlyRate) {
+        cancelRideEdit();
+        showTab('rides');
+        document.getElementById('r-clientId').value = clientId;
+        document.getElementById('r-pickupLocation').value = pickupLocation;
+        document.getElementById('r-dropoffLocation').value = dropoffLocation;
+        document.getElementById('r-pricingMode').value = pricingMode || 'FLAT';
+        document.getElementById('r-basePrice').value = basePrice;
+        document.getElementById('r-hourlyRate').value = hourlyRate;
+        document.getElementById('r-notes').value = notes;
+        togglePricingFields();
+        document.getElementById('ride-fb').className = 'form-feedback ok';
+        document.getElementById('ride-fb').textContent = 'Rebooked — pick a new date/time and submit.';
+        document.getElementById('r-pickupDateTime').focus();
     };
 
     window.cancelRideEdit = function() {
