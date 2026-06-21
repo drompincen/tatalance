@@ -131,7 +131,25 @@
         .muted { color: #6b7280; }
         .empty-state { text-align: center; padding: 48px 24px; color: #6b7280; }
         .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
-        .empty-state p { font-size: 0.85rem; }
+        .empty-state p { font-size: 0.85rem; margin-bottom: 12px; }
+        .empty-state-cta {
+            margin-top: 4px; padding: 10px 18px; font-size: 0.88rem; font-weight: 600;
+            border: none; border-radius: 8px; background: #0f3460; color: #fff; cursor: pointer;
+        }
+        .empty-state-cta:hover { background: #1a4a7a; }
+        .onboarding-banner {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+            border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;
+        }
+        .onboarding-banner h3 { margin: 0 0 8px; font-size: 1.05rem; color: #1e3a5f; }
+        .onboarding-banner p { margin: 0 0 14px; font-size: 0.88rem; color: #475569; }
+        .onboarding-steps { display: flex; flex-wrap: wrap; gap: 8px; }
+        .onboarding-steps button {
+            padding: 8px 14px; font-size: 0.82rem; font-weight: 600; border-radius: 8px;
+            border: 1px solid #93c5fd; background: #fff; color: #1d4ed8; cursor: pointer;
+        }
+        .onboarding-steps button:hover { background: #dbeafe; }
+        .field-hint { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
         .refresh-ts { font-size: 0.72rem; color: #6b7280; margin-top: 12px; text-align: right; }
 
         /* ── Pagination ── */
@@ -423,6 +441,15 @@
 <div id="tab-dashboard" class="tab-pane active">
     <div class="page">
         <p style="text-align: center; padding: 10px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; margin-bottom: 10px; font-size: 0.9rem;">LOCAL WIFI TEST - ?m=1 flag. If you see this banner + header, page loaded. Content loads via API (may be limited without full DB). Tap hamburger for menu.</p>
+        <div id="dash-onboarding" class="onboarding-banner" style="display:none" role="region" aria-label="Getting started">
+            <h3>Welcome to Tatalance</h3>
+            <p>Your dashboard is empty. Follow these steps to get your chauffeur business running.</p>
+            <div class="onboarding-steps">
+                <button type="button" onclick="showTab('clients');focusClientForm()">1. Add a client</button>
+                <button type="button" onclick="showTab('drivers');focusDriverForm()">2. Add a driver</button>
+                <button type="button" onclick="showTab('rides');focusRideForm()">3. Book a ride</button>
+            </div>
+        </div>
         <div class="dash-grid" id="dash-cards">
             <div class="stat-card accent-blue"><div class="stat-label">Clients</div><div class="stat-value">...</div></div>
             <div class="stat-card accent-purple"><div class="stat-label">Drivers</div><div class="stat-value">...</div></div>
@@ -462,7 +489,8 @@
                         </div>
                         <div class="field">
                             <label>Phone <span class="req">*</span><span class="schema-type" id="type-phone">string</span></label>
-                            <input type="text" id="f-phone" placeholder="+1 555 000 0000" autocomplete="off">
+                            <input type="tel" id="f-phone" placeholder="+15551234567" autocomplete="tel" inputmode="tel" aria-describedby="e-phone phone-hint-f">
+                            <div class="field-hint" id="phone-hint-f">E.164 format — start with +, then digits only (no spaces)</div>
                             <div class="err" id="e-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
                         </div>
                         <div class="field">
@@ -515,7 +543,8 @@
                     </div>
                     <div class="field">
                         <label>Phone <span class="req">*</span></label>
-                        <input type="text" id="d-phone" placeholder="+1 555 000 0000" autocomplete="off">
+                        <input type="tel" id="d-phone" placeholder="+15551234567" autocomplete="tel" inputmode="tel" aria-describedby="de-phone phone-hint-d">
+                        <div class="field-hint" id="phone-hint-d">E.164 format — start with +, then digits only (no spaces)</div>
                         <div class="err" id="de-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
                     </div>
                     <div class="field">
@@ -839,6 +868,45 @@
     /* ── Helpers ── */
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const PHONE_E164 = /^\+[1-9]\d{9,14}$/;
+    function isPhoneE164(value) { return PHONE_E164.test((value || '').trim()); }
+    function guidedEmptyState(icon, text, ctaLabel, actionName) {
+        const cta = ctaLabel && actionName
+            ? `<button type="button" class="empty-state-cta" onclick="${actionName}()">${esc(ctaLabel)}</button>` : '';
+        return `<div class="empty-state"><div class="icon">${icon}</div><p>${esc(text)}</p>${cta}</div>`;
+    }
+    function scrollToField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+    }
+    window.focusClientForm = function() { scrollToField('f-firstName'); };
+    window.focusDriverForm = function() { scrollToField('d-firstName'); };
+    window.focusRideForm = function() {
+        showTab('rides');
+        setTimeout(() => scrollToField('r-clientId'), 80);
+    };
+    window.focusJobForm = function() {
+        showTab('jobs');
+        setTimeout(() => scrollToField('j-title'), 80);
+    };
+    window.goToRidesFromInvoiceEmpty = function() { showTab('rides'); focusRideForm(); };
+    function setFieldValidity(inputId, errId, valid) {
+        const input = document.getElementById(inputId);
+        const err = document.getElementById(errId);
+        if (input) input.classList.toggle('invalid', !valid);
+        if (err) err.classList.toggle('show', !valid);
+    }
+    function bindBlurValidation(inputId, errId, validateFn) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        el.addEventListener('blur', () => {
+            const value = el.value.trim();
+            if (!value && validateFn === isPhoneE164) return;
+            setFieldValidity(inputId, errId, validateFn(value));
+        });
+    }
 
     /* Auth check moved to the main block below; early guard removed to avoid any redirect timing or blank issues on mobile. */
 
@@ -1169,8 +1237,8 @@
 
         if (!clients.length) {
             el.innerHTML = hasSearch
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No matches</p></div>`
-                : `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
+                ? guidedEmptyState('🔍', 'No clients match your search — try a different name or phone.')
+                : guidedEmptyState('👤', 'No clients yet — add your first client to get started.', 'Add client', 'focusClientForm');
             return;
         }
         const sorted = sortedData('clients', clients);
@@ -1254,9 +1322,8 @@
             document.getElementById(`e-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
         }
-        const phoneValid = /^\+[1-9]\d{9,14}$/.test(phone);
-        document.getElementById('f-phone').classList.toggle('invalid', !phoneValid);
-        document.getElementById('e-phone').classList.toggle('show', !phoneValid);
+        const phoneValid = isPhoneE164(phone);
+        setFieldValidity('f-phone', 'e-phone', phoneValid);
         if (!phoneValid) valid = false;
         if (!valid) return;
 
@@ -1293,6 +1360,13 @@
             document.getElementById(id).classList.remove('invalid');
             document.getElementById(`e-${id.replace('f-','')}`).classList.remove('show');
         });
+    });
+    bindBlurValidation('f-firstName', 'e-firstName', v => v.length > 0);
+    bindBlurValidation('f-lastName', 'e-lastName', v => v.length > 0);
+    document.getElementById('f-phone').addEventListener('blur', () => {
+        const value = document.getElementById('f-phone').value.trim();
+        if (!value) { setFieldValidity('f-phone', 'e-phone', true); return; }
+        setFieldValidity('f-phone', 'e-phone', isPhoneE164(value));
     });
 
     /* ── Edit / Delete client ── */
@@ -1401,7 +1475,7 @@
         }
 
         if (!drivers.length) {
-            el.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>No drivers yet — add the first one!</p></div>`;
+            el.innerHTML = guidedEmptyState('🚗', 'No drivers yet — add your first driver to assign rides.', 'Add driver', 'focusDriverForm');
             return;
         }
         const sorted = sortedData('drivers', drivers);
@@ -1495,9 +1569,8 @@
             document.getElementById(`de-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
         }
-        const phoneValid = /^\+[1-9]\d{9,14}$/.test(phone);
-        document.getElementById('d-phone').classList.toggle('invalid', !phoneValid);
-        document.getElementById('de-phone').classList.toggle('show', !phoneValid);
+        const phoneValid = isPhoneE164(phone);
+        setFieldValidity('d-phone', 'de-phone', phoneValid);
         if (!phoneValid) valid = false;
 
         const rateValid = payoutRate !== '' && Number(payoutRate) >= 0;
@@ -1542,6 +1615,14 @@
             const errEl = document.getElementById(errId);
             if (errEl) errEl.classList.remove('show');
         });
+    });
+    bindBlurValidation('d-firstName', 'de-firstName', v => v.length > 0);
+    bindBlurValidation('d-lastName', 'de-lastName', v => v.length > 0);
+    bindBlurValidation('d-payoutRate', 'de-payoutRate', v => v !== '' && Number(v) >= 0);
+    document.getElementById('d-phone').addEventListener('blur', () => {
+        const value = document.getElementById('d-phone').value.trim();
+        if (!value) { setFieldValidity('d-phone', 'de-phone', true); return; }
+        setFieldValidity('d-phone', 'de-phone', isPhoneE164(value));
     });
 
     /* ── Edit / Delete driver ── */
@@ -1796,8 +1877,8 @@
         const el = document.getElementById('ride-list');
         if (!rides.length) {
             el.innerHTML = rideStatusFilter !== 'ALL'
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${rideStatusFilter.toLowerCase().replace('_',' ')} rides</p></div>`
-                : `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
+                ? guidedEmptyState('🔍', `No ${rideStatusFilter.toLowerCase().replace('_', ' ')} rides — try another filter.`)
+                : guidedEmptyState('🚘', 'No rides yet — book your first ride using the form above.', 'Book a ride', 'focusRideForm');
             return;
         }
         window.sortRides = function(field) { toggleSort('rides', field); applyRideFilter(); };
@@ -2186,8 +2267,8 @@
         if (countEl) countEl.textContent = `(${jobs.length})`;
         if (!jobs.length) {
             el.innerHTML = jobStatusFilter !== 'ALL'
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${jobStatusFilter.toLowerCase().replace('_',' ')} jobs</p></div>`
-                : `<div class="empty-state"><div class="icon">💼</div><p>No jobs yet — book the first one!</p></div>`;
+                ? guidedEmptyState('🔍', `No ${jobStatusFilter.toLowerCase().replace('_', ' ')} jobs — try another filter.`)
+                : guidedEmptyState('💼', 'No jobs yet — book your first hourly job using the form above.', 'Book a job', 'focusJobForm');
             return;
         }
         el.innerHTML = jobs.map(r => {
@@ -2464,8 +2545,8 @@
         const el = document.getElementById('invoice-list');
         if (!invoices.length) {
             el.innerHTML = invoiceStatusFilter !== 'ALL'
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${invoiceStatusFilter.toLowerCase()} invoices</p></div>`
-                : `<div class="empty-state"><div class="icon">📄</div><p>No invoices yet — complete a ride and generate one!</p></div>`;
+                ? guidedEmptyState('🔍', `No ${invoiceStatusFilter.toLowerCase()} invoices — try another filter.`)
+                : guidedEmptyState('📄', 'No invoices yet — complete a ride, then generate an invoice from the Rides tab.', 'Go to rides', 'goToRidesFromInvoiceEmpty');
             return;
         }
         window.sortInvoices = function(field) { toggleSort('invoices', field); applyInvoiceFilter(); };
@@ -3144,6 +3225,11 @@
     }
 
     function renderDashboard(s) {
+        var onboarding = document.getElementById('dash-onboarding');
+        if (onboarding) {
+            var isFresh = (s.totalClients || 0) === 0 && (s.totalRides || 0) === 0;
+            onboarding.style.display = isFresh ? 'block' : 'none';
+        }
         var cards = document.getElementById('dash-cards');
         cards.innerHTML = `
             <div class="stat-card accent-blue">
@@ -3196,7 +3282,7 @@
                 '<div class="status-bar-track"><div class="status-bar-fill" style="width:' + (count > 0 ? Math.max(pct, 8) : 0) + '%;background:' + color + '">' + count + '</div></div>' +
                 '</div>';
         }
-        statusBars.innerHTML = html || '<p class="muted">No rides yet</p>';
+        statusBars.innerHTML = html || guidedEmptyState('🚘', 'No rides yet — book one from the Rides tab.', 'Book a ride', 'focusRideForm');
 
         // Revenue summary
         var rev = document.getElementById('dash-revenue');
