@@ -2147,13 +2147,13 @@
         return {est: 4, scope: notes};
     }
 
-    function loadJobs() {
+    function loadJobs(forceRender) {
         const prof = getProfileParam();
         fetch(`/api/rides?page=0&size=100${prof}`)
             .then(r => r.json())
             .then(data => {
                 allJobsCache = data.content || [];
-                if (!isUserEditingTab('tab-jobs')) {
+                if (forceRender || !isUserEditingTab('tab-jobs')) {
                     applyJobFilter();
                 }
                 const ts = document.getElementById('job-ts');
@@ -2367,7 +2367,7 @@
                 cancelJobEdit();
                 fb.className = 'form-feedback ok';
                 fb.textContent = wasEdit ? '✓ Job updated' : '✓ Job booked ($20/hr)';
-                loadJobs();
+                loadJobs(true);
             } catch {
                 fb.className = 'form-feedback fail';
                 fb.textContent = '✗ Save failed — check server logs';

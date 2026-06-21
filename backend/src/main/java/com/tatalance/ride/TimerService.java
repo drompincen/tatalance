@@ -98,11 +98,10 @@ public class TimerService {
     public BigDecimal billableAmount(Ride ride, Instant now) {
         PricingMode mode = ride.getPricingMode() == null ? PricingMode.FLAT : ride.getPricingMode();
         long seconds = workedSeconds(ride, now);
-        long durationMins = seconds / 60;
         BigDecimal base = ride.getBasePrice() == null ? BigDecimal.ZERO : ride.getBasePrice();
         BigDecimal timeCost = BigDecimal.ZERO;
-        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && durationMins > 0) {
-            BigDecimal hours = BigDecimal.valueOf(durationMins).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
+        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && seconds > 0) {
+            BigDecimal hours = BigDecimal.valueOf(seconds).divide(BigDecimal.valueOf(3600), 4, RoundingMode.HALF_UP);
             timeCost = ride.getHourlyRate().multiply(hours).setScale(2, RoundingMode.HALF_UP);
         }
         return switch (mode) {
