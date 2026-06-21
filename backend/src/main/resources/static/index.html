@@ -402,6 +402,7 @@
         <select id="profile-switcher" onchange="switchProfile(this.value)" style="font-size:0.78rem;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;min-width:140px;">
             <option value="">All (account)</option>
         </select>
+        <button class="btn-sm" style="padding:2px 6px;font-size:0.65rem;" onclick="showProfileManager()">Manage</button>
     </div>
     <div class="search-box" style="position:relative;margin-left:12px;">
         <input type="text" id="global-search" placeholder="Search..." autocomplete="off"
@@ -801,6 +802,37 @@
     </div>
 </div>
 
+<!-- ── Profile Manager Modal (create/edit profiles for distinction e.g. driver vs hourly) ── -->
+<div class="modal-overlay" id="profile-manager-modal" onclick="if(event.target===this)closeProfileManager()">
+    <div class="modal" style="max-width:520px">
+        <h2>Manage Profiles</h2>
+        <div style="margin:8px 0">
+            <div id="profile-list" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;max-height:180px;overflow:auto"></div>
+        </div>
+        <div style="border-top:1px solid #eee;padding-top:12px;margin-top:8px">
+            <div class="field">
+                <label>Type</label>
+                <select id="pm-type" style="width:100%;padding:6px">
+                    <option value="DRIVER">DRIVER (shows Rides)</option>
+                    <option value="ENGINEER">ENGINEER / Hourly</option>
+                    <option value="HANDYMAN">HANDYMAN / Hourly</option>
+                    <option value="OTHER">OTHER / Hourly</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Name (optional display)</label>
+                <input id="pm-name" placeholder="e.g. Main Taxi or Freelance Dev" style="width:100%">
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="btn" onclick="createNewProfile()">Create New</button>
+                <button class="btn" onclick="saveProfileEdit()" id="pm-save-btn" disabled>Save Changes</button>
+                <button class="btn btn-cancel" onclick="closeProfileManager()">Close</button>
+            </div>
+            <div class="err" id="pm-err" style="display:none;margin-top:6px"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Dynamic custom table panes inserted here ── -->
 <div id="custom-tab-panes"></div>
 
@@ -995,6 +1027,7 @@
         if (name === 'dashboard') loadDashboard();
         if (name === 'activity') loadActivity();
         closeNav();
+        updateTabVisibility();
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -1898,16 +1931,126 @@
             if (!sel) return;
             sel.innerHTML = '<option value="">All (account)</option>' +
                 profilesCache.map(p => `<option value="${p.id}">${(p.name || p.type || 'Profile')}</option>`).join('');
-            if (activeProfileId) sel.value = activeProfileId;
+            sel.value = activeProfileId || '';
         } catch (e) { /* non-fatal */ }
     }
     window.switchProfile = function(pid) {
         activeProfileId = pid || '';
         localStorage.setItem('activeProfileId', activeProfileId);
+        const sel = document.getElementById('profile-switcher');
+        if (sel) sel.value = activeProfileId || '';
         // reload scoped views
         if (typeof loadRides === 'function') loadRides();
         if (typeof loadJobs === 'function') loadJobs();
+        updateTabVisibility();
     };
+
+    let editingProfileId = null;
+
+    function showProfileManager() {
+        const modal = document.getElementById('profile-manager-modal');
+        if (modal) modal.style.display = 'flex';
+        editingProfileId = null;
+        document.getElementById('pm-save-btn').disabled = true;
+        document.getElementById('pm-err').style.display = 'none';
+        loadProfileListForManager();
+    }
+
+    function closeProfileManager() {
+        const modal = document.getElementById('profile-manager-modal');
+        if (modal) modal.style.display = 'none';
+        // refresh switcher and tabs
+        loadProfiles().then(updateTabVisibility);
+    }
+
+    async function loadProfileListForManager() {
+        const container = document.getElementById('profile-list');
+        container.innerHTML = 'Loading...';
+        try {
+            const r = await fetch('/api/profiles?size=50');
+            const data = await r.json();
+            const list = data.content || data || [];
+            if (!list.length) {
+                container.innerHTML = '<div style="padding:8px;color:#666">No profiles yet. Create one below.</div>';
+                return;
+            }
+            container.innerHTML = list.map(p => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #f0f0f0;cursor:pointer" onclick="startEditProfile('${p.id}', '${p.type}', '${(p.name||'').replace(/'/g,"\\'")}')">
+                    <div>
+                        <strong>${p.name || p.type}</strong> <span style="font-size:0.75rem;color:#666">(${p.type})</span>
+                    </div>
+                    <div style="font-size:0.7rem;color:#888">edit</div>
+                </div>
+            `).join('');
+        } catch(e) {
+            container.innerHTML = 'Failed to load profiles.';
+        }
+    }
+
+    function startEditProfile(id, type, name) {
+        editingProfileId = id;
+        document.getElementById('pm-type').value = type;
+        document.getElementById('pm-name').value = name || '';
+        document.getElementById('pm-save-btn').disabled = false;
+        document.getElementById('pm-err').style.display = 'none';
+    }
+
+    async function saveProfileEdit() {
+        if (!editingProfileId) return;
+        const type = document.getElementById('pm-type').value;
+        const name = document.getElementById('pm-name').value.trim();
+        try {
+            const r = await fetch(`/api/profiles/${editingProfileId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type, name})
+            });
+            if (!r.ok) throw new Error('Update failed');
+            await loadProfileListForManager();
+            // refresh global switcher
+            await loadProfiles(); updateTabVisibility();
+            updateTabVisibility();
+            document.getElementById('pm-err').textContent = 'Saved.';
+            document.getElementById('pm-err').style.display = 'block';
+        } catch(e) {
+            document.getElementById('pm-err').textContent = e.message || 'Failed to save.';
+            document.getElementById('pm-err').style.display = 'block';
+        }
+    }
+
+    async function createNewProfile() {
+        const type = document.getElementById('pm-type').value;
+        const name = document.getElementById('pm-name').value.trim();
+        if (!type) { alert('Type required'); return; }
+        try {
+            const r = await fetch('/api/profiles', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type, name})
+            });
+            if (!r.ok) throw new Error('Create failed');
+            await loadProfileListForManager();
+            await loadProfiles(); updateTabVisibility();
+            updateTabVisibility();
+            document.getElementById('pm-name').value = '';
+            document.getElementById('pm-err').textContent = 'Profile created.';
+            document.getElementById('pm-err').style.display = 'block';
+        } catch(e) {
+            document.getElementById('pm-err').textContent = e.message || 'Failed to create.';
+            document.getElementById('pm-err').style.display = 'block';
+        }
+    }
+
+    function updateTabVisibility() {
+        const current = profilesCache.find(p => p.id === activeProfileId);
+        const isDriver = !current || current.type === 'DRIVER';
+        const ridesBtn = document.getElementById('btn-rides');
+        const ridesPane = document.getElementById('tab-rides');
+        if (ridesBtn) ridesBtn.style.display = isDriver ? '' : 'none';
+        if (!isDriver && ridesPane && ridesPane.classList.contains('active')) {
+            showTab('jobs');
+        }
+    }
 
     function loadRides() {
         const prof = getProfileParam();
@@ -1975,7 +2118,8 @@
             if (hourlyRate) body.hourlyRate = Number(hourlyRate);
             if (notes) body.notes = notes;
 
-            const url = editingRideId ? `/api/rides/${editingRideId}` : '/api/rides';
+            const profQ = (!editingRideId && activeProfileId) ? `?profileId=${encodeURIComponent(activeProfileId)}` : '';
+            const url = editingRideId ? `/api/rides/${editingRideId}` : `/api/rides${profQ}`;
             const method = editingRideId ? 'PUT' : 'POST';
             const r = await fetch(url, {
                 method,
@@ -1993,6 +2137,8 @@
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
             loadRides();
+            // force render even after submit for profile-scoped views/tests
+            setTimeout(() => { if (typeof applyRideFilter === 'function') applyRideFilter(); }, 50);
         } catch (err) {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ ' + (err.message || 'Save failed — check server logs');
@@ -2097,7 +2243,7 @@
     loadRides();
     setInterval(loadRides, 10000);
     // load profiles for switcher (business owner multi-profile)
-    loadProfiles();
+    loadProfiles().then(updateTabVisibility);
     setInterval(loadClientDropdown, 10000);
     setInterval(loadAvailableDrivers, 10000);
 

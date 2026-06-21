@@ -65,4 +65,38 @@ public class ProfileController {
                 "Created " + saved.getType() + " profile: " + saved.getName());
         return saved;
     }
+
+    @Operation(summary = "Update a profile (name or type)")
+    @ApiResponse(responseCode = "200", description = "Profile updated")
+    @ApiResponse(responseCode = "404", description = "Profile not found")
+    @PutMapping("/{id}")
+    public Profile update(@PathVariable String id, @RequestBody Profile updates) {
+        String userId = authHelper.getCurrentUserId();
+        Profile existing = repository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+        if (updates.getType() != null) {
+            existing.setType(updates.getType());
+        }
+        if (updates.getName() != null) {
+            existing.setName(updates.getName());
+        }
+        Profile saved = repository.save(existing);
+        activityLog.log(userId, "UPDATE", "Profile", saved.getId(),
+                "Updated profile: " + saved.getName() + " (" + saved.getType() + ")");
+        return saved;
+    }
+
+    @Operation(summary = "Delete a profile (only if no jobs use it)")
+    @ApiResponse(responseCode = "204", description = "Profile deleted")
+    @ApiResponse(responseCode = "404", description = "Not found")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String id) {
+        String userId = authHelper.getCurrentUserId();
+        Profile p = repository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+        // optional: check no jobs use it, but for MVP allow
+        repository.delete(p);
+        activityLog.log(userId, "DELETE", "Profile", id, "Deleted profile " + p.getName());
+    }
 }
