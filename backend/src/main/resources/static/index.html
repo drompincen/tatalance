@@ -823,6 +823,31 @@
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
+    /* Early auth guard — redirect fast on phone/desktop before painting data or doing other fetches.
+       Prevents "hanging" or flash of empty UI when not authenticated. */
+    (function earlyAuthGuard() {
+        document.documentElement.style.visibility = 'hidden';
+        fetch('/api/users/me')
+            .then(r => {
+                if (!r.ok) {
+                    window.location.href = '/login.html';
+                    return null;
+                }
+                return r.json();
+            })
+            .then(data => {
+                if (data) {
+                    // reveal when we have user; full loads and username set happen in the main block below
+                    document.documentElement.style.visibility = '';
+                }
+            })
+            .catch(() => {
+                if (!location.pathname.includes('login')) {
+                    window.location.href = '/login.html';
+                }
+            });
+    })();
+
     /* ── Sort state ── */
     const sortState = {};
     function toggleSort(table, field) {
@@ -2912,8 +2937,7 @@
         } catch { alert('Delete failed'); }
     };
 
-    loadCustomTables();
-    setInterval(loadCustomTables, 15000);
+    /* bootstrap loads moved inside successful /api/users/me to avoid partial renders or extra work on unauth (helps mobile) */
 
     /* ── DB type badge ── */
     fetch('/api/info')
@@ -2939,6 +2963,11 @@
             if (el) el.textContent = data.username;
             const linkBtn = document.getElementById('link-google-btn');
             if (linkBtn && data.googleLinked === false) linkBtn.style.display = '';
+
+            // Only load data after confirmed auth — prevents extra fetches + partial UI that can look like hang on mobile
+            loadCustomTables();
+            setInterval(loadCustomTables, 15000);
+            loadDashboard();
         })
         .catch(() => {
             // On any error (incl network/auth), go to login
@@ -3130,8 +3159,7 @@
         `;
     }
 
-    // Load dashboard on page load
-    loadDashboard();
+    /* dashboard load moved after auth success (see users/me handler) to prevent hanging/partial UI on mobile */
 
     /* ── Activity Log ── */
     function loadActivity() {
