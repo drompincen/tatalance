@@ -67,7 +67,8 @@ $env:APP_USERNAME = "admin"; $env:APP_PASSWORD = "admin"; npm run test:e2e
 | #35 M5 Register + forgot | `m5-register-forgot-mobile.spec.ts` | implemented |
 | #93 M6 Jobs (freelance) | `m6-jobs-mobile.spec.ts` | implemented (booking, live timer, complete @ $20/hr) |
 
-Shared helpers: `pages/mobile.page.ts`, `fixtures/mobile-seed.ts`.
+Shared helpers: `pages/mobile.page.ts`, `fixtures/mobile-seed.ts`
+(`useAccountWideProfileScope` clears profile filter so Jobs tab lists all account rides).
 
 ## Notes
 
