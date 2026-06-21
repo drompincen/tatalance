@@ -1,9 +1,9 @@
 ---
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
-status: completed
+status: in-progress
 created: 2026-04-27
-updated: 2026-06-10
-current_chapter: epic-7
+updated: 2026-06-21
+current_chapter: epic-11
 ---
 
 # Tatalance v1 Plan
@@ -209,6 +209,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #76 | Live stopwatch on driver queue | Epic 10 | feature | completed |
 | #77 | Duration + cost summary on completion | Epic 10 | feature | completed |
 | #78 | Invoice shows time breakdown | Epic 10 | feature | completed |
+| #93 | Freelance mode — hourly timer UI (epic) | Epic 11 | epic | in-progress |
 
 ---
 
@@ -385,6 +386,59 @@ David can add clients, book rides, and get paid — end to end in the browser.
   └──> #77 (Completion summary) — needs hourlyRate + duration to calculate cost
         └──> #78 (Invoice breakdown) — needs duration + rate stored on completed ride
 ```
+
+---
+
+# Epic 11: Freelance mode — book job, track time, invoice (issue #93)
+**Status:** in-progress
+**Outcome:** Luciano can bill Tatalance dev work hourly: book a job without starting the timer, start/pause/resume with server-side segments, see billable amount, complete the day, and generate an invoice. Chauffeur ops (`index.html`) stays unchanged for David.
+**Depends on:** Epic 10 (#75 hourly pricing on rides) — done
+**Design reference:** `docs/freelance-jobs-mockup.html`, `docs/ui-redesign-mockups.html`
+**Production UI:** `backend/src/main/resources/static/freelance.html`
+
+## User journey
+
+1. Sign in → redirected to `/freelance.html` when `businessMode=FREELANCE`
+2. Set hourly rate in sidebar (saved to profile)
+3. **Jobs** → book job (client, title, date) — timer does **not** start
+4. Press **Start timer** on the job card (Jobs tab or Dashboard “ready” list)
+5. Pause / Resume during the day (segments logged server-side)
+6. **Complete day** → invoice auto-generated → **Invoices** → Mark paid
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | `BusinessMode` + `defaultHourlyRate` on `AppUser`; `PATCH /api/users/me/settings` | completed | luciano | #93 |
+| 2 | `jobTitle`, `workSegments`, `RideStatus.PAUSED` on `Ride` model | completed | luciano | #93 |
+| 3 | `TimerService` — start, pause, resume, billable seconds/amount | completed | luciano | #93 |
+| 4 | Timer REST API: `POST …/timer/pause`, `…/resume`, `GET …/timer` | completed | luciano | #93 |
+| 5 | Freelance UI (`freelance.html`) wired to APIs | completed | luciano | #93 |
+| 6 | Login redirect by `businessMode`; link between freelance ↔ chauffeur | completed | luciano | #93 |
+| 7 | Mark paid / unpaid on invoices in freelance UI | completed | luciano | #93 |
+| 8 | Start timer discoverability (dashboard ready-jobs + auto-navigate after book) | completed | luciano | #93 |
+| 8b | Fix booking failures (past pickup time, silent API errors) | completed | luciano | #93 |
+| 9 | E2E: freelance book → start → pause → complete → invoice | completed | luciano | #93 |
+| 10 | Deploy + verify on `tatalance-luciano` EB sandbox | in-progress | luciano | #93 |
+
+## Dependencies
+
+```
+#75 (HOURLY pricing on Ride) ✅
+  └──> #93 stories 1–4 (backend timer + user settings)
+        └──> #93 stories 5–8 (freelance.html)
+              └──> #93 story 9 (Playwright E2E)
+                    └──> #93 story 10 (cloud verify)
+```
+
+## Architecture (Option B — one app, two surfaces)
+
+| Surface | URL | User | Billing |
+|---|---|---|---|
+| Freelance | `/freelance.html` | Luciano | `HOURLY` + `jobTitle` + `workSegments` |
+| Chauffeur | `/index.html` | David | FLAT / HOURLY / FLAT_PLUS_HOURLY rides |
+
+Same `Ride` collection and APIs; freelance uses deferred timer start (book ≠ start).
 
 ---
 

@@ -62,6 +62,11 @@
 **Decision:** `SecurityConfig` inspects `spring.security.oauth2.client.registration.google.client-id` via `@Value`. Only registers `.oauth2Login()` on the `SecurityFilterChain` when the property is non-blank. In `demo` mode without Google credentials, only `formLogin()` is active. Prod requires both — app fails fast if `GOOGLE_CLIENT_ID` is absent in prod.
 **Consequences:** `demo` profile works without any Google credentials. Prod is still secure — missing credentials cause startup failure, not silent fallback.
 
+## 2026-06-21 One app, two surfaces for chauffeur + freelance (Option B)
+**Context:** Luciano bills Tatalance dev work hourly (timer, pause/resume, daily invoice). David uses chauffeur ride dispatch. Need one deployable app without duplicating backend models.
+**Decision:** Single Spring Boot app with two static UIs. `businessMode` on `AppUser` (`CHAUFFEUR` | `FREELANCE`). Login redirects to `/freelance.html` or `/index.html`. Freelance reuses `Ride` with `pricingMode=HOURLY`, `jobTitle`, and `workSegments` for pause/resume audit. `TimerService` handles server-side timer state; `GET /api/rides/{id}/timer` for recovery after refresh.
+**Consequences:** Chauffeur UI unchanged. Freelance book flow does not auto-start timer — user explicitly presses Start. Two HTML surfaces to maintain until a unified redesign. Mockups in `docs/freelance-jobs-mockup.html`.
+
 ## 2026-04-30 Flapdoodle spring30x artifact for Spring Boot 3 tests
 **Context:** The legacy `de.flapdoodle.embed.mongo` artifact does not auto-configure with Spring Boot 3. `@DataMongoTest` silently fails to start an embedded MongoDB, causing all repository tests to fail with connection refused.
 **Decision:** Use `de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x` in `test` scope.

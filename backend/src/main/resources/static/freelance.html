@@ -99,6 +99,7 @@
       <div class="lbl">Your hourly rate</div>
       <div class="amt">$<span id="rateDisplay">20</span>/hr</div>
       <input type="number" id="rateInput" value="20" min="1" step="0.5" style="margin-top:8px;margin-bottom:0;font-size:14px">
+      <p style="font-size:.68rem;color:var(--muted);margin-top:6px">Change anytime — new jobs use this rate.</p>
     </div>
     <nav class="nav">
       <button class="active" data-view="dash" onclick="go('dash')">Dashboard</button>
@@ -117,7 +118,7 @@
       <div class="stats" id="dash-stats"></div>
       <div class="card" id="dash-timer-card">
         <h3>Active timer</h3>
-        <div id="dash-timer-inner" class="empty">No timer running — open Jobs and press Start.</div>
+        <div id="dash-timer-inner" class="empty">No timer running — go to <strong>Jobs</strong> and press <strong>Start timer</strong> on your booked job.</div>
       </div>
     </section>
     <section class="view" id="view-jobs">
@@ -135,7 +136,11 @@
           <input type="datetime-local" id="book-when">
           <button class="btn" id="book-btn" onclick="bookJob()">Book job</button>
         </div>
-        <div id="job-list"></div>
+        <div class="card" id="job-list-wrap">
+          <h3>Your jobs</h3>
+          <p style="font-size:.8rem;color:var(--muted);margin:-8px 0 14px">Booked jobs appear here. Press <strong>Start timer</strong> when you begin work.</p>
+          <div id="job-list"></div>
+        </div>
       </div>
     </section>
     <section class="view" id="view-clients">
@@ -169,13 +174,34 @@ function fmtDuration(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
   return h ? h + 'h ' + m + 'm' : m + 'm';
 }
+function apiErrorMessage(data, status) {
+  if (data?.errors?.length) return data.errors.map(e => e.message).join('; ');
+  return data?.message || data?.error || ('Request failed (' + status + ')');
+}
+function toPickupIso(when) {
+  let d = new Date(when);
+  const floor = new Date(Date.now() + 60000);
+  if (isNaN(d.getTime()) || d < floor) d = floor;
+  return d.toISOString();
+}
+function defaultBookWhen() {
+  const d = new Date();
+  d.setHours(d.getHours() + 1);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: 'same-origin', ...opts,
     headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
   if (r.status === 401) { window.location.href = '/login.html'; return null; }
   if (r.status === 204) return null;
   const text = await r.text();
-  return text ? JSON.parse(text) : null;
+  const data = text ? JSON.parse(text) : null;
+  if (!r.ok) {
+    toast(apiErrorMessage(data, r.status));
+    return null;
+  }
+  return data;
 }
 function unwrapPage(body) { return body && Array.isArray(body.content) ? body.content : (body || []); }
 
@@ -227,7 +253,7 @@ function badgeClass(s) {
 function timerHtml(j, isActive) {
   if (!isActive) {
     if (j.status === 'SCHEDULED' || j.status === 'ASSIGNED') {
-      return `<button class="btn btn-sm" onclick="startJob('${j.id}')">Start timer</button>`;
+      return `<button class="btn" onclick="startJob('${j.id}')">Start timer</button>`;
     }
     if (j.status === 'COMPLETED') {
       const amt = j.totalAmount || j.billableAmount;
@@ -265,7 +291,24 @@ function renderJobs() {
 function renderDashTimer() {
   const inner = document.getElementById('dash-timer-inner');
   const j = jobs.find(x => x.id === activeJobId);
-  if (!j) { inner.className = 'empty'; inner.textContent = 'No timer running — open Jobs and press Start.'; return; }
+  if (!j) {
+    const scheduled = jobs.filter(x => x.status === 'SCHEDULED' || x.status === 'ASSIGNED');
+    if (scheduled.length) {
+      inner.className = '';
+      inner.innerHTML = `<p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">${scheduled.length} job(s) ready — press <strong>Start timer</strong> below when you begin.</p>` +
+        scheduled.map(s => `<div class="job" style="margin-bottom:8px;text-align:left">
+          <div class="job-head"><div><h4 style="font-size:.9rem">${jobLabel(s)}</h4>
+          <p>${fmtMoney(s.hourlyRate || user.defaultHourlyRate || 20)}/hr</p></div>
+          <span class="badge scheduled">${s.status.replace('_',' ')}</span></div>
+          <button class="btn btn-sm" style="margin-top:10px" onclick="startJob('${s.id}')">Start timer</button>
+        </div>`).join('') +
+        `<button class="btn-outline btn-sm" style="margin-top:4px" onclick="go('jobs')">View all jobs →</button>`;
+      return;
+    }
+    inner.className = 'empty';
+    inner.innerHTML = 'No jobs yet. <button class="btn-outline btn-sm" style="margin-top:8px" onclick="go(\'jobs\')">Book a job →</button>';
+    return;
+  }
   inner.className = '';
   inner.innerHTML = `<p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">${jobLabel(j)}</p>
     <div class="timer-box" style="margin:0">
@@ -321,7 +364,8 @@ function updateClocks() {
 }
 
 async function startJob(id) {
-  await api('/api/rides/' + id + '/start', { method: 'POST', body: '{}' });
+  const started = await api('/api/rides/' + id + '/start', { method: 'POST', body: '{}' });
+  if (!started?.id) return;
   toast('Timer started');
   await loadJobs();
 }
@@ -358,7 +402,7 @@ async function bookJob() {
   const rate = parseFloat(document.getElementById('rateInput').value) || 20;
   const body = {
     clientId, jobTitle: title, notes,
-    pickupDateTime: new Date(when).toISOString(),
+    pickupDateTime: toPickupIso(when),
     pickupLocation: 'Remote', dropoffLocation: 'Remote',
     pricingMode: 'HOURLY', hourlyRate: rate
   };
@@ -366,7 +410,12 @@ async function bookJob() {
   btn.disabled = true;
   const created = await api('/api/rides', { method: 'POST', body: JSON.stringify(body) });
   btn.disabled = false;
-  if (created) { toast('Job booked — press Start when ready'); document.getElementById('book-title').value = ''; await loadJobs(); }
+  if (created?.id) {
+    toast('Job booked — press Start timer on the right');
+    document.getElementById('book-title').value = '';
+    await loadJobs();
+    go('jobs');
+  }
 }
 
 async function loadClients() {
@@ -378,14 +427,30 @@ async function loadClients() {
     `<div class="row"><strong>${c.firstName} ${c.lastName}</strong><span>${c.phone || ''}</span></div>`).join('')
     : '<div class="empty">Add a client in Chauffeur ops or via API first.</div>';
 }
+async function markPaid(invoiceId) {
+  const updated = await api('/api/invoices/' + invoiceId + '/mark-paid', { method: 'POST' });
+  if (!updated) return;
+  toast('Invoice marked ' + updated.status.toLowerCase());
+  await loadInvoices();
+  await renderDashStats();
+}
 async function loadInvoices() {
   const list = unwrapPage(await api('/api/invoices?page=0&size=50'));
   document.getElementById('invoice-list').innerHTML = list.length ? list.map(i => {
     const detail = (i.clientName || '') + (i.durationMinutes ? ' · ' + fmtDuration(i.durationMinutes*60) : '') +
       (i.hourlyRate ? ' × ' + fmtMoney(i.hourlyRate) : '');
     const st = i.status === 'PAID' ? 'done' : 'scheduled';
-    return `<div class="row"><div><strong>${i.invoiceNumber}</strong><br><span style="font-size:.8rem;color:var(--muted)">${detail}</span></div>
-      <span class="badge ${st}">${i.status} · ${fmtMoney(i.total)}</span></div>`;
+    const btnLabel = i.status === 'OUTSTANDING' ? 'Mark paid' : 'Mark unpaid';
+    const btnStyle = i.status === 'OUTSTANDING'
+      ? 'background:#f0fff4;color:#15803d;border-color:#86efac'
+      : 'background:#fff5f5;color:#b45309;border-color:#fca5a5';
+    return `<div class="row" style="gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px"><strong>${i.invoiceNumber}</strong><br>
+        <span style="font-size:.8rem;color:var(--muted)">${detail}</span></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="badge ${st}">${i.status} · ${fmtMoney(i.total)}</span>
+        <button class="btn-outline btn-sm" style="${btnStyle}" onclick="markPaid('${i.id}')">${btnLabel}</button>
+      </div></div>`;
   }).join('') : '<div class="empty">Complete a job to generate an invoice.</div>';
 }
 async function doLogout() {
@@ -394,9 +459,7 @@ async function doLogout() {
 }
 
 (async function init() {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('book-when').value = now.toISOString().slice(0, 16);
+  document.getElementById('book-when').value = defaultBookWhen();
   await loadUser();
   await loadClients();
   await loadJobs();
