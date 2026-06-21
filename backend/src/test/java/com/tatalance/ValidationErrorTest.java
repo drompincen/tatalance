@@ -1,24 +1,58 @@
 package com.tatalance;
 
+import com.tatalance.activity.ActivityLogger;
+import com.tatalance.client.ClientRepository;
+import com.tatalance.driver.DriverRepository;
+import com.tatalance.ride.RideRepository;
+import com.tatalance.user.AuthHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(controllers = {com.tatalance.client.ClientController.class, com.tatalance.driver.DriverController.class, com.tatalance.ride.RideController.class})
 class ValidationErrorTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private ClientRepository clientRepository;
+
+    @MockBean
+    private DriverRepository driverRepository;
+
+    @MockBean
+    private RideRepository rideRepository;
+
+    @MockBean
+    private AuthHelper authHelper;
+
+    @MockBean
+    private ActivityLogger activityLogger;
+
+    @MockBean
+    private com.tatalance.ride.TimerService timerService;
+
+    @MockBean
+    private com.tatalance.profile.ProfileRepository profileRepository;
+
+    @BeforeEach
+    void setUp() {
+        when(authHelper.getCurrentUserId()).thenReturn("test-user");
+    }
 
     @Test
     void should_returnStructuredErrors_when_clientValidationFails() throws Exception {
