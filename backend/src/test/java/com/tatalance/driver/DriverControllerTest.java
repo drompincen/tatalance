@@ -262,4 +262,24 @@ class DriverControllerTest {
         mockMvc.perform(delete("/api/drivers/unknown"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void should_updateAvailability_viaPatch() throws Exception {
+        var driver = sampleDriver();
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
+        when(repository.save(any(Driver.class))).thenAnswer(i -> i.getArgument(0));
+
+        mockMvc.perform(patch("/api/drivers/drv001/availability")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availability\":\"ON_TRIP\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void should_listDrivers() throws Exception {
+        when(repository.findByUserId(eq(TEST_USER_ID), any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(sampleDriver())));
+
+        mockMvc.perform(get("/api/drivers"))
+                .andExpect(status().isOk());
+    }
 }

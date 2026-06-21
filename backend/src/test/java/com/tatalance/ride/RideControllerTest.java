@@ -525,4 +525,116 @@ class RideControllerTest {
                 .andExpect(jsonPath("$.clientName").value("Ana Torres"))
                 .andExpect(jsonPath("$.hourlyRate").value(20));
     }
+
+    @Test
+    void should_createRide_withProfileId_whenProfileOwned() throws Exception {
+        when(clientRepository.findByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(Optional.of(sampleClient()));
+        when(profileRepository.findByIdAndUserId("prof-driver", TEST_USER_ID)).thenReturn(Optional.of(new com.tatalance.profile.Profile()));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides?profileId=prof-driver")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli001\",\"pickupDateTime\":\"2028-06-01T14:00:00Z\",\"pickupLocation\":\"A\",\"dropoffLocation\":\"B\",\"basePrice\":50}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void should_return400_when_createWithInvalidProfileId() throws Exception {
+        when(clientRepository.findByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(Optional.of(sampleClient()));
+        when(profileRepository.findByIdAndUserId("bad-prof", TEST_USER_ID)).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/rides?profileId=bad-prof")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli001\",\"pickupDateTime\":\"2028-06-01T14:00:00Z\",\"pickupLocation\":\"A\",\"dropoffLocation\":\"B\",\"basePrice\":50}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_listRides_scopedByProfileId() throws Exception {
+        when(profileRepository.findByIdAndUserId("prof1", TEST_USER_ID)).thenReturn(Optional.of(new com.tatalance.profile.Profile()));
+        when(rideRepository.findByUserIdAndProfileId(eq(TEST_USER_ID), eq("prof1"), any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(sampleRide())));
+
+        mockMvc.perform(get("/api/rides?profileId=prof1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void should_return400_when_updateNonScheduled() throws Exception {
+        var existing = sampleRide();
+        existing.setStatus(RideStatus.ASSIGNED);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(existing));
+        when(clientRepository.findByIdAndUserId(any(), any())).thenReturn(Optional.of(sampleClient()));
+
+        mockMvc.perform(put("/api/rides/ride001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli001\",\"pickupDateTime\":\"2028-06-01T14:00:00Z\",\"pickupLocation\":\"X\",\"dropoffLocation\":\"Y\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_createRideInPast() throws Exception {
+        when(clientRepository.findByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(Optional.of(sampleClient()));
+
+        mockMvc.perform(post("/api/rides")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli001\",\"pickupDateTime\":\"2020-01-01T00:00:00Z\",\"pickupLocation\":\"Old\",\"dropoffLocation\":\"Old2\",\"basePrice\":10}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_pause_and_resume_viaTimerEndpoints_coversPauseResumeBranches() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.SCHEDULED);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // start first to transition to IN_PROGRESS + open segment (required for pause)
+        mockMvc.perform(post("/api/rides/ride001/start"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+
+        mockMvc.perform(post("/api/rides/ride001/timer/pause"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAUSED"));
+
+        mockMvc.perform(post("/api/rides/ride001/timer/resume"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    }
+
+    @Test
+    void should_complete_whenPaused_andMarkPayout_coversPausedAndPayoutBranches() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.PAUSED);
+        ride.setBasePrice(new BigDecimal("40.00"));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+        // mark after complete
+        ride.setStatus(RideStatus.COMPLETED);
+        mockMvc.perform(post("/api/rides/ride001/mark-payout-paid"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payoutPaid").value(true));
+    }
+
+    @Test
+    void should_createJob_withoutClientId_coversClientIdIfBranch() throws Exception {
+        when(rideRepository.save(any(Job.class))).thenAnswer(inv -> {
+            Job j = inv.getArgument(0);
+            j.setId("jobNoC");
+            return j;
+        });
+
+        mockMvc.perform(post("/api/jobs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pickupDateTime\":\"2028-07-01T09:00:00Z\",\"pickupLocation\":\"SiteA\",\"dropoffLocation\":\"SiteB\",\"pricingMode\":\"HOURLY\",\"hourlyRate\":25}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value("jobNoC"));
+    }
 }
