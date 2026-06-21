@@ -49,6 +49,12 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     await page.locator('#job-form').evaluate((f: HTMLFormElement) => f.requestSubmit());
 
     await expect(page.locator('#job-fb')).toContainText('booked', { timeout: 15000 });
+    // Verify creation via API (the fb 'booked' means POST succeeded in UI handler)
+    await page.waitForTimeout(300); // allow DB visibility
+    const listData = await (await request.get('/api/rides?size=50')).json();
+    const created = (listData.content || []).find((r: any) => r.pickupLocation === 'Landing page for client' && r.clientId === clientId);
+    expect(created).toBeTruthy();
+    // DOM should show it
     await expect(page.locator('#job-list')).toContainText('Landing page for client', { timeout: 15000 });
   });
 
