@@ -8,6 +8,7 @@ import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository; // #93 Job refactor touch - collection now jobs, Ride extends Job
+import com.tatalance.ride.TimerService;
 import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
@@ -24,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, TimerService.class})
 @WithMockUser
 class InfoControllerTest {
 
@@ -62,6 +63,9 @@ class InfoControllerTest {
     ProfileRepository profileRepository;
 
     @MockBean
+    TimerService timerService;
+
+    @MockBean
     ActivityLogger activityLogger;
 
     @MockBean
@@ -71,6 +75,7 @@ class InfoControllerTest {
     void should_returnEmbedded_when_noDbTypeConfigured() throws Exception {
         mockMvc.perform(get("/api/info"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.dbType").value("embedded"));
+            .andExpect(jsonPath("$.dbType").value("embedded"))
+            .andExpect(jsonPath("$.googleOAuthEnabled").value(false));
     }
 }

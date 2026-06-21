@@ -51,6 +51,10 @@ test.describe('M5 — Login on iPhone Safari', () => {
       page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: process.env.CI ? 30_000 : 10_000 }),
       page.locator('button[type="submit"], input[type="submit"]').first().click(),
     ]);
-    await expect(page.locator('#hamburger')).toBeVisible();
+    // FREELANCE users redirect to freelance.html; CHAUFFEUR users land on index.html
+    // where the mobile tab nav is behind the hamburger.
+    const chauffeurShell = page.locator('#hamburger');
+    const freelanceShell = page.locator('.nav button', { hasText: 'Jobs' });
+    await expect(chauffeurShell.or(freelanceShell)).toBeVisible();
   });
 });

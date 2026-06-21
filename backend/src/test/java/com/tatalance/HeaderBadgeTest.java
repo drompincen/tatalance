@@ -9,6 +9,7 @@ import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.JobRepository;
 import com.tatalance.ride.RideRepository; // #93: RideRepository extends JobRepository now (jobs collection)
+import com.tatalance.ride.TimerService;
 import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
@@ -25,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, TimerService.class})
 @WithMockUser
 class HeaderBadgeTest {
 
@@ -67,6 +68,9 @@ class HeaderBadgeTest {
 
     @MockBean
     ProfileRepository profileRepository;
+
+    @MockBean
+    TimerService timerService;
 
     @Test
     void should_haveDynamicDbBadgeElement() throws Exception {

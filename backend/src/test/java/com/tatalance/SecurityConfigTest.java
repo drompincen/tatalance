@@ -8,6 +8,7 @@ import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository; // updated during Category A Job model refactor (Issue #93)
+import com.tatalance.ride.TimerService;
 import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
@@ -33,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, TimerService.class})
 class SecurityConfigTest {
 
     @Autowired
@@ -72,6 +73,9 @@ class SecurityConfigTest {
     ProfileRepository profileRepository;
 
     @MockBean
+    TimerService timerService;
+
+    @MockBean
     ActivityLogger activityLogger;
 
     @MockBean
@@ -81,6 +85,13 @@ class SecurityConfigTest {
     void should_return401_when_apiRequestUnauthenticated() throws Exception {
         mockMvc.perform(get("/api/clients"))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void should_returnOk_when_infoRequestUnauthenticated() throws Exception {
+        mockMvc.perform(get("/api/info"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.googleOAuthEnabled").value(false));
     }
 
     @Test

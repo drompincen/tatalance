@@ -34,6 +34,9 @@ public class SecurityConfig {
     @Autowired(required = false)
     private CustomOAuth2UserService customOAuth2UserService;
 
+    @Autowired(required = false)
+    private OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            UserDetailsService userDetailsService) throws Exception {
@@ -42,7 +45,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/login.html", "/logout",
                                  "/register.html", "/api/users/register",
-                                 "/forgot-password.html", "/api/users/forgot-password/**").permitAll()
+                                 "/forgot-password.html", "/api/users/forgot-password/**",
+                                 "/api/info",
+                                 "/oauth2/**", "/login/oauth2/**").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults())
@@ -61,11 +66,15 @@ public class SecurityConfig {
             .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 
         if (clientRegistrationRepository != null) {
-            http.oauth2Login(oauth2 -> oauth2
-                .loginPage("/login.html")
-                .defaultSuccessUrl("/index.html")
-                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-            );
+            http.oauth2Login(oauth2 -> {
+                oauth2.loginPage("/login.html")
+                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService));
+                if (oauth2LoginSuccessHandler != null) {
+                    oauth2.successHandler(oauth2LoginSuccessHandler);
+                } else {
+                    oauth2.defaultSuccessUrl("/index.html", true);
+                }
+            });
         }
 
         return http.build();

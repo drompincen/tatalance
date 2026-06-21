@@ -306,6 +306,7 @@
         .user-menu .username { font-size: 0.82rem; color: rgba(255,255,255,.7); font-weight: 500; }
         .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
         .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+        .nav-external-link { display: none; text-decoration: none; }
 
         /* ── Hamburger menu ── */
         .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
@@ -341,8 +342,11 @@
             nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            .user-menu { margin-left: auto; }
+            .user-menu { margin-left: auto; gap: 6px; flex-shrink: 0; }
             .user-menu .username { display: none; }
+            .user-menu .header-mobile-hide { display: none; }
+            .nav-external-link { display: block; }
+            header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             nav #custom-tab-buttons { display: contents; }
             .page { margin: 16px auto; padding: 0 12px; }
             .grid-2 { grid-template-columns: 1fr; gap: 16px; }
@@ -390,6 +394,7 @@
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
         <span id="custom-tab-buttons"></span>
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
+        <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile">Freelance</a>
         <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
     <div id="profile-switcher-wrap" style="margin-left:8px;display:flex;align-items:center;gap:6px;">
@@ -407,7 +412,8 @@
     <div class="user-menu">
         <span class="username" id="username-display"></span>
         <button class="logout-btn" id="link-google-btn" onclick="linkGoogle()" style="display:none">Link Google</button>
-        <button class="logout-btn" onclick="openChangePassword()">Password</button>
+        <a href="/freelance.html" class="logout-btn header-mobile-hide" style="text-decoration:none;line-height:1.6">Freelance</a>
+        <button class="logout-btn header-mobile-hide" onclick="openChangePassword()">Password</button>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
     </div>
 </header>
@@ -1954,9 +1960,13 @@
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
+            let pickupInstant = new Date(pickupDateTime);
+            const floor = new Date(Date.now() + 60000);
+            if (pickupInstant < floor) pickupInstant = floor;
+
             const body = {
                 clientId,
-                pickupDateTime: new Date(pickupDateTime).toISOString(),
+                pickupDateTime: pickupInstant.toISOString(),
                 pickupLocation,
                 dropoffLocation,
                 pricingMode
@@ -1969,18 +1979,23 @@
             const method = editingRideId ? 'PUT' : 'POST';
             const r = await fetch(url, {
                 method,
+                credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
-            if (!r.ok) throw new Error();
+            if (!r.ok) {
+                const err = await r.json().catch(() => ({}));
+                const msg = err.errors?.[0]?.message || err.message || err.error || 'Save failed';
+                throw new Error(msg);
+            }
             const wasEdit = !!editingRideId;
             cancelRideEdit();
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
             loadRides();
-        } catch {
+        } catch (err) {
             fb.className = 'form-feedback fail';
-            fb.textContent = '✗ Save failed — check server logs';
+            fb.textContent = '✗ ' + (err.message || 'Save failed — check server logs');
         } finally {
             btn.disabled = false;
             btn.textContent = editingRideId ? 'Update Ride' : 'Book Ride';
@@ -2070,6 +2085,15 @@
 
     loadClientDropdown();
     loadAvailableDrivers();
+    function defaultPickupDateTime() {
+        const el = document.getElementById('r-pickupDateTime');
+        if (!el || el.value) return;
+        const d = new Date();
+        d.setHours(d.getHours() + 1);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        el.value = d.toISOString().slice(0, 16);
+    }
+    defaultPickupDateTime();
     loadRides();
     setInterval(loadRides, 10000);
     // load profiles for switcher (business owner multi-profile)
@@ -2989,7 +3013,7 @@
             const el = document.getElementById('username-display');
             if (el) el.textContent = data.username;
             const linkBtn = document.getElementById('link-google-btn');
-            if (linkBtn && data.googleLinked === false) linkBtn.style.display = '';
+            if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = '';
 
             // Only load data after confirmed auth — prevents extra fetches + partial UI that can look like hang on mobile
             loadCustomTables();
@@ -3270,7 +3294,11 @@
         try {
             var res = await fetch('/api/users/link-google', { method: 'POST', headers: headers, credentials: 'same-origin' });
             var data = await res.json();
-            if (data.redirect) window.location.href = data.redirect;
+            if (res.ok && data.redirect) {
+                window.location.href = data.redirect;
+                return;
+            }
+            alert(data.message || 'Could not start Google linking. Try again.');
         } catch (err) {
             alert('Could not start Google linking. Try again.');
         }

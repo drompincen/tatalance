@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tatalance UI Redesign — Mockup Explorer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
+      --sidebar-w: 248px;
+    }
+    body { font-family: var(--font); background: #0f1117; color: #e8eaed; min-height: 100dvh; }
+
+    /* ── Mockup chrome (outside the app preview) ── */
+    .chrome {
+      position: sticky; top: 0; z-index: 1000;
+      background: #1a1d27; border-bottom: 1px solid #2a2f3d;
+      padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    }
+    .chrome h1 { font-size: .95rem; font-weight: 700; margin-right: auto; }
+    .chrome label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #8b93a7; }
+    .chrome select, .chrome button {
+      background: #252a36; border: 1px solid #3a4155; color: #e8eaed;
+      border-radius: 8px; padding: 8px 12px; font-size: .82rem; cursor: pointer;
+    }
+    .chrome button.active { background: #3b82f6; border-color: #3b82f6; }
+    .chrome .refs { font-size: .72rem; color: #6b7280; max-width: 420px; line-height: 1.4; }
+    .screen-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── Theme tokens (applied to .preview) ── */
+    .preview {
+      --bg: #f4f6f9; --surface: #fff; --text: #1e293b; --muted: #64748b;
+      --border: #e2e8f0; --primary: #2563eb; --primary-soft: #eff6ff;
+      --accent: #f59e0b; --success: #10b981; --danger: #ef4444; --sidebar-bg: #0f2744;
+      --sidebar-text: rgba(255,255,255,.85); --sidebar-active: rgba(255,255,255,.14);
+      max-width: 1280px; margin: 24px auto; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0,0,0,.35); min-height: 720px;
+      background: var(--bg); color: var(--text); display: flex;
+    }
+    .preview[data-theme="luxury"] {
+      --bg: #0c0c0e; --surface: #16161a; --text: #f4f4f5; --muted: #a1a1aa;
+      --border: #27272a; --primary: #d4a853; --primary-soft: rgba(212,168,83,.12);
+      --accent: #d4a853; --sidebar-bg: #09090b; --sidebar-active: rgba(212,168,83,.15);
+    }
+    .preview[data-theme="freelance"] {
+      --bg: #fafafa; --surface: #fff; --text: #18181b; --muted: #71717a;
+      --border: #e4e4e7; --primary: #7c3aed; --primary-soft: #f5f3ff;
+      --accent: #7c3aed; --sidebar-bg: #fafafa; --sidebar-text: #3f3f46;
+      --sidebar-active: #f4f4f5; --success: #22c55e;
+    }
+    .preview[data-theme="freelance"] .sidebar { border-right: 1px solid var(--border); color: var(--text); }
+    .preview[data-theme="freelance"] .sidebar .logo { color: var(--text); }
+    .preview[data-theme="freelance"] .nav-item { color: var(--muted); }
+    .preview[data-theme="freelance"] .nav-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+
+    .sidebar {
+      width: var(--sidebar-w); background: var(--sidebar-bg); color: var(--sidebar-text);
+      padding: 20px 0; flex-shrink: 0; display: flex; flex-direction: column;
+    }
+    .logo { padding: 0 20px 20px; font-size: 1.15rem; font-weight: 800; letter-spacing: -.03em; color: #fff; }
+    .logo span { display: block; font-size: .68rem; font-weight: 500; opacity: .55; margin-top: 4px; letter-spacing: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 20px; margin: 2px 10px;
+      border-radius: var(--radius-sm); font-size: .86rem; cursor: pointer; border: none;
+      background: transparent; color: inherit; width: calc(100% - 20px); text-align: left;
+    }
+    .nav-item:hover { background: var(--sidebar-active); }
+    .nav-item.active { background: var(--sidebar-active); font-weight: 600; }
+    .nav-item .ico { width: 18px; opacity: .7; }
+
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 16px;
+    }
+    .topbar h2 { font-size: 1.1rem; font-weight: 700; }
+    .search {
+      margin-left: auto; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border);
+      background: var(--bg); font-size: .82rem; width: 200px; color: var(--muted);
+    }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff;
+      display: grid; place-items: center; font-size: .75rem; font-weight: 700; }
+
+    .content { padding: 24px; flex: 1; overflow: auto; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; box-shadow: var(--shadow);
+    }
+    .kpi .label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    .kpi .value { font-size: 1.75rem; font-weight: 800; margin: 6px 0 2px; letter-spacing: -.02em; }
+    .kpi .sub { font-size: .78rem; color: var(--muted); }
+    .kpi.accent { border-left: 4px solid var(--primary); }
+
+    .grid-2 { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--shadow);
+    }
+    .card-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 16px; }
+
+    .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .status-label { width: 90px; font-size: .78rem; text-align: right; color: var(--muted); font-weight: 600; }
+    .bar-track { flex: 1; height: 8px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; }
+
+    .trip-list { display: flex; flex-direction: column; gap: 10px; }
+    .trip {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 14px 16px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm); align-items: center;
+    }
+    .trip:hover { border-color: var(--primary); background: var(--primary-soft); }
+    .trip .route { font-weight: 600; font-size: .9rem; }
+    .trip .meta { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+    .pill {
+      font-size: .68rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .pill.scheduled { background: #dbeafe; color: #1d4ed8; }
+    .pill.assigned { background: #ede9fe; color: #6d28d9; }
+    .pill.progress { background: #fef3c7; color: #b45309; }
+    .pill.done { background: #d1fae5; color: #047857; }
+
+    .btn {
+      padding: 8px 16px; border-radius: var(--radius-sm); border: none; font-size: .82rem;
+      font-weight: 600; cursor: pointer; background: var(--primary); color: #fff;
+    }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th { text-align: left; padding: 10px 12px; font-size: .68rem; text-transform: uppercase;
+      letter-spacing: .05em; color: var(--muted); border-bottom: 2px solid var(--border); }
+    td { padding: 12px; border-bottom: 1px solid var(--border); }
+    tr:hover td { background: var(--primary-soft); }
+
+    .mobile-frame {
+      max-width: 390px; margin: 0 auto; border: 8px solid #1a1d27; border-radius: 32px;
+      overflow: hidden; background: var(--surface); min-height: 640px;
+    }
+    .mobile-header { background: var(--sidebar-bg); color: #fff; padding: 16px; }
+    .mobile-header h3 { font-size: 1rem; }
+    .mobile-header p { font-size: .78rem; opacity: .7; }
+    .ride-card-m {
+      margin: 12px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .timer {
+      font-size: 2.2rem; font-weight: 800; font-variant-numeric: tabular-nums;
+      letter-spacing: -.04em; color: var(--primary); text-align: center; padding: 20px 0;
+    }
+    .timer-actions { display: flex; gap: 8px; justify-content: center; }
+
+    @media (max-width: 900px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .preview { margin: 12px; border-radius: 12px; flex-direction: column; }
+      .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px; }
+      .nav-item { white-space: nowrap; width: auto; margin: 0 4px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="chrome">
+  <h1>Tatalance — UI Redesign Mockups</h1>
+  <div>
+    <label>Design direction</label><br>
+    <select id="themeSelect" onchange="setTheme(this.value)">
+      <option value="fleet">Fleet Ops — DLX / Veloxa / Dotrack (Behance)</option>
+      <option value="luxury">Luxury Chauffeur — dark + gold premium</option>
+      <option value="freelance">Freelance Pro — Clockify / Toggl minimal</option>
+    </select>
+  </div>
+  <div class="screen-btns" id="screenBtns"></div>
+  <p class="refs" id="refs"></p>
+</div>
+
+<div class="preview" id="preview" data-theme="fleet">
+  <aside class="sidebar">
+    <div class="logo">Tatalance<span>Chauffeur &amp; operations</span></div>
+    <button class="nav-item active" data-screen="dashboard"><span class="ico">◫</span> Dashboard</button>
+    <button class="nav-item" data-screen="rides"><span class="ico">◎</span> Rides</button>
+    <button class="nav-item" data-screen="clients"><span class="ico">◇</span> Clients</button>
+    <button class="nav-item" data-screen="drivers"><span class="ico">▣</span> Drivers</button>
+    <button class="nav-item" data-screen="invoices"><span class="ico">▤</span> Invoices</button>
+    <button class="nav-item" data-screen="mobile"><span class="ico">▢</span> Driver mobile</button>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <h2 id="screenTitle">Dashboard</h2>
+      <input class="search" placeholder="Search clients, rides…" readonly>
+      <span style="font-size:.82rem;color:var(--muted)">David</span>
+      <div class="avatar">D</div>
+    </header>
+    <div class="content">
+
+      <section class="screen active" id="screen-dashboard">
+        <div class="kpi-row">
+          <div class="kpi accent"><div class="label">Rides today</div><div class="value">4</div><div class="sub">+2 vs yesterday</div></div>
+          <div class="kpi"><div class="label">Revenue (month)</div><div class="value">$12.4k</div><div class="sub">8 invoices paid</div></div>
+          <div class="kpi"><div class="label">Outstanding</div><div class="value">$1,840</div><div class="sub">3 invoices</div></div>
+          <div class="kpi"><div class="label">Payouts owed</div><div class="value">$620</div><div class="sub">2 drivers</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Rides by status</div>
+            <div class="status-row"><span class="status-label">Scheduled</span><div class="bar-track"><div class="bar-fill" style="width:35%;background:#3b82f6"></div></div><span style="font-size:.75rem;font-weight:700">7</span></div>
+            <div class="status-row"><span class="status-label">Assigned</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:#8b5cf6"></div></div><span style="font-size:.75rem;font-weight:700">4</span></div>
+            <div class="status-row"><span class="status-label">In progress</span><div class="bar-track"><div class="bar-fill" style="width:10%;background:#f59e0b"></div></div><span style="font-size:.75rem;font-weight:700">2</span></div>
+            <div class="status-row"><span class="status-label">Completed</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:#10b981"></div></div><span style="font-size:.75rem;font-weight:700">48</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Today's schedule</div>
+            <div class="trip-list">
+              <div class="trip">
+                <div><div class="route">MIA → South Beach</div><div class="meta">Sarah Chen · 2:30 PM · Marcus Reid</div></div>
+                <span class="pill assigned">Assigned</span>
+              </div>
+              <div class="trip">
+                <div><div class="route">Brickell → FLL</div><div class="meta">James Ortiz · 5:00 PM · Unassigned</div></div>
+                <span class="pill scheduled">Scheduled</span>
+              </div>
+              <div class="trip">
+                <div><div class="route">Coral Gables → Wynwood</div><div class="meta">VIP · 7:15 PM · In progress</div></div>
+                <span class="pill progress">Live</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-rides">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn">+ Book ride</button>
+          <button class="btn btn-ghost">All</button>
+          <button class="btn btn-ghost">Scheduled</button>
+          <button class="btn btn-ghost">Assigned</button>
+          <button class="btn btn-ghost">Completed</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table>
+            <thead><tr><th>Client</th><th>Route</th><th>Pickup</th><th>Driver</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><strong>Sarah Chen</strong></td><td>MIA → South Beach</td><td>Today 2:30 PM</td><td>Marcus Reid</td><td><span class="pill assigned">Assigned</span></td><td><button class="btn btn-ghost" style="padding:4px 10px;font-size:.75rem">Complete</button></td></tr>
+              <tr><td><strong>James Ortiz</strong></td><td>Brickell → FLL</td><td>Today 5:00 PM</td><td>—</td><td><span class="pill scheduled">Scheduled</span></td><td><button class="btn" style="padding:4px 10px;font-size:.75rem">Assign</button></td></tr>
+              <tr><td><strong>VIP Guest</strong></td><td>Coral Gables → Wynwood</td><td>Today 7:15 PM</td><td>Elena Voss</td><td><span class="pill progress">In progress</span></td><td><button class="btn btn-ghost" style="padding:4px 10px;font-size:.75rem">Track</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-clients">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Add client</div>
+            <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">Split name, E.164 phone, optional email &amp; VIP notes.</p>
+            <button class="btn">Open form →</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Client list</div>
+            <table>
+              <thead><tr><th>Name</th><th>Phone</th><th>Rides</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>Sarah Chen <span class="pill" style="background:#fef3c7;color:#b45309;font-size:.6rem">VIP</span></td><td>+1 305 555 0142</td><td>12</td><td><button class="btn btn-ghost" style="padding:4px 8px;font-size:.72rem">View</button></td></tr>
+                <tr><td>James Ortiz</td><td>+1 786 555 0198</td><td>3</td><td><button class="btn btn-ghost" style="padding:4px 8px;font-size:.72rem">View</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-drivers">
+        <div class="card">
+          <div class="card-title">Driver roster</div>
+          <table>
+            <thead><tr><th>Driver</th><th>Vehicle</th><th>Status</th><th>Payout</th><th>Unpaid</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Marcus Reid</strong></td><td>2024 Mercedes S</td><td><span class="pill progress">On trip</span></td><td>70%</td><td style="color:var(--danger);font-weight:700">$340</td></tr>
+              <tr><td><strong>Elena Voss</strong></td><td>2023 BMW 7</td><td><span class="pill assigned">Available</span></td><td>$50 flat</td><td style="color:var(--danger);font-weight:700">$280</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:12px;font-size:.78rem;color:var(--muted)">Inspired by <em>Modern Driver Settlement Dashboard</em> (Behance) — payout column + bulk pay (#92).</p>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-invoices">
+        <div class="card">
+          <div class="card-title">Invoices</div>
+          <table>
+            <thead><tr><th>Invoice</th><th>Client</th><th>Total</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>INV-2026-014</td><td>Sarah Chen</td><td>$284.40</td><td><span class="pill done">Paid</span></td><td></td></tr>
+              <tr><td>INV-2026-015</td><td>James Ortiz</td><td>$156.00</td><td><span class="pill scheduled" style="background:#fee2e2;color:#b91c1c">Outstanding</span></td><td><button class="btn" style="padding:4px 10px;font-size:.75rem">Mark paid</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-mobile">
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;text-align:center">Mobile driver queue — iPhone Safari (M3/M4). Ref: LogiTrack delivery app UI (Behance).</p>
+        <div class="mobile-frame">
+          <div class="mobile-header">
+            <h3>Marcus Reid — My Queue</h3>
+            <p>Today · 2 rides</p>
+          </div>
+          <div class="ride-card-m">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <div><strong>Sarah Chen</strong><div class="meta" style="margin-top:4px">2:30 PM · MIA → South Beach</div></div>
+              <span class="pill assigned">Assigned</span>
+            </div>
+            <div class="timer" id="mockTimer">01:24:08</div>
+            <div class="timer-actions">
+              <button class="btn" onclick="toggleTimer()">Pause</button>
+              <button class="btn btn-ghost">Complete</button>
+            </div>
+          </div>
+          <div class="ride-card-m" style="opacity:.6">
+            <strong>James Ortiz</strong>
+            <div class="meta" style="margin-top:4px">5:00 PM · Brickell → FLL</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const refs = {
+    fleet: 'Inspired by Behance: DLX Logistics Fleet SaaS, Veloxa Smart Logistics, Dotrack Fleet Platform — sidebar nav, KPI cards, status bars, trip timeline.',
+    luxury: 'Premium chauffeur aesthetic — dark surfaces, gold accents, high-contrast typography. Common in black-car / limousine operator branding.',
+    freelance: 'Inspired by Clockify / Toggl — light minimal UI, purple accent, focus on time + rate. See also docs/freelance-jobs-mockup.html for full jobs flow.'
+  };
+  const titles = { dashboard:'Dashboard', rides:'Rides', clients:'Clients', drivers:'Drivers', invoices:'Invoices', mobile:'Driver queue (mobile)' };
+
+  function setTheme(t) {
+    document.getElementById('preview').dataset.theme = t;
+    document.getElementById('refs').textContent = refs[t];
+  }
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    document.getElementById('screenTitle').textContent = titles[id];
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.screen === id));
+    document.querySelectorAll('#screenBtns button').forEach((b,i) => {
+      const screens = Object.keys(titles);
+      b.classList.toggle('active', screens[i] === id);
+    });
+  }
+  document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => showScreen(n.dataset.screen)));
+  const screens = Object.keys(titles);
+  document.getElementById('screenBtns').innerHTML = screens.map(s =>
+    `<button onclick="showScreen('${s}')">${titles[s]}</button>`).join('');
+  setTheme('fleet');
+
+  let timerOn = true, secs = 5048;
+  function toggleTimer() {
+    timerOn = !timerOn;
+    event.target.textContent = timerOn ? 'Pause' : 'Resume';
+  }
+  setInterval(() => {
+    if (!timerOn) return;
+    secs++;
+    const h = String(Math.floor(secs/3600)).padStart(2,'0');
+    const m = String(Math.floor((secs%3600)/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    const el = document.getElementById('mockTimer');
+    if (el) el.textContent = h+':'+m+':'+s;
+  }, 1000);
+</script>
+</body>
+</html>

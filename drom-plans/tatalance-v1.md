@@ -1,9 +1,9 @@
 ---
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
-status: completed
+status: in-progress
 created: 2026-04-27
-updated: 2026-06-10
-current_chapter: epic-7
+updated: 2026-06-21
+current_chapter: epic-13
 ---
 
 # Tatalance v1 Plan
@@ -209,6 +209,20 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #76 | Live stopwatch on driver queue | Epic 10 | feature | completed |
 | #77 | Duration + cost summary on completion | Epic 10 | feature | completed |
 | #78 | Invoice shows time breakdown | Epic 10 | feature | completed |
+| #93 | Freelance mode — hourly timer UI (epic) | Epic 11 | epic | completed |
+| #96 | Map-based location picker (epic) | Epic 12 | epic | pending |
+| #97 | Google Maps Platform API key + EB env | Epic 12 | infra | pending |
+| #98 | LocationPicker modal (search + pin) | Epic 12 | feature | pending |
+| #99 | Wire picker into book/edit ride form | Epic 12 | feature | pending |
+| #100 | Store lat/lng on Ride for precise links | Epic 12 | enhancement | pending |
+| #101 | E2E: book ride using LocationPicker | Epic 12 | qa | pending |
+| #102 | Spanish UI for Tata — EN/ES toggle (epic) | Epic 13 | epic | pending |
+| #103 | i18n foundation — toggle + shared module | Epic 13 | feature | pending |
+| #104 | Translate chauffeur UI (`index.html`) | Epic 13 | feature | pending |
+| #108 | Translate ? help overlay to Spanish | Epic 13 | feature | pending |
+| #105 | Translate login/register/forgot-password | Epic 13 | feature | pending |
+| #106 | Spanish API validation messages | Epic 13 | enhancement | pending |
+| #107 | E2E: language toggle smoke | Epic 13 | qa | pending |
 
 ---
 
@@ -388,6 +402,153 @@ David can add clients, book rides, and get paid — end to end in the browser.
 
 ---
 
+# Epic 11: Freelance mode — book job, track time, invoice (issue #93)
+**Status:** completed
+**Outcome:** Luciano can bill Tatalance dev work hourly: book a job without starting the timer, start/pause/resume with server-side segments, see billable amount, complete the day, and generate an invoice. Chauffeur ops (`index.html`) stays unchanged for David.
+**Depends on:** Epic 10 (#75 hourly pricing on rides) — done
+**Design reference:** `docs/freelance-jobs-mockup.html`, `docs/ui-redesign-mockups.html`
+**Production UI:** `backend/src/main/resources/static/freelance.html`
+
+## User journey
+
+1. Sign in → redirected to `/freelance.html` when `businessMode=FREELANCE`
+2. Set hourly rate in sidebar (saved to profile)
+3. **Jobs** → book job (client, title, date) — timer does **not** start
+4. Press **Start timer** on the job card (Jobs tab or Dashboard “ready” list)
+5. Pause / Resume during the day (segments logged server-side)
+6. **Complete day** → invoice auto-generated → **Invoices** → Mark paid
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | `BusinessMode` + `defaultHourlyRate` on `AppUser`; `PATCH /api/users/me/settings` | completed | luciano | #93 |
+| 2 | `jobTitle`, `workSegments`, `RideStatus.PAUSED` on `Ride` model | completed | luciano | #93 |
+| 3 | `TimerService` — start, pause, resume, billable seconds/amount | completed | luciano | #93 |
+| 4 | Timer REST API: `POST …/timer/pause`, `…/resume`, `GET …/timer` | completed | luciano | #93 |
+| 5 | Freelance UI (`freelance.html`) wired to APIs | completed | luciano | #93 |
+| 6 | Login redirect by `businessMode`; link between freelance ↔ chauffeur | completed | luciano | #93 |
+| 7 | Mark paid / unpaid on invoices in freelance UI | completed | luciano | #93 |
+| 8 | Start timer discoverability (dashboard ready-jobs + auto-navigate after book) | completed | luciano | #93 |
+| 8b | Fix booking failures (past pickup time, silent API errors) | completed | luciano | #93 |
+| 9 | E2E: freelance book → start → pause → complete → invoice | completed | luciano | #93 |
+| 10 | Deploy + verify on `tatalance-luciano` EB sandbox | completed | luciano | #93 |
+
+## Dependencies
+
+```
+#75 (HOURLY pricing on Ride) ✅
+  └──> #93 stories 1–4 (backend timer + user settings)
+        └──> #93 stories 5–8 (freelance.html)
+              └──> #93 story 9 (Playwright E2E)
+                    └──> #93 story 10 (cloud verify)
+```
+
+## Architecture (Option B — one app, two surfaces)
+
+| Surface | URL | User | Billing |
+|---|---|---|---|
+| Freelance | `/freelance.html` | Luciano | `HOURLY` + `jobTitle` + `workSegments` |
+| Chauffeur | `/index.html` | David | FLAT / HOURLY / FLAT_PLUS_HOURLY rides |
+
+Same `Ride` collection and APIs; freelance uses deferred timer start (book ≠ start).
+
+---
+
+# Epic 12: Map-based location picker (issue #96)
+**Status:** pending
+**Outcome:** David picks pickup and dropoff on an embedded Google Map (search or drop a pin) instead of typing addresses. The ride table shows simple location text; clicking it opens Google Maps for navigation (extends Epic 9 #73).
+**Depends on:** Epic 9 #73 (clickable Maps links) — done; Epic 1 #12 (Create Ride form) — done
+**Blocked by:** #97 (Google Maps API key in EB — drom)
+
+## User journey
+
+1. Book/edit ride → tap **Pickup** or **Dropoff**
+2. Location picker modal opens (embedded map + search)
+3. Search or tap map to place pin → reverse-geocode to address text
+4. Confirm → text fills form; saved to `pickupLocation` / `dropoffLocation`
+5. Rides table shows text; click → Google Maps (existing `mapsLink`)
+
+## Design note
+
+Opening external `google.com/maps` in another tab cannot return the picked pin to the app. The picker must be **in-app** (Maps JavaScript API + Places).
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Google Maps Platform API key + EB env config | pending | drom | #97 |
+| 2 | `LocationPicker` modal — search + pin drop → address | pending | luciano | #98 |
+| 3 | Wire picker into chauffeur book/edit form (`index.html`) | pending | luciano | #99 |
+| 4 | Store `pickupLat/Lng`, `dropoffLat/Lng` on `Ride` (optional) | pending | luciano | #100 |
+| 5 | E2E: book ride using LocationPicker | pending | luciano | #101 |
+
+## Dependencies
+
+```
+#97 (API key + EB env) — drom, blocks frontend work
+  └──> #98 (LocationPicker component)
+        └──> #99 (wire into book/edit form)
+              └──> #101 (E2E)
+#100 (lat/lng) — optional follow-up after #99
+```
+
+## Out of scope
+
+- Freelance `freelance.html` (keeps `Remote` default for now)
+- GPS capture on driver Start/Complete
+- In-app map view when clicking table links (keep external Maps)
+
+---
+
+# Epic 13: Spanish UI for Tata — EN/ES toggle (issue #102)
+**Status:** pending
+**Outcome:** Tata and other Spanish-speaking users use Tatalance in Spanish: tabs, forms, buttons, the **? help guide**, and auth pages — with an EN/ES toggle that remembers their choice.
+**Depends on:** Epic 3 #41 (Help page) — done; UI stable enough to port i18n from mockup
+**Reference:** `docs/js/i18n.js`, `docs/index.html` (redesign mockup with working EN/ES toggle)
+
+## Persona
+
+**Tata** — chauffeur-ops user who prefers Spanish. Should not need to decode English labels to book rides or read the ? guide.
+
+## User journey
+
+1. Open Tatalance → tap **ES** in header (or auto-detect Spanish browser)
+2. Tabs, forms, and buttons show Spanish (Clientes, Viajes, Guardar, etc.)
+3. Tap **?** → help panels in plain Spanish (how to add clients, book rides, invoice)
+4. Toggle **EN** anytime; choice saved in `localStorage`
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | i18n foundation — `i18n.js`, `data-i18n`, EN/ES toggle, `localStorage` | pending | luciano | #103 |
+| 2 | Translate chauffeur UI (`index.html`) | pending | luciano | #104 |
+| 3 | Translate ? help overlay (6 panels) | pending | luciano | #108 |
+| 4 | Translate login / register / forgot-password | pending | luciano | #105 |
+| 5 | Spanish API validation messages | pending | luciano | #106 |
+| 6 | E2E: language toggle smoke | pending | luciano | #107 |
+
+## Dependencies
+
+```
+#103 (i18n foundation)
+  ├──> #104 (index.html UI)
+  ├──> #108 (help overlay)
+  ├──> #105 (auth pages)
+  └──> #107 (E2E) — after #104 + #108
+#106 (API messages) — optional after #104
+```
+
+## Out of scope (v1)
+
+- `freelance.html` translation
+- User-entered data (client names, notes)
+- PDF invoices in Spanish
+- Languages beyond EN/ES
+
+---
+
 # What's NOT in v1 (nice-to-haves for later)
 
 | Feature | Why deferred |
@@ -400,6 +561,6 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | Driver payouts | Not needed for core book-to-pay loop |
 | VIP preferences | Nice-to-have fields for later |
 | Reports/analytics | Needs data volume |
-| i18n (EN/ES) | Port when UI is stable |
+| i18n beyond EN/ES | Epic 13 covers EN/ES for Tata; other languages later |
 | React/Vite | Plain HTML/JS works for MVP scope |
 | In-app payment processing | David collects payment directly from clients — app is for management, not transactions |
