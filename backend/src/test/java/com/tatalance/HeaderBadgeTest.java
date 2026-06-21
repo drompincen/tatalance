@@ -7,7 +7,9 @@ import com.tatalance.customtable.CustomTableRepository;
 import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
-import com.tatalance.ride.RideRepository;
+import com.tatalance.ride.JobRepository;
+import com.tatalance.ride.RideRepository; // #93: RideRepository extends JobRepository now (jobs collection)
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -62,6 +64,9 @@ class HeaderBadgeTest {
 
     @MockBean
     ActivityLogRepository activityLogRepository;
+
+    @MockBean
+    ProfileRepository profileRepository;
 
     @Test
     void should_haveDynamicDbBadgeElement() throws Exception {

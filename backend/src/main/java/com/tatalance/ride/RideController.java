@@ -6,6 +6,7 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
 import com.tatalance.driver.Driver;
 import com.tatalance.driver.DriverRepository;
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,7 +27,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-@Tag(name = "Rides", description = "Ride booking and management")
+@Tag(name = "Rides / Jobs", description = "Ride and unified Job (service/freelance) booking and management. Category A refactor #93: base Job + Ride extends, collection=jobs")
 @RestController
 @RequestMapping("/api")
 public class RideController {
@@ -36,26 +37,33 @@ public class RideController {
     private final DriverRepository driverRepository;
     private final AuthHelper authHelper;
     private final ActivityLogger activityLog;
+    private final ProfileRepository profileRepository;
 
     public RideController(RideRepository rideRepository, ClientRepository clientRepository,
                           DriverRepository driverRepository, AuthHelper authHelper,
-                          ActivityLogger activityLog) {
+                          ActivityLogger activityLog, ProfileRepository profileRepository) {
         this.rideRepository = rideRepository;
         this.clientRepository = clientRepository;
         this.driverRepository = driverRepository;
         this.authHelper = authHelper;
         this.activityLog = activityLog;
+        this.profileRepository = profileRepository;
     }
 
     @Operation(summary = "Create a ride")
     @ApiResponse(responseCode = "201", description = "Ride created")
     @PostMapping("/rides")
     @ResponseStatus(HttpStatus.CREATED)
-    public Ride create(@Valid @RequestBody Ride ride) {
+    public Ride create(@Valid @RequestBody Ride ride, @RequestParam(required = false) String profileId) {
         if (ride.getPickupDateTime() != null && ride.getPickupDateTime().isBefore(Instant.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pickup date/time cannot be in the past");
         }
         String userId = authHelper.getCurrentUserId();
+        if (profileId != null && !profileId.isBlank()) {
+            profileRepository.findByIdAndUserId(profileId, userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile not found or does not belong to user"));
+            ride.setProfileId(profileId);
+        }
         Client client = clientRepository.findByIdAndUserId(ride.getClientId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
         ride.setUserId(userId);
@@ -65,15 +73,54 @@ public class RideController {
         ride.setCreatedAt(Instant.now());
         Ride saved = rideRepository.save(ride);
         activityLog.log(userId, "CREATE", "Ride", saved.getId(),
-                "Booked ride for " + saved.getClientName());
+                "Booked ride for " + saved.getClientName() + (profileId != null ? " under profile " + profileId : ""));
+        return saved;
+    }
+
+    @Operation(summary = "Create a service/freelance Job (base Job, for developer jobs etc, Issue #93). Link to profile for multi-profile support.")
+    @ApiResponse(responseCode = "201", description = "Job created")
+    @PostMapping("/jobs")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Job createJob(@RequestBody Job job, @RequestParam(required = false) String profileId) {
+        // For base Job (SERVICE) use case. No destination validation. scheduledTime optional for MVP.
+        String userId = authHelper.getCurrentUserId();
+        if (job.getClientId() != null) {
+            Client client = clientRepository.findByIdAndUserId(job.getClientId(), userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
+            job.setClientName(client.getFirstName() + " " + client.getLastName());
+        }
+        job.setUserId(userId);
+        if (profileId != null && !profileId.isBlank()) {
+            profileRepository.findByIdAndUserId(profileId, userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile not found or does not belong to user"));
+            job.setProfileId(profileId);
+        }
+        if (job.getType() == null || job.getType().isBlank()) {
+            job.setType("SERVICE");
+        }
+        job.setStatus(RideStatus.SCHEDULED);
+        job.addStatusEvent(RideStatus.SCHEDULED);
+        job.setCreatedAt(Instant.now());
+        // Note: save via rideRepository (which extends JobRepository) works for base Job too
+        Job saved = rideRepository.save(job);
+        activityLog.log(userId, "CREATE", "Job", saved.getId(),
+                "Booked job for " + saved.getClientName() + (profileId != null ? " under profile " + profileId : ""));
         return saved;
     }
 
     @Operation(summary = "List all rides")
     @ApiResponse(responseCode = "200", description = "Ride list")
     @GetMapping("/rides")
-    public Page<Ride> list(@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return rideRepository.findByUserId(authHelper.getCurrentUserId(), pageable);
+    public Page<Ride> list(@RequestParam(required = false) String profileId,
+                           @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        String userId = authHelper.getCurrentUserId();
+        if (profileId != null && !profileId.isBlank()) {
+            // validate ownership
+            profileRepository.findByIdAndUserId(profileId, userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile not found or does not belong to user"));
+            return rideRepository.findByUserIdAndProfileId(userId, profileId, pageable);
+        }
+        return rideRepository.findByUserId(userId, pageable);
     }
 
     @Operation(summary = "Get ride by id")
@@ -206,7 +253,8 @@ public class RideController {
     public Ride start(@PathVariable String id) {
         Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
-        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
+        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED
+                || ride.getStatus() == RideStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Cannot start a ride in status " + ride.getStatus());
         }
@@ -243,8 +291,12 @@ public class RideController {
             durationMins = Duration.between(ride.getActualStart(), ride.getActualEnd()).toMinutes();
             ride.setDurationMinutes(durationMins);
         }
-        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && durationMins > 0) {
-            BigDecimal hours = BigDecimal.valueOf(durationMins).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
+        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null) {
+            // Use precise fractional hours (supports sub-minute for hourly jobs / tests)
+            long millis = (ride.getActualStart() != null)
+                ? Duration.between(ride.getActualStart(), ride.getActualEnd()).toMillis()
+                : 0;
+            BigDecimal hours = BigDecimal.valueOf(millis).divide(BigDecimal.valueOf(3600000), 6, RoundingMode.HALF_UP);
             timeCost = ride.getHourlyRate().multiply(hours).setScale(2, RoundingMode.HALF_UP);
         }
 

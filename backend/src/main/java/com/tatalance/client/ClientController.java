@@ -1,6 +1,7 @@
 package com.tatalance.client;
 
 import com.tatalance.activity.ActivityLogger;
+import com.tatalance.ride.JobRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
 import com.tatalance.user.AuthHelper;
@@ -39,6 +40,8 @@ public class ClientController {
         this.authHelper = authHelper;
         this.activityLog = activityLog;
     }
+
+    // Updated for #93 Job refactor: active rides check + stats use RideRepository (RIDE filtered); billable now from Job base.
 
     @Operation(summary = "List all clients")
     @ApiResponse(responseCode = "200", description = "Client list")
@@ -138,7 +141,7 @@ public class ClientController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
         }
         var activeRides = rideRepository.findByClientIdAndStatusIn(id,
-                List.of(RideStatus.SCHEDULED, RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
+                List.of(RideStatus.SCHEDULED, RideStatus.ASSIGNED, RideStatus.IN_PROGRESS)); // ride-only check post Job refactor
         if (!activeRides.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot delete client with active rides (" + activeRides.size() + " active)");

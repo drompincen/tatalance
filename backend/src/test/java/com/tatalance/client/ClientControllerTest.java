@@ -2,8 +2,9 @@ package com.tatalance.client;
 
 import com.tatalance.SecurityConfig;
 import com.tatalance.activity.ActivityLogger;
+import com.tatalance.ride.Job;
 import com.tatalance.ride.RideRepository;
-import com.tatalance.ride.RideStatus;
+import com.tatalance.ride.RideStatus; // updated for Job base model refactor #93 (Category A)
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.BeforeEach;

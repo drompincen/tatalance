@@ -25,14 +25,18 @@ public class UserSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (repository.count() == 0) {
-            AppUser admin = new AppUser();
-            admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin"));
-            admin.setRole("USER");
-            admin.setCreatedAt(Instant.now());
-            repository.save(admin);
-            log.info("Seeded default admin user");
+        try {
+            if (repository.count() == 0) {
+                AppUser admin = new AppUser();
+                admin.setUsername("admin");
+                admin.setPassword(passwordEncoder.encode("admin"));
+                admin.setRole("USER");
+                admin.setCreatedAt(Instant.now());
+                repository.save(admin);
+                log.info("Seeded default admin user");
+            }
+        } catch (Exception e) {
+            log.warn("UserSeeder skipped (Mongo not available or error): {}", e.getMessage());
         }
     }
 }

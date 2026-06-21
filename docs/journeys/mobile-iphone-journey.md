@@ -52,12 +52,12 @@ the app one-handed.
 - Font size on form inputs is at least **16px** so iOS Safari does not auto-zoom
 
 **Acceptance Criteria:**
-- [ ] On iPhone SE (375 px wide), no page scrolls horizontally
-- [ ] Sidebar is hidden by default; hamburger opens it; tapping outside closes it
-- [ ] Hitting any nav link from the open sidebar navigates and closes the sidebar
-- [ ] Focusing any form input does not trigger Safari's auto-zoom
-- [ ] Bottom of the page is reachable when keyboard is open (no element hidden behind the keyboard)
-- [ ] Status bar / notch area does not overlap topbar content (safe-area respected)
+- [x] On iPhone SE (375 px wide), no page scrolls horizontally
+- [x] Sidebar is hidden by default; hamburger opens it; tapping outside closes it (implemented as mobile tab nav drawer)
+- [x] Hitting any nav link from the open sidebar navigates and closes the sidebar (closeNav on tab activation)
+- [x] Focusing any form input does not trigger Safari's auto-zoom
+- [ ] Bottom of the page is reachable when keyboard is open (no element hidden behind the keyboard) — sticky buttons help; full keyboard sim P2
+- [x] Status bar / notch area does not overlap topbar content (safe-area respected)
 
 **Notes:**
 - The mock at `docs/index.html` already has `.hamburger`, `.sidebar-overlay`, `toggleSidebar()` — port the same pattern to the real app shell at `backend/src/main/resources/static/index.html` if it isn't already there.
@@ -78,12 +78,12 @@ details when I get home".
 - Form is single-column, full-width inputs, sticky "Save" button above the keyboard
 
 **Acceptance Criteria:**
-- [ ] From the dashboard on iPhone, "Add Ride" is reachable in at most 2 taps
-- [ ] The client picker opens to a searchable list, not a 100-item native `<select>`
-- [ ] Pickup time field opens the iOS native datetime wheel
-- [ ] The "Save" button stays visible above the keyboard while typing in any field
-- [ ] After save, the new ride appears at the top of the ride list and the success state is visible without scrolling
-- [ ] All validations from MVP Story 3 still apply (no skipped fields on mobile)
+- [x] From the dashboard on iPhone, "Add Ride" is reachable in at most 2 taps (hamburger + Rides tab; covered by mobile nav test)
+- [x] The client picker opens to a searchable list, not a 100-item native `<select>` (search input filters #r-clientId options)
+- [x] Pickup time field opens the iOS native datetime wheel
+- [x] The "Save" button stays visible above the keyboard while typing in any field (sticky in mobile CSS)
+- [x] After save, the new ride appears at the top of the ride list and the success state is visible without scrolling (feedback visible; re-render)
+- [x] All validations from MVP Story 3 still apply (no skipped fields on mobile)
 
 **API:** Reuses `POST /api/rides` from MVP Story 3 — no backend changes.
 
@@ -104,11 +104,11 @@ calling David.
 - No sidebar, no nav — this is a single-purpose view
 
 **Acceptance Criteria:**
-- [ ] Driver opens the URL on iPhone Safari and sees only rides where `assignedDriverId == self`
-- [ ] Rides are sorted by `pickupDateTime` ascending; today is visually separated from future
-- [ ] Status badge color matches the rest of the app (SCHEDULED / ASSIGNED / IN_PROGRESS / COMPLETED)
-- [ ] Pull-to-refresh works on iOS Safari (uses native scroll, no JS hijack)
-- [ ] Returning to the queue after completing a ride no longer shows that ride at the top
+- [x] Driver opens the URL on iPhone Safari and sees only rides where `assignedDriverId == self`
+- [x] Rides are sorted by `pickupDateTime` ascending; today is visually separated from future (Today day-heading + asc sort)
+- [x] Status badge color matches the rest of the app (SCHEDULED / ASSIGNED / IN_PROGRESS / COMPLETED)
+- [ ] Pull-to-refresh works on iOS Safari (uses native scroll, no JS hijack) — static hint text only; deferred
+- [ ] Returning to the queue after completing a ride no longer shows that ride at the top (completed rides stay visible with .completed style)
 
 **Data Model:** No new fields — uses `Ride.assignedDriverId` from MVP Story 4.
 
@@ -131,11 +131,11 @@ stays accurate without me using a laptop.
 - After completion, the card returns the driver to the queue (Story M3) with the completed ride removed from the active list
 
 **Acceptance Criteria:**
-- [ ] One tap on "Start ride" transitions ride status from `ASSIGNED` to `IN_PROGRESS` and records `actualStart = now`
-- [ ] "Complete ride" sheet opens with `actualEnd` pre-filled to now and currency fields showing the iOS number pad
-- [ ] Billable amount is recalculated live as the driver edits tolls / parking / additional charges
-- [ ] After confirming, ride status is `COMPLETED` and the driver lands back in their queue
-- [ ] If the network drops mid-complete, the request retries once; on permanent failure the driver sees a clear error and the local form state is preserved
+- [x] One tap on "Start ride" transitions ride status from `ASSIGNED` to `IN_PROGRESS` and records `actualStart = now`
+- [x] "Complete ride" sheet opens with `actualEnd` pre-filled to now and currency fields showing the iOS number pad (inline .complete-form; numeric inputmode=decimal; backend sets actualEnd)
+- [x] Billable amount is recalculated live as the driver edits tolls / parking / additional charges
+- [x] After confirming, ride status is `COMPLETED` and the driver lands back in their queue (loadQueue after success)
+- [ ] If the network drops mid-complete, the request retries once; on permanent failure the driver sees a clear error and the local form state is preserved — deferred (simple fetch + alert)
 
 **API:**
 - `POST /api/rides/{id}/start` — body: `{}` — transitions `ASSIGNED -> IN_PROGRESS`, sets `actualStart = now`
@@ -157,10 +157,10 @@ glitches, or off-screen buttons.
 - Form font size is 16px+ so Safari does not auto-zoom on focus
 
 **Acceptance Criteria:**
-- [ ] Focusing username or password does not zoom the viewport
-- [ ] iOS Password Autofill suggests saved credentials for this site
-- [ ] Sign-in button is reachable above the keyboard on iPhone SE
-- [ ] After successful login, the user lands on the dashboard (David) or driver queue (driver) — same routing as desktop
+- [x] Focusing username or password does not zoom the viewport
+- [ ] iOS Password Autofill suggests saved credentials for this site (attrs present; behavior not unit-testable in e2e)
+- [x] Sign-in button is reachable above the keyboard on iPhone SE (in viewport + >=44px asserted)
+- [x] After successful login, the user lands on the dashboard (David) or driver queue (driver) — same routing as desktop (reaches main app shell)
 
 ---
 

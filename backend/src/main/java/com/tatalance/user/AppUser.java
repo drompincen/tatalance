@@ -19,6 +19,10 @@ public class AppUser {
     private String securityQuestion;
     private String securityAnswer;
 
+    // Business owner and type concepts (for multi-profile support)
+    private boolean businessOwner = true;
+    private String businessOwnerType; // optional high-level type for the account
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getUsername() { return username; }
@@ -35,4 +39,9 @@ public class AppUser {
     public void setSecurityQuestion(String securityQuestion) { this.securityQuestion = securityQuestion; }
     public String getSecurityAnswer() { return securityAnswer; }
     public void setSecurityAnswer(String securityAnswer) { this.securityAnswer = securityAnswer; }
+
+    public boolean isBusinessOwner() { return businessOwner; }
+    public void setBusinessOwner(boolean businessOwner) { this.businessOwner = businessOwner; }
+    public String getBusinessOwnerType() { return businessOwnerType; }
+    public void setBusinessOwnerType(String businessOwnerType) { this.businessOwnerType = businessOwnerType; }
 }

@@ -2,6 +2,7 @@ package com.tatalance.search;
 
 import com.tatalance.client.ClientRepository;
 import com.tatalance.invoice.InvoiceRepository;
+import com.tatalance.ride.JobRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +30,8 @@ public class SearchController {
         this.invoiceRepo = invoiceRepo;
         this.authHelper = authHelper;
     }
+
+    // #93: Search on rides continues to use ride-specific fields (locations); jobs use scheduled/client only.
 
     @GetMapping
     public Map<String, Object> search(@RequestParam String q) {
