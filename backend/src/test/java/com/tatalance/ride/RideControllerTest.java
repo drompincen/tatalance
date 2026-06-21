@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RideController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, TimerService.class})
 @WithMockUser
 class RideControllerTest {
 

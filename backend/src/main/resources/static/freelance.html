@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tatalance — Freelance</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f8f9fc; --surface: #fff; --text: #111827; --muted: #6b7280;
+      --border: #e5e7eb; --primary: #6366f1; --primary-soft: #eef2ff;
+      --success: #22c55e; --danger: #ef4444; --radius: 14px;
+      --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; font-size: 16px; }
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; min-height: 100dvh; }
+    .side {
+      width: 220px; padding: 24px 16px; border-right: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0; display: flex; flex-direction: column;
+    }
+    .side h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -.03em; }
+    .rate-badge {
+      margin-top: 12px; padding: 12px; background: var(--primary-soft); border-radius: var(--radius);
+      border: 1px solid #c7d2fe;
+    }
+    .rate-badge .lbl { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+    .rate-badge .amt { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .nav { margin-top: 24px; display: flex; flex-direction: column; gap: 4px; }
+    .nav button {
+      text-align: left; padding: 10px 12px; border: none; background: transparent;
+      border-radius: 10px; font-size: .88rem; cursor: pointer; color: var(--muted);
+    }
+    .nav button.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+    .side-footer { margin-top: auto; padding-top: 16px; font-size: .75rem; }
+    .side-footer a { color: var(--primary); }
+
+    .main { flex: 1; padding: 24px; overflow: auto; min-width: 0; }
+    .view { display: none; }
+    .view.active { display: block; }
+    h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -.02em; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .stat .l { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+    .stat .v { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+    .grid { display: grid; grid-template-columns: minmax(280px, 340px) 1fr; gap: 20px; align-items: start; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card h3 { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; font-weight: 700; }
+    label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 5px; color: #374151; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 16px; margin-bottom: 12px; background: #fafafa;
+    }
+    .btn {
+      padding: 12px 20px; border: none; border-radius: 10px; background: var(--primary);
+      color: #fff; font-weight: 700; font-size: .9rem; cursor: pointer; width: 100%;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); width: auto; }
+    .btn-sm { padding: 8px 14px; font-size: .82rem; width: auto; }
+    .job {
+      padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
+      margin-bottom: 10px;
+    }
+    .job-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .job h4 { font-size: .95rem; font-weight: 700; }
+    .job p { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+    .job.active-job { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+    .badge { font-size: .65rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; white-space: nowrap; }
+    .badge.scheduled { background: #dbeafe; color: #1d4ed8; }
+    .badge.progress { background: #fef3c7; color: #b45309; }
+    .badge.paused { background: #f3f4f6; color: #4b5563; }
+    .badge.done { background: #dcfce7; color: #15803d; }
+    .timer-box {
+      text-align: center; padding: 24px 16px; background: linear-gradient(180deg, var(--primary-soft), var(--surface));
+      border-radius: var(--radius); margin-top: 14px; border: 1px solid #c7d2fe;
+    }
+    .timer-box .clock { font-size: 2.6rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--primary); }
+    .timer-box .billable { font-size: 1.1rem; font-weight: 700; margin-top: 8px; color: var(--success); }
+    .timer-btns { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+    .row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+    .empty { text-align: center; padding: 32px; color: var(--muted); font-size: .88rem; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 12px 18px; border-radius: 10px; font-size: .85rem; display: none; z-index: 99; }
+    .toast.show { display: block; }
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; }
+      .side { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .nav { flex-direction: row; overflow-x: auto; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <h1>Tatalance</h1>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:4px">Freelance mode</p>
+    <div class="rate-badge">
+      <div class="lbl">Your hourly rate</div>
+      <div class="amt">$<span id="rateDisplay">20</span>/hr</div>
+      <input type="number" id="rateInput" value="20" min="1" step="0.5" style="margin-top:8px;margin-bottom:0;font-size:14px">
+    </div>
+    <nav class="nav">
+      <button class="active" data-view="dash" onclick="go('dash')">Dashboard</button>
+      <button data-view="jobs" onclick="go('jobs')">Jobs</button>
+      <button data-view="clients" onclick="go('clients')">Clients</button>
+      <button data-view="invoices" onclick="go('invoices')">Invoices</button>
+    </nav>
+    <div class="side-footer">
+      <a href="/index.html">Chauffeur ops →</a><br>
+      <button class="btn-outline btn-sm" style="margin-top:8px;width:100%" onclick="doLogout()">Logout</button>
+    </div>
+  </aside>
+  <main class="main">
+    <section class="view active" id="view-dash">
+      <h2 id="greeting">Hello</h2>
+      <div class="stats" id="dash-stats"></div>
+      <div class="card" id="dash-timer-card">
+        <h3>Active timer</h3>
+        <div id="dash-timer-inner" class="empty">No timer running — open Jobs and press Start.</div>
+      </div>
+    </section>
+    <section class="view" id="view-jobs">
+      <h2>Jobs</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Book a job</h3>
+          <label>Client</label>
+          <select id="book-client"></select>
+          <label>Job title</label>
+          <input id="book-title" placeholder="e.g. Tatalance UI redesign">
+          <label>Scope / notes</label>
+          <textarea id="book-notes" rows="2" placeholder="What you're delivering…"></textarea>
+          <label>Date &amp; time</label>
+          <input type="datetime-local" id="book-when">
+          <button class="btn" id="book-btn" onclick="bookJob()">Book job</button>
+        </div>
+        <div id="job-list"></div>
+      </div>
+    </section>
+    <section class="view" id="view-clients">
+      <h2>Clients</h2>
+      <div class="card" id="client-list"><div class="empty">Loading…</div></div>
+    </section>
+    <section class="view" id="view-invoices">
+      <h2>Invoices</h2>
+      <div class="card" id="invoice-list"><div class="empty">Loading…</div></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let user = {}, jobs = [], activeJobId = null, timer = { running: false, workedSeconds: 0, billable: 0 };
+let tickHandle = null, syncHandle = null;
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+function fmt(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  return [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
+}
+function fmtMoney(n) { return '$' + Number(n).toFixed(2); }
+function fmtDuration(sec) {
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+  return h ? h + 'h ' + m + 'm' : m + 'm';
+}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { credentials: 'same-origin', ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  if (r.status === 401) { window.location.href = '/login.html'; return null; }
+  if (r.status === 204) return null;
+  const text = await r.text();
+  return text ? JSON.parse(text) : null;
+}
+function unwrapPage(body) { return body && Array.isArray(body.content) ? body.content : (body || []); }
+
+async function loadUser() {
+  user = await api('/api/users/me') || {};
+  const rate = user.defaultHourlyRate != null ? Number(user.defaultHourlyRate) : 20;
+  document.getElementById('rateInput').value = rate;
+  document.getElementById('rateDisplay').textContent = rate;
+  const h = new Date().getHours();
+  const part = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+  document.getElementById('greeting').textContent = 'Good ' + part + ', ' + (user.username || 'there');
+  if (user.businessMode !== 'FREELANCE') {
+    await api('/api/users/me/settings', { method: 'PATCH', body: JSON.stringify({ businessMode: 'FREELANCE' }) });
+  }
+}
+document.getElementById('rateInput').addEventListener('change', async function() {
+  const v = parseFloat(this.value);
+  if (!v || v <= 0) return;
+  document.getElementById('rateDisplay').textContent = v;
+  await api('/api/users/me/settings', { method: 'PATCH', body: JSON.stringify({ defaultHourlyRate: v }) });
+  toast('Hourly rate saved');
+});
+
+function go(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+}
+
+async function loadJobs() {
+  const data = await api('/api/rides?page=0&size=50');
+  jobs = unwrapPage(data);
+  activeJobId = jobs.find(j => j.status === 'IN_PROGRESS' || j.status === 'PAUSED')?.id || null;
+  if (activeJobId) await syncTimer(activeJobId);
+  renderJobs();
+  renderDashTimer();
+  renderDashStats();
+}
+function jobLabel(j) {
+  return (j.jobTitle || j.notes || 'Job') + ' — ' + (j.clientName || 'Client');
+}
+function badgeClass(s) {
+  if (s === 'IN_PROGRESS') return 'progress';
+  if (s === 'PAUSED') return 'paused';
+  if (s === 'COMPLETED') return 'done';
+  return 'scheduled';
+}
+
+function timerHtml(j, isActive) {
+  if (!isActive) {
+    if (j.status === 'SCHEDULED' || j.status === 'ASSIGNED') {
+      return `<button class="btn btn-sm" onclick="startJob('${j.id}')">Start timer</button>`;
+    }
+    if (j.status === 'COMPLETED') {
+      const amt = j.totalAmount || j.billableAmount;
+      return `<span style="font-size:.82rem;color:var(--muted)">${fmtDuration((j.durationMinutes||0)*60)} · ${fmtMoney(amt||0)}</span>`;
+    }
+    return '';
+  }
+  const pauseLabel = timer.running ? 'Pause' : 'Resume';
+  const pauseFn = timer.running ? 'pauseJob' : 'resumeJob';
+  return `<div class="timer-box">
+    <div class="clock" id="clock-${j.id}">${fmt(timer.workedSeconds)}</div>
+    <div class="billable" id="bill-${j.id}">${fmtMoney(timer.billable)} billable</div>
+    <div class="timer-btns">
+      <button class="btn btn-outline btn-sm" onclick="${pauseFn}('${j.id}')">${pauseLabel}</button>
+      <button class="btn btn-sm" onclick="completeJob('${j.id}')">Complete day</button>
+    </div></div>`;
+}
+
+function renderJobs() {
+  const el = document.getElementById('job-list');
+  if (!jobs.length) { el.innerHTML = '<div class="empty">No jobs yet — book one to get started.</div>'; return; }
+  el.innerHTML = jobs.map(j => {
+    const active = j.id === activeJobId;
+    return `<div class="job ${active ? 'active-job' : ''}">
+      <div class="job-head">
+        <div><h4>${jobLabel(j)}</h4>
+        <p>${j.pricingMode || 'HOURLY'} @ ${fmtMoney(j.hourlyRate || user.defaultHourlyRate || 20)}/hr</p></div>
+        <span class="badge ${badgeClass(j.status)}">${j.status.replace('_',' ')}</span>
+      </div>
+      ${timerHtml(j, active)}
+    </div>`;
+  }).join('');
+}
+
+function renderDashTimer() {
+  const inner = document.getElementById('dash-timer-inner');
+  const j = jobs.find(x => x.id === activeJobId);
+  if (!j) { inner.className = 'empty'; inner.textContent = 'No timer running — open Jobs and press Start.'; return; }
+  inner.className = '';
+  inner.innerHTML = `<p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">${jobLabel(j)}</p>
+    <div class="timer-box" style="margin:0">
+      <div class="clock" id="dash-clock">${fmt(timer.workedSeconds)}</div>
+      <div class="billable" id="dash-bill">Billable: ${fmtMoney(timer.billable)}</div>
+      <div class="timer-btns">
+        <button class="btn btn-outline btn-sm" onclick="go('jobs')">View job</button>
+        <button class="btn btn-sm" onclick="completeJob('${j.id}')">Complete &amp; invoice</button>
+      </div></div>`;
+}
+
+async function renderDashStats() {
+  const stats = await api('/api/stats') || {};
+  const active = jobs.filter(j => j.status === 'IN_PROGRESS' || j.status === 'PAUSED').length;
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat"><div class="l">Active</div><div class="v">${active}</div></div>
+    <div class="stat"><div class="l">Rides/jobs</div><div class="v">${stats.totalRides ?? jobs.length}</div></div>
+    <div class="stat"><div class="l">Revenue (mo)</div><div class="v">${fmtMoney(stats.revenueThisMonth || 0)}</div></div>
+    <div class="stat"><div class="l">Outstanding</div><div class="v">${fmtMoney(stats.outstandingAmount || 0)}</div></div>`;
+}
+
+async function syncTimer(id) {
+  const s = await api('/api/rides/' + id + '/timer');
+  if (!s) return;
+  timer.running = s.running;
+  timer.workedSeconds = s.workedSeconds;
+  timer.billable = s.billableAmount;
+  activeJobId = id;
+  startLocalTick();
+}
+
+function startLocalTick() {
+  if (tickHandle) clearInterval(tickHandle);
+  tickHandle = setInterval(() => {
+    if (!timer.running || !activeJobId) return;
+    timer.workedSeconds++;
+    const rate = Number(jobs.find(j => j.id === activeJobId)?.hourlyRate || user.defaultHourlyRate || 20);
+    timer.billable = (timer.workedSeconds / 3600) * rate;
+    updateClocks();
+  }, 1000);
+  if (syncHandle) clearInterval(syncHandle);
+  syncHandle = setInterval(() => { if (activeJobId) syncTimer(activeJobId); }, 8000);
+}
+function updateClocks() {
+  ['dash-clock', 'clock-' + activeJobId].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = fmt(timer.workedSeconds);
+  });
+  ['dash-bill', 'bill-' + activeJobId].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (id.startsWith('dash') ? 'Billable: ' : '') + fmtMoney(timer.billable) + (id.startsWith('bill') ? ' billable' : '');
+  });
+}
+
+async function startJob(id) {
+  await api('/api/rides/' + id + '/start', { method: 'POST', body: '{}' });
+  toast('Timer started');
+  await loadJobs();
+}
+async function pauseJob(id) {
+  await api('/api/rides/' + id + '/timer/pause', { method: 'POST', body: '{}' });
+  timer.running = false;
+  toast('Paused');
+  await loadJobs();
+}
+async function resumeJob(id) {
+  await api('/api/rides/' + id + '/timer/resume', { method: 'POST', body: '{}' });
+  timer.running = true;
+  toast('Resumed');
+  await loadJobs();
+}
+async function completeJob(id) {
+  if (!confirm('Complete this job for today and calculate billable amount?')) return;
+  const done = await api('/api/rides/' + id + '/complete', { method: 'POST', body: '{}' });
+  if (!done) return;
+  const inv = await api('/api/invoices', { method: 'POST', body: JSON.stringify({ rideId: id }) });
+  activeJobId = null; timer.running = false;
+  toast('Completed — invoice ' + (inv?.invoiceNumber || '') + ' total ' + fmtMoney(inv?.total || done.billableAmount));
+  await loadJobs();
+  await loadInvoices();
+  go('invoices');
+}
+
+async function bookJob() {
+  const clientId = document.getElementById('book-client').value;
+  const title = document.getElementById('book-title').value.trim();
+  const notes = document.getElementById('book-notes').value.trim();
+  const when = document.getElementById('book-when').value;
+  if (!clientId || !title || !when) { toast('Client, title, and date required'); return; }
+  const rate = parseFloat(document.getElementById('rateInput').value) || 20;
+  const body = {
+    clientId, jobTitle: title, notes,
+    pickupDateTime: new Date(when).toISOString(),
+    pickupLocation: 'Remote', dropoffLocation: 'Remote',
+    pricingMode: 'HOURLY', hourlyRate: rate
+  };
+  const btn = document.getElementById('book-btn');
+  btn.disabled = true;
+  const created = await api('/api/rides', { method: 'POST', body: JSON.stringify(body) });
+  btn.disabled = false;
+  if (created) { toast('Job booked — press Start when ready'); document.getElementById('book-title').value = ''; await loadJobs(); }
+}
+
+async function loadClients() {
+  const list = unwrapPage(await api('/api/clients?page=0&size=100'));
+  const sel = document.getElementById('book-client');
+  sel.innerHTML = '<option value="">Select client…</option>' + list.map(c =>
+    `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('');
+  document.getElementById('client-list').innerHTML = list.length ? list.map(c =>
+    `<div class="row"><strong>${c.firstName} ${c.lastName}</strong><span>${c.phone || ''}</span></div>`).join('')
+    : '<div class="empty">Add a client in Chauffeur ops or via API first.</div>';
+}
+async function loadInvoices() {
+  const list = unwrapPage(await api('/api/invoices?page=0&size=50'));
+  document.getElementById('invoice-list').innerHTML = list.length ? list.map(i => {
+    const detail = (i.clientName || '') + (i.durationMinutes ? ' · ' + fmtDuration(i.durationMinutes*60) : '') +
+      (i.hourlyRate ? ' × ' + fmtMoney(i.hourlyRate) : '');
+    const st = i.status === 'PAID' ? 'done' : 'scheduled';
+    return `<div class="row"><div><strong>${i.invoiceNumber}</strong><br><span style="font-size:.8rem;color:var(--muted)">${detail}</span></div>
+      <span class="badge ${st}">${i.status} · ${fmtMoney(i.total)}</span></div>`;
+  }).join('') : '<div class="empty">Complete a job to generate an invoice.</div>';
+}
+async function doLogout() {
+  await fetch('/logout', { method: 'POST', credentials: 'same-origin' });
+  window.location.href = '/login.html';
+}
+
+(async function init() {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('book-when').value = now.toISOString().slice(0, 16);
+  await loadUser();
+  await loadClients();
+  await loadJobs();
+  await loadInvoices();
+})();
+</script>
+</body>
+</html>

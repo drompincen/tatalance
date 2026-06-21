@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tatalance — Freelance Jobs Mockup ($20/hr)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f8f9fc; --surface: #fff; --text: #111827; --muted: #6b7280;
+      --border: #e5e7eb; --primary: #6366f1; --primary-soft: #eef2ff;
+      --success: #22c55e; --radius: 14px; --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; }
+
+    .banner {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff;
+      padding: 10px 20px; font-size: .78rem; text-align: center;
+    }
+    .banner a { color: #fde68a; }
+
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; min-height: calc(100dvh - 36px); }
+    .side {
+      width: 220px; padding: 24px 16px; border-right: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+    .side h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -.03em; }
+    .side .rate-badge {
+      margin-top: 12px; padding: 12px; background: var(--primary-soft); border-radius: var(--radius);
+      border: 1px solid #c7d2fe;
+    }
+    .side .rate-badge .lbl { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+    .side .rate-badge .amt { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .nav { margin-top: 24px; display: flex; flex-direction: column; gap: 4px; }
+    .nav button {
+      text-align: left; padding: 10px 12px; border: none; background: transparent;
+      border-radius: 10px; font-size: .88rem; cursor: pointer; color: var(--muted);
+    }
+    .nav button.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+
+    .main { flex: 1; padding: 24px; overflow: auto; }
+    .view { display: none; }
+    .view.active { display: block; }
+    h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -.02em; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .stat .l { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+    .stat .v { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card h3 { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; font-weight: 700; }
+
+    label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 5px; color: #374151; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 16px; margin-bottom: 12px; background: #fafafa;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
+    .btn {
+      width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--primary);
+      color: #fff; font-weight: 700; font-size: .9rem; cursor: pointer;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+
+    .job {
+      padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
+      margin-bottom: 10px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+    }
+    .job.active-job { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+    .job h4 { font-size: .95rem; font-weight: 700; }
+    .job p { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+    .badge { font-size: .65rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; }
+    .badge.scheduled { background: #dbeafe; color: #1d4ed8; }
+    .badge.progress { background: #fef3c7; color: #b45309; }
+    .badge.done { background: #dcfce7; color: #15803d; }
+
+    .timer-box {
+      text-align: center; padding: 28px 16px; background: linear-gradient(180deg, var(--primary-soft), var(--surface));
+      border-radius: var(--radius); margin: 16px 0; border: 1px solid #c7d2fe;
+    }
+    .timer-box .clock {
+      font-size: 3rem; font-weight: 800; font-variant-numeric: tabular-nums;
+      letter-spacing: -.04em; color: var(--primary); line-height: 1;
+    }
+    .timer-box .billable { font-size: 1.1rem; font-weight: 700; margin-top: 8px; color: var(--success); }
+    .timer-btns { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+    .timer-btns button { width: auto; padding: 10px 20px; }
+
+    .invoice-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid var(--border); font-size: .88rem;
+    }
+
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; }
+      .side { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .nav { flex-direction: row; overflow-x: auto; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="banner">
+  Mockup for <strong>GitHub issue #93</strong> — inspired by
+  <a href="https://clockify.me/" target="_blank" rel="noopener">Clockify</a> time-tracking UI +
+  Behance <em>Freelance / SaaS dashboard</em> patterns. Open locally: <code>docs/freelance-jobs-mockup.html</code>
+</div>
+
+<div class="layout">
+  <aside class="side">
+    <h1>Tatalance</h1>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:4px">Freelance mode</p>
+    <div class="rate-badge">
+      <div class="lbl">Your hourly rate</div>
+      <div class="amt">$<span id="rateDisplay">20</span>/hr</div>
+      <input type="number" id="rateInput" value="20" min="1" step="0.5" style="margin-top:8px;margin-bottom:0;font-size:14px"
+             onchange="document.getElementById('rateDisplay').textContent=this.value; updateBillable()">
+    </div>
+    <nav class="nav">
+      <button class="active" data-view="dash" onclick="go('dash')">Dashboard</button>
+      <button data-view="jobs" onclick="go('jobs')">Jobs</button>
+      <button data-view="clients" onclick="go('clients')">Clients</button>
+      <button data-view="invoices" onclick="go('invoices')">Invoices</button>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section class="view active" id="view-dash">
+      <h2>Good afternoon, Luciano</h2>
+      <div class="stats">
+        <div class="stat"><div class="l">Active jobs</div><div class="v" id="statActive">1</div></div>
+        <div class="stat"><div class="l">Hours this week</div><div class="v">12.5</div></div>
+        <div class="stat"><div class="l">Revenue (month)</div><div class="v">$1,050</div></div>
+        <div class="stat"><div class="l">Outstanding</div><div class="v">$160</div></div>
+      </div>
+      <div class="card">
+        <h3>Active timer</h3>
+        <div class="timer-box">
+          <div style="font-size:.85rem;color:var(--muted);margin-bottom:8px">API integration — Acme Corp</div>
+          <div class="clock" id="dashClock">02:15:00</div>
+          <div class="billable" id="dashBillable">Billable: $45.00</div>
+          <div class="timer-btns">
+            <button class="btn btn-outline" onclick="go('jobs')">View job</button>
+            <button class="btn" onclick="completeJob()">Complete &amp; invoice</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-jobs">
+      <h2>Jobs</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Book a job</h3>
+          <label>Client</label>
+          <select><option>Acme Corp</option><option>Startup XYZ</option></select>
+          <label>Job title</label>
+          <input placeholder="e.g. API integration sprint">
+          <label>Scope / notes</label>
+          <textarea rows="2" placeholder="Backend endpoints, testing…"></textarea>
+          <label>Date &amp; time</label>
+          <input type="datetime-local">
+          <label>Estimated hours</label>
+          <input type="number" value="4" min="0.5" step="0.5">
+          <button class="btn" onclick="alert('Mockup: POST /api/rides with pricingMode=HOURLY')">Book job</button>
+        </div>
+        <div>
+          <div class="job active-job" id="activeJob">
+            <div>
+              <h4>API integration — Acme Corp</h4>
+              <p>Today · HOURLY @ $<span class="rate-copy">20</span>/hr</p>
+            </div>
+            <span class="badge progress">In progress</span>
+            <div style="grid-column:1/-1">
+              <div class="timer-box" style="margin:0">
+                <div class="clock" id="jobClock">02:15:00</div>
+                <div class="billable" id="jobBillable">$45.00 billable</div>
+                <div class="timer-btns">
+                  <button class="btn btn-outline" id="pauseBtn" onclick="togglePause()">Pause</button>
+                  <button class="btn" onclick="completeJob()">Complete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="job">
+            <div><h4>Landing page fixes — Startup XYZ</h4><p>Thu 10 AM · 3h estimated</p></div>
+            <span class="badge scheduled">Scheduled</span>
+          </div>
+          <div class="job" style="opacity:.65">
+            <div><h4>Code review — Acme Corp</h4><p>Completed · 1h 30m · $30 invoiced</p></div>
+            <span class="badge done">Done</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-clients">
+      <h2>Clients</h2>
+      <div class="card">
+        <div class="invoice-row"><strong>Acme Corp</strong><span>8 jobs · $840 spent</span></div>
+        <div class="invoice-row"><strong>Startup XYZ</strong><span>2 jobs · $210 spent</span></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-invoices">
+      <h2>Invoices</h2>
+      <div class="card">
+        <div class="invoice-row">
+          <div><strong>INV-2026-008</strong><br><span style="font-size:.8rem;color:var(--muted)">Acme Corp · 2h 15m × $20 + tax</span></div>
+          <span class="badge done">Paid · $48.60</span>
+        </div>
+        <div class="invoice-row" id="newInvoice" style="display:none">
+          <div><strong>INV-2026-009</strong><br><span style="font-size:.8rem;color:var(--muted)" id="invDetail"></span></div>
+          <span class="badge scheduled" style="background:#fee2e2;color:#b91c1c">Outstanding</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  let seconds = 8100, running = true;
+  const rate = () => parseFloat(document.getElementById('rateInput').value) || 20;
+
+  function fmt(sec) {
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    return [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
+  }
+  function billable(sec) {
+    const hours = sec / 3600;
+    return (hours * rate()).toFixed(2);
+  }
+  function updateBillable() {
+    document.querySelectorAll('.rate-copy').forEach(el => el.textContent = rate());
+    const b = '$' + billable(seconds);
+    document.getElementById('dashBillable').textContent = 'Billable: ' + b;
+    document.getElementById('jobBillable').textContent = b + ' billable';
+  }
+  function tick() {
+    if (!running) return;
+    seconds++;
+    const t = fmt(seconds);
+    document.getElementById('dashClock').textContent = t;
+    document.getElementById('jobClock').textContent = t;
+    updateBillable();
+  }
+  setInterval(tick, 1000);
+
+  function togglePause() {
+    running = !running;
+    document.getElementById('pauseBtn').textContent = running ? 'Pause' : 'Resume';
+  }
+  function go(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + id).classList.add('active');
+    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+  }
+  function completeJob() {
+    running = false;
+    const hrs = (seconds/3600).toFixed(2);
+    const sub = hrs + 'h × $' + rate() + ' + 8% tax';
+    document.getElementById('invDetail').textContent = 'Acme Corp · ' + sub;
+    document.getElementById('newInvoice').style.display = 'flex';
+    document.getElementById('activeJob').style.opacity = '0.5';
+    document.getElementById('statActive').textContent = '0';
+    alert('Mockup: POST /api/rides/{id}/complete → POST /api/invoices\nInvoice generated for $' + (billable(seconds)*1.08).toFixed(2));
+    go('invoices');
+  }
+</script>
+</body>
+</html>

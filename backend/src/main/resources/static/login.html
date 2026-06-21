@@ -209,7 +209,15 @@
                     btn.textContent = 'Sign in';
                     return;
                 }
-                window.location.href = '/index.html';
+                try {
+                    var me = await fetch('/api/users/me', { credentials: 'same-origin' });
+                    if (me.ok) {
+                        var profile = await me.json();
+                        window.location.href = profile.businessMode === 'FREELANCE' ? '/freelance.html' : '/index.html';
+                        return;
+                    }
+                } catch (e) { /* fall through */ }
+                window.location.href = '/freelance.html';
             } catch (err) {
                 msgError.textContent = 'Could not reach server. Try again.';
                 msgError.style.display = 'block';

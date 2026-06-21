@@ -26,6 +26,8 @@ public class Ride {
     private String pickupLocation;
     @NotBlank
     private String dropoffLocation;
+    /** Freelance job title (issue #93); optional for chauffeur rides. */
+    private String jobTitle;
     private BigDecimal basePrice;
     private PricingMode pricingMode;
     private BigDecimal hourlyRate;
@@ -51,6 +53,9 @@ public class Ride {
     private BigDecimal driverPayout;
     private boolean payoutPaid;
 
+    // Freelance timer segments (pause/resume with audit trail)
+    private List<WorkSegment> workSegments = new ArrayList<>();
+
     // Status history (#88)
     private List<StatusEvent> statusHistory = new ArrayList<>();
 
@@ -68,6 +73,8 @@ public class Ride {
     public void setPickupLocation(String pickupLocation) { this.pickupLocation = pickupLocation; }
     public String getDropoffLocation() { return dropoffLocation; }
     public void setDropoffLocation(String dropoffLocation) { this.dropoffLocation = dropoffLocation; }
+    public String getJobTitle() { return jobTitle; }
+    public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
     public BigDecimal getBasePrice() { return basePrice; }
     public void setBasePrice(BigDecimal basePrice) { this.basePrice = basePrice; }
     public PricingMode getPricingMode() { return pricingMode; }
@@ -108,6 +115,8 @@ public class Ride {
     public void setDriverPayout(BigDecimal driverPayout) { this.driverPayout = driverPayout; }
     public boolean isPayoutPaid() { return payoutPaid; }
     public void setPayoutPaid(boolean payoutPaid) { this.payoutPaid = payoutPaid; }
+    public List<WorkSegment> getWorkSegments() { return workSegments; }
+    public void setWorkSegments(List<WorkSegment> workSegments) { this.workSegments = workSegments; }
     public List<StatusEvent> getStatusHistory() { return statusHistory; }
     public void setStatusHistory(List<StatusEvent> statusHistory) { this.statusHistory = statusHistory; }
     public void addStatusEvent(RideStatus status) {

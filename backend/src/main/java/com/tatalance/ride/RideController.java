@@ -21,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +35,17 @@ public class RideController {
     private final DriverRepository driverRepository;
     private final AuthHelper authHelper;
     private final ActivityLogger activityLog;
+    private final TimerService timerService;
 
     public RideController(RideRepository rideRepository, ClientRepository clientRepository,
                           DriverRepository driverRepository, AuthHelper authHelper,
-                          ActivityLogger activityLog) {
+                          ActivityLogger activityLog, TimerService timerService) {
         this.rideRepository = rideRepository;
         this.clientRepository = clientRepository;
         this.driverRepository = driverRepository;
         this.authHelper = authHelper;
         this.activityLog = activityLog;
+        this.timerService = timerService;
     }
 
     @Operation(summary = "Create a ride")
@@ -169,6 +170,9 @@ public class RideController {
         existing.setPricingMode(updates.getPricingMode());
         existing.setHourlyRate(updates.getHourlyRate());
         existing.setNotes(updates.getNotes());
+        if (updates.getJobTitle() != null) {
+            existing.setJobTitle(updates.getJobTitle());
+        }
         return rideRepository.save(existing);
     }
 
@@ -206,14 +210,34 @@ public class RideController {
     public Ride start(@PathVariable String id) {
         Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
-        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Cannot start a ride in status " + ride.getStatus());
-        }
-        ride.setStatus(RideStatus.IN_PROGRESS);
-        ride.addStatusEvent(RideStatus.IN_PROGRESS);
-        ride.setActualStart(Instant.now());
+        timerService.startTimer(ride);
         return rideRepository.save(ride);
+    }
+
+    @Operation(summary = "Pause freelance timer", description = "Closes the open work segment and sets status PAUSED.")
+    @PostMapping("/rides/{id}/timer/pause")
+    public Ride pauseTimer(@PathVariable String id) {
+        Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        timerService.pauseTimer(ride);
+        return rideRepository.save(ride);
+    }
+
+    @Operation(summary = "Resume freelance timer", description = "Opens a new work segment after PAUSED.")
+    @PostMapping("/rides/{id}/timer/resume")
+    public Ride resumeTimer(@PathVariable String id) {
+        Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        timerService.resumeTimer(ride);
+        return rideRepository.save(ride);
+    }
+
+    @Operation(summary = "Timer state for recovery", description = "Server-side worked seconds and billable amount from work segments.")
+    @GetMapping("/rides/{id}/timer")
+    public Map<String, Object> timerState(@PathVariable String id) {
+        Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+        return timerService.timerState(ride);
     }
 
     @Operation(summary = "Complete a ride with billable extras (mobile driver action)",
@@ -223,9 +247,9 @@ public class RideController {
     public Ride complete(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
         Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
-        if (ride.getStatus() != RideStatus.IN_PROGRESS) {
+        if (ride.getStatus() != RideStatus.IN_PROGRESS && ride.getStatus() != RideStatus.PAUSED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Cannot complete a ride in status " + ride.getStatus() + " — start it first");
+                    "Cannot complete a ride in status " + ride.getStatus() + " — start the timer first");
         }
         BigDecimal tolls   = asDecimal(body, "tolls");
         BigDecimal parking = asDecimal(body, "parking");
@@ -234,25 +258,13 @@ public class RideController {
         ride.setTolls(tolls);
         ride.setParking(parking);
         ride.setAdditionalCharges(extras);
-        ride.setActualEnd(Instant.now());
+        Instant end = Instant.now();
+        timerService.finalizeDurationMinutes(ride, end);
 
         PricingMode mode = ride.getPricingMode() == null ? PricingMode.FLAT : ride.getPricingMode();
-        BigDecimal timeCost = BigDecimal.ZERO;
-        long durationMins = 0;
-        if (ride.getActualStart() != null) {
-            durationMins = Duration.between(ride.getActualStart(), ride.getActualEnd()).toMinutes();
-            ride.setDurationMinutes(durationMins);
-        }
-        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && durationMins > 0) {
-            BigDecimal hours = BigDecimal.valueOf(durationMins).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
-            timeCost = ride.getHourlyRate().multiply(hours).setScale(2, RoundingMode.HALF_UP);
-        }
-
-        BigDecimal total;
-        switch (mode) {
-            case HOURLY -> total = timeCost;
-            case FLAT_PLUS_HOURLY -> total = base.add(timeCost);
-            default -> total = base;
+        BigDecimal total = timerService.billableAmount(ride, end);
+        if (mode == PricingMode.FLAT && total.compareTo(BigDecimal.ZERO) == 0) {
+            total = base;
         }
         BigDecimal billable = total.add(tolls).add(parking).add(extras);
         ride.setBillableAmount(billable);
