@@ -67,6 +67,11 @@
 **Decision:** Single Spring Boot app with two static UIs. `businessMode` on `AppUser` (`CHAUFFEUR` | `FREELANCE`). Login redirects to `/freelance.html` or `/index.html`. Freelance reuses `Ride` with `pricingMode=HOURLY`, `jobTitle`, and `workSegments` for pause/resume audit. `TimerService` handles server-side timer state; `GET /api/rides/{id}/timer` for recovery after refresh.
 **Consequences:** Chauffeur UI unchanged. Freelance book flow does not auto-start timer — user explicitly presses Start. Two HTML surfaces to maintain until a unified redesign. Mockups in `docs/freelance-jobs-mockup.html`.
 
+## 2026-06-21 Embedded in-app map picker over external Google Maps redirect
+**Context:** Users want to pick pickup/dropoff by dropping a pin on Google Maps instead of typing addresses. Epic 9 #73 already links table text to `google.com/maps/search/...`.
+**Decision:** Build an in-app `LocationPicker` modal using Google Maps JavaScript API + Places. Reverse-geocode pin/search result to human-readable text stored in existing `pickupLocation` / `dropoffLocation` strings. Optional `lat/lng` on `Ride` (#100) for precise navigation links. API key in EB env (`GOOGLE_MAPS_API_KEY`), never in git. External Google Maps tab cannot return picked coordinates to the web app.
+**Consequences:** Requires Google Cloud billing (free-tier usually sufficient). Drom sets up API key (#97); Luciano builds UI (#98–#99). Freelance `freelance.html` out of scope for v1. E2E must mock Maps APIs (#101).
+
 ## 2026-04-30 Flapdoodle spring30x artifact for Spring Boot 3 tests
 **Context:** The legacy `de.flapdoodle.embed.mongo` artifact does not auto-configure with Spring Boot 3. `@DataMongoTest` silently fails to start an embedded MongoDB, causing all repository tests to fail with connection refused.
 **Decision:** Use `de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x` in `test` scope.

@@ -80,6 +80,7 @@ Driver { id, name, phone, email, vehicle, payoutType, payoutRate, availability, 
 
 **Scope:**
 - Create ride form: select client (required), pickup date/time (required), pickup location (required), dropoff location (required), price, notes
+- Location fields use in-app map picker (Epic 12 #96) — search or drop pin → stored as text; table links open Google Maps (#73)
 - Ride list view showing all rides with status
 - New rides default to status `SCHEDULED`
 

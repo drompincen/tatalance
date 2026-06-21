@@ -3,7 +3,7 @@ title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
 status: in-progress
 created: 2026-04-27
 updated: 2026-06-21
-current_chapter: epic-11
+current_chapter: epic-12
 ---
 
 # Tatalance v1 Plan
@@ -209,7 +209,13 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #76 | Live stopwatch on driver queue | Epic 10 | feature | completed |
 | #77 | Duration + cost summary on completion | Epic 10 | feature | completed |
 | #78 | Invoice shows time breakdown | Epic 10 | feature | completed |
-| #93 | Freelance mode — hourly timer UI (epic) | Epic 11 | epic | in-progress |
+| #93 | Freelance mode — hourly timer UI (epic) | Epic 11 | epic | completed |
+| #96 | Map-based location picker (epic) | Epic 12 | epic | pending |
+| #97 | Google Maps Platform API key + EB env | Epic 12 | infra | pending |
+| #98 | LocationPicker modal (search + pin) | Epic 12 | feature | pending |
+| #99 | Wire picker into book/edit ride form | Epic 12 | feature | pending |
+| #100 | Store lat/lng on Ride for precise links | Epic 12 | enhancement | pending |
+| #101 | E2E: book ride using LocationPicker | Epic 12 | qa | pending |
 
 ---
 
@@ -439,6 +445,52 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | Chauffeur | `/index.html` | David | FLAT / HOURLY / FLAT_PLUS_HOURLY rides |
 
 Same `Ride` collection and APIs; freelance uses deferred timer start (book ≠ start).
+
+---
+
+# Epic 12: Map-based location picker (issue #96)
+**Status:** pending
+**Outcome:** David picks pickup and dropoff on an embedded Google Map (search or drop a pin) instead of typing addresses. The ride table shows simple location text; clicking it opens Google Maps for navigation (extends Epic 9 #73).
+**Depends on:** Epic 9 #73 (clickable Maps links) — done; Epic 1 #12 (Create Ride form) — done
+**Blocked by:** #97 (Google Maps API key in EB — drom)
+
+## User journey
+
+1. Book/edit ride → tap **Pickup** or **Dropoff**
+2. Location picker modal opens (embedded map + search)
+3. Search or tap map to place pin → reverse-geocode to address text
+4. Confirm → text fills form; saved to `pickupLocation` / `dropoffLocation`
+5. Rides table shows text; click → Google Maps (existing `mapsLink`)
+
+## Design note
+
+Opening external `google.com/maps` in another tab cannot return the picked pin to the app. The picker must be **in-app** (Maps JavaScript API + Places).
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Google Maps Platform API key + EB env config | pending | drom | #97 |
+| 2 | `LocationPicker` modal — search + pin drop → address | pending | luciano | #98 |
+| 3 | Wire picker into chauffeur book/edit form (`index.html`) | pending | luciano | #99 |
+| 4 | Store `pickupLat/Lng`, `dropoffLat/Lng` on `Ride` (optional) | pending | luciano | #100 |
+| 5 | E2E: book ride using LocationPicker | pending | luciano | #101 |
+
+## Dependencies
+
+```
+#97 (API key + EB env) — drom, blocks frontend work
+  └──> #98 (LocationPicker component)
+        └──> #99 (wire into book/edit form)
+              └──> #101 (E2E)
+#100 (lat/lng) — optional follow-up after #99
+```
+
+## Out of scope
+
+- Freelance `freelance.html` (keeps `Remote` default for now)
+- GPS capture on driver Start/Complete
+- In-app map view when clicking table links (keep external Maps)
 
 ---
 

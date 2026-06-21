@@ -74,7 +74,7 @@ details when I get home".
 - "Add Ride" CTA visible without opening the sidebar (also lives on the Dashboard mobile view)
 - Client picker is searchable (typing filters the list) — important because the dropdown is unusable on mobile with 100+ clients
 - Pickup date/time uses `<input type="datetime-local">` so iOS shows the native wheel picker
-- Pickup/dropoff location are plain text inputs (autocomplete is out of scope for this journey)
+- Pickup/dropoff location open an in-app map picker (Epic 12 #96) instead of free-text typing — see issue #99
 - Form is single-column, full-width inputs, sticky "Save" button above the keyboard
 
 **Acceptance Criteria:**
@@ -205,7 +205,7 @@ Useful but deferred — keep this journey shippable in one or two PRs:
 | PWA install / `manifest.json` / offline mode              | Safari has weak PWA support; revisit when usage data justifies it    |
 | Push notifications to drivers ("new ride assigned")       | Requires server push + iOS web-push (only in PWA installed mode)     |
 | GPS location capture on Start/Complete                    | Useful audit trail, but adds permissions UX — out of MVP             |
-| Address autocomplete on pickup / dropoff                  | Needs a maps API key + cost decision                                  |
+| Address autocomplete on pickup / dropoff                  | **Planned** — Epic 12 #96 (embedded map picker; needs API key #97)   |
 | Client-facing receipt page                                | Different persona, different auth — its own journey                   |
 | Per-driver auth (real accounts, not obscure URL)          | Phase 2 once we know drivers actually use the queue                   |
 | Hardening against flaky 3G / spotty service               | Worth doing once basic flow works; not a blocker for first ship       |

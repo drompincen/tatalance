@@ -2,7 +2,9 @@
 
 ## Current Focus
 
-Epic 11 (issue #93): **completed** — freelance mode deployed to `tatalance-luciano`, CI green (55 E2E tests).
+Epic 12 (issue #96): **planned** — map-based location picker for pickup/dropoff. Blocked on #97 (Google Maps API key — drom). Stories #98–#101 for Luciano.
+
+Epic 11 (issue #93): **completed** — freelance mode; PR #95 open for merge to main.
 
 ## Recent Decisions
 
@@ -27,3 +29,4 @@ Epic 11 (issue #93): **completed** — freelance mode deployed to `tatalance-luc
 - 2026-06-21: Implemented freelance mode (TimerService, workSegments, freelance.html). Commits `51c530f`, `d87118c`. Local smoke passed. Plan updated with Epic 11.
 - 2026-06-21: Fixed mark paid in freelance UI; improved Start timer discoverability on dashboard + after book.
 - 2026-06-21: Shipped Epic 11 story 10 — fixed mobile header overflow (`1a6a766`), m5 login E2E for freelance redirect (`1ad5193`). CI deploy success; cloud smoke verified.
+- 2026-06-21: Formalized Epic 12 map location picker — GitHub #96–#101, plan + journey docs updated.
