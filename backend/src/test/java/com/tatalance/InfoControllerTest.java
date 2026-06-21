@@ -8,6 +8,7 @@ import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository;
+import com.tatalance.ride.TimerService;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, TimerService.class})
 @WithMockUser
 class InfoControllerTest {
 
