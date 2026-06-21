@@ -72,13 +72,13 @@ class ValidationErrorTest {
     }
 
     @Test
-    void should_returnFriendlyErrors_forRide() {
+    void should_returnFriendlyErrors_forRide() { // updated post #93: scheduled/pickupDateTime not @NotNull enforced at create (optional per jobs MVP; only Ride location fields are)
         var request = Map.of("clientId", "x");
         var response = restTemplate.postForEntity("/api/rides", request, Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
         var errors = (List<Map<String, String>>) response.getBody().get("errors");
         var fields = errors.stream().map(e -> e.get("field")).toList();
-        assertThat(fields).contains("pickupLocation", "dropoffLocation", "pickupDateTime");
+        assertThat(fields).contains("pickupLocation", "dropoffLocation");
     }
 }

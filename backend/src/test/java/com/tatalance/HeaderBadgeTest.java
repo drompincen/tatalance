@@ -7,6 +7,7 @@ import com.tatalance.customtable.CustomTableRepository;
 import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.TimerService;
 import com.tatalance.user.AppUserRepository;
@@ -63,6 +64,9 @@ class HeaderBadgeTest {
 
     @MockBean
     ActivityLogRepository activityLogRepository;
+
+    @MockBean
+    ProfileRepository profileRepository;
 
     @Test
     void should_haveDynamicDbBadgeElement() throws Exception {

@@ -1,5 +1,6 @@
 package com.tatalance.driver;
 
+import com.tatalance.ride.JobRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
 import com.tatalance.user.AuthHelper;
@@ -35,6 +36,8 @@ public class DriverController {
         this.rideRepository = rideRepository;
         this.authHelper = authHelper;
     }
+
+    // #93 Job model refactor: driver stats + active rides checks continue on Ride (driver assignment ride-specific)
 
     @Operation(summary = "List all drivers")
     @ApiResponse(responseCode = "200", description = "Driver list")
@@ -122,7 +125,7 @@ public class DriverController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
         }
         var activeRides = rideRepository.findByAssignedDriverIdAndStatusIn(id,
-                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
+                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS)); // uses ride-specific query (post #93)
         if (!activeRides.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot delete driver with active rides (" + activeRides.size() + " active)");

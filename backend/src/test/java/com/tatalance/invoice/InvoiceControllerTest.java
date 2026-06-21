@@ -2,9 +2,10 @@ package com.tatalance.invoice;
 
 import com.tatalance.SecurityConfig;
 import com.tatalance.activity.ActivityLogger;
+import com.tatalance.ride.Job;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
-import com.tatalance.ride.RideStatus;
+import com.tatalance.ride.RideStatus; // Job base model #93 Category A - Invoice now uses base fields via Job
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,6 +77,7 @@ class InvoiceControllerTest {
         ride.setAdditionalCharges(new BigDecimal("20.00"));
         ride.setStatus(RideStatus.COMPLETED);
         ride.setTotalAmount(new BigDecimal("100.00"));
+        // #93: pickup/dropoff are Ride-only; amounts, status etc now on base Job
         return ride;
     }
 

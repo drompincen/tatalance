@@ -6,17 +6,20 @@
     <title>Sign in — Tatalance</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { height: -webkit-fill-available; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
             color: #1a1a2e;
             min-height: 100dvh;
+            min-height: -webkit-fill-available;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
             padding-top: calc(24px + env(safe-area-inset-top));
             padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            overflow: auto;
         }
         .login-card {
             background: white;
@@ -104,6 +107,10 @@
         .google-btn svg { flex-shrink: 0; }
         @media (max-height: 500px) {
             body { align-items: flex-start; padding-top: 16px; }
+        }
+        @media (max-height: 600px) {
+            body { align-items: flex-start; padding-top: 8px; padding-bottom: 8px; }
+            .login-card { padding: 16px 12px; }
         }
         .message {
             padding: 10px 12px;
@@ -197,9 +204,10 @@
             var formData = new URLSearchParams();
             formData.append('username', document.getElementById('username').value);
             formData.append('password', document.getElementById('password').value);
+            var csrf = getCsrfToken();
+            if (csrf) formData.append('_csrf', csrf);
 
             var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            var csrf = getCsrfToken();
             if (csrf) headers['X-XSRF-TOKEN'] = csrf;
 
             try {
@@ -224,8 +232,8 @@
                         window.location.href = profile.businessMode === 'FREELANCE' ? '/freelance.html' : '/index.html';
                         return;
                     }
-                } catch (e) { /* fall through */ }
-                window.location.href = '/freelance.html';
+                } catch (err) { /* fall through */ }
+                window.location.href = '/index.html';
             } catch (err) {
                 msgError.textContent = 'Could not reach server. Try again.';
                 msgError.style.display = 'block';

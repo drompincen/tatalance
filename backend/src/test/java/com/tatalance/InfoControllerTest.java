@@ -7,6 +7,7 @@ import com.tatalance.customtable.CustomTableRepository;
 import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.TimerService;
 import com.tatalance.user.AppUserRepository;
@@ -57,6 +58,9 @@ class InfoControllerTest {
 
     @MockBean
     AuthHelper authHelper;
+
+    @MockBean
+    ProfileRepository profileRepository;
 
     @MockBean
     ActivityLogger activityLogger;
