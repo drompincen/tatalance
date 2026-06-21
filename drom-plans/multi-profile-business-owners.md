@@ -147,7 +147,7 @@ This enables a single login to run multiple "businesses" or service types withou
   - Display profile context in job cards / lists (small badge?).
 - [x] Clients: no change – always load full account list.
 - [ ] Dashboard / stats: decide – per active profile or account-wide (start per-profile for jobs).
-- [ ] Profile creation UI (simple modal or section): choose type (hardcoded options first: DRIVER, ENGINEER, HANDYMAN, OTHER), optional name.
+- [x] Profile creation + update UI (Manage Profiles modal in header): list/edit/create via PUT/POST; labels distinguish DRIVER (shows Rides) vs hourly; updateTabVisibility auto-hides rides tab + switches pane for non-DRIVER profiles.
 - [x] Mobile: ensure switcher works at 768/640, good tap targets (reuse mobile patterns, ?m=1).
 - [x] **/implementer** + **/reviewer**: Update existing job tab logic, add profile helpers (like a `currentProfile` module).
 - [ ] Handle case of 0 or 1 profile gracefully (auto-create default on first use?).

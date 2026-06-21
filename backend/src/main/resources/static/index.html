@@ -375,6 +375,11 @@
         .account-menu-panel select {
             display: block; width: calc(100% - 28px); margin: 0 14px 8px;
             padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.82rem;
+            background: #fff; color: #1a1a2e;
+        }
+        .account-menu-panel select option {
+            background: #fff;
+            color: #1a1a2e;
         }
         .account-menu-panel a,
         .account-menu-panel button.menu-item {
@@ -489,6 +494,7 @@
                         <option value="">All (account)</option>
                     </select>
                     <div class="account-menu-divider"></div>
+                    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem">Manage profiles</button>
                     <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none">Link Google account</button>
                     <a href="/freelance.html" class="menu-item nav-external-link" role="menuitem">Freelance mode</a>
                     <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem">Change password</button>
@@ -913,6 +919,37 @@
     </div>
 </div>
 
+<!-- ── Profile Manager Modal (create/edit profiles to distinguish hourly jobs from rides) ── -->
+<div class="modal-overlay" id="profile-manager-modal" onclick="if(event.target===this)closeProfileManager()">
+    <div class="modal" style="max-width:520px">
+        <h2>Manage Profiles</h2>
+        <div style="margin:8px 0">
+            <div id="profile-list" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;max-height:180px;overflow:auto"></div>
+        </div>
+        <div style="border-top:1px solid #eee;padding-top:12px;margin-top:8px">
+            <div class="field">
+                <label>Type</label>
+                <select id="pm-type" style="width:100%;padding:6px">
+                    <option value="DRIVER">DRIVER (shows Rides)</option>
+                    <option value="ENGINEER">ENGINEER / Hourly</option>
+                    <option value="HANDYMAN">HANDYMAN / Hourly</option>
+                    <option value="OTHER">OTHER / Hourly</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Name (optional display)</label>
+                <input id="pm-name" placeholder="e.g. Main Taxi or Freelance Dev" style="width:100%">
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="btn" onclick="createNewProfile()">Create New</button>
+                <button class="btn" onclick="saveProfileEdit()" id="pm-save-btn" disabled>Save Changes</button>
+                <button class="btn btn-cancel" onclick="closeProfileManager()">Close</button>
+            </div>
+            <div class="err" id="pm-err" style="display:none;margin-top:6px"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Dynamic custom table panes inserted here ── -->
 <div id="custom-tab-panes"></div>
 
@@ -1163,6 +1200,7 @@
         if (name === 'dashboard') loadDashboard();
         if (name === 'activity') loadActivity();
         closeNav();
+        updateTabVisibility();
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -2105,10 +2143,128 @@
     window.switchProfile = function(pid) {
         activeProfileId = pid || '';
         localStorage.setItem('activeProfileId', activeProfileId);
+        const sel = document.getElementById('profile-switcher');
+        if (sel) sel.value = activeProfileId || '';
         // reload scoped views
         if (typeof loadRides === 'function') loadRides();
         if (typeof loadJobs === 'function') loadJobs();
+        updateTabVisibility();
     };
+
+    let editingProfileId = null;
+
+    function showProfileManager() {
+        const modal = document.getElementById('profile-manager-modal');
+        if (modal) modal.style.display = 'flex';
+        editingProfileId = null;
+        const saveBtn = document.getElementById('pm-save-btn');
+        if (saveBtn) saveBtn.disabled = true;
+        const err = document.getElementById('pm-err');
+        if (err) err.style.display = 'none';
+        loadProfileListForManager();
+    }
+
+    function closeProfileManager() {
+        const modal = document.getElementById('profile-manager-modal');
+        if (modal) modal.style.display = 'none';
+        loadProfiles();
+        updateTabVisibility();
+    }
+
+    async function loadProfileListForManager() {
+        const container = document.getElementById('profile-list');
+        if (!container) return;
+        container.innerHTML = 'Loading...';
+        try {
+            const r = await fetch('/api/profiles?size=50');
+            const data = await r.json();
+            const list = data.content || data || [];
+            if (!list.length) {
+                container.innerHTML = '<div style="padding:8px;color:#666">No profiles yet. Create one below.</div>';
+                return;
+            }
+            container.innerHTML = list.map(p => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #f0f0f0;cursor:pointer" onclick="startEditProfile('${p.id}', '${p.type}', '${(p.name||'').replace(/'/g,"\\'")}')">
+                    <div>
+                        <strong>${p.name || p.type}</strong> <span style="font-size:0.75rem;color:#666">(${p.type})</span>
+                    </div>
+                    <div style="font-size:0.7rem;color:#888">edit</div>
+                </div>
+            `).join('');
+        } catch(e) {
+            container.innerHTML = 'Failed to load profiles.';
+        }
+    }
+
+    function startEditProfile(id, type, name) {
+        editingProfileId = id;
+        const t = document.getElementById('pm-type');
+        const n = document.getElementById('pm-name');
+        const saveBtn = document.getElementById('pm-save-btn');
+        if (t) t.value = type;
+        if (n) n.value = name || '';
+        if (saveBtn) saveBtn.disabled = false;
+        const err = document.getElementById('pm-err');
+        if (err) err.style.display = 'none';
+    }
+
+    async function saveProfileEdit() {
+        if (!editingProfileId) return;
+        const tEl = document.getElementById('pm-type');
+        const nEl = document.getElementById('pm-name');
+        const type = tEl ? tEl.value : '';
+        const name = nEl ? nEl.value.trim() : '';
+        const err = document.getElementById('pm-err');
+        try {
+            const r = await fetch(`/api/profiles/${editingProfileId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type, name})
+            });
+            if (!r.ok) throw new Error('Update failed');
+            await loadProfileListForManager();
+            await loadProfiles();
+            updateTabVisibility();
+            if (err) { err.textContent = 'Saved.'; err.style.display = 'block'; }
+        } catch(e) {
+            if (err) { err.textContent = e.message || 'Failed to save.'; err.style.display = 'block'; }
+        }
+    }
+
+    async function createNewProfile() {
+        const tEl = document.getElementById('pm-type');
+        const nEl = document.getElementById('pm-name');
+        const type = tEl ? tEl.value : '';
+        const name = nEl ? nEl.value.trim() : '';
+        const err = document.getElementById('pm-err');
+        if (!type) { alert('Type required'); return; }
+        try {
+            const r = await fetch('/api/profiles', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type, name})
+            });
+            if (!r.ok) throw new Error('Create failed');
+            await loadProfileListForManager();
+            await loadProfiles();
+            updateTabVisibility();
+            if (nEl) nEl.value = '';
+            if (err) { err.textContent = 'Profile created.'; err.style.display = 'block'; }
+        } catch(e) {
+            if (err) { err.textContent = e.message || 'Failed to create.'; err.style.display = 'block'; }
+        }
+    }
+
+    function updateTabVisibility() {
+        const current = (profilesCache || []).find(p => p.id === activeProfileId);
+        const isDriver = !current || current.type === 'DRIVER';
+        const ridesBtn = document.getElementById('btn-rides');
+        const ridesPane = document.getElementById('tab-rides');
+        if (ridesBtn) ridesBtn.style.display = isDriver ? '' : 'none';
+        if (!isDriver && ridesPane && ridesPane.classList.contains('active')) {
+            if (typeof showTab === 'function') showTab('jobs');
+        }
+    }
 
     function loadRides() {
         const prof = getProfileParam();
@@ -2176,7 +2332,8 @@
             if (hourlyRate) body.hourlyRate = Number(hourlyRate);
             if (notes) body.notes = notes;
 
-            const url = editingRideId ? `/api/rides/${editingRideId}` : '/api/rides';
+            const profQ = (!editingRideId && activeProfileId) ? `?profileId=${encodeURIComponent(activeProfileId)}` : '';
+            const url = editingRideId ? `/api/rides/${editingRideId}` : `/api/rides${profQ}`;
             const method = editingRideId ? 'PUT' : 'POST';
             const r = await fetch(url, {
                 method,
@@ -2194,6 +2351,7 @@
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
             loadRides();
+            setTimeout(() => { if (typeof applyRideFilter === 'function') applyRideFilter(); }, 50);
         } catch (err) {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ ' + (err.message || 'Save failed — check server logs');
@@ -2307,7 +2465,7 @@
     loadRides();
     setInterval(loadRides, 10000);
     // load profiles for switcher (business owner multi-profile)
-    loadProfiles();
+    loadProfiles().then(updateTabVisibility);
     setInterval(loadClientDropdown, 10000);
     setInterval(loadAvailableDrivers, 10000);
 
