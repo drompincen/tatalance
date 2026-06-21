@@ -187,9 +187,18 @@
         var btn = form.querySelector('button');
         var msgError = document.getElementById('msg-error');
 
-        // Normal form submit (no preventDefault) so Spring Security properly sets the session cookie.
-        // The server handles redirect on success/fail (with ?error or ?logout qs for messages).
+        // Inject CSRF token (read from cookie set by Spring) into the form.
+        // Without this, Spring Security CsrfFilter rejects the POST /login (403 or back to login page).
+        // getCsrfToken helper was defined but never used — this was causing form login to fail.
         form.addEventListener('submit', function() {
+            var token = getCsrfToken();
+            if (token) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = '_csrf';
+                input.value = token;
+                form.appendChild(input);
+            }
             btn.disabled = true;
             btn.textContent = 'Signing in\u2026';
             msgError.style.display = 'none';
