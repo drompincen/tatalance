@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-Epic 11 (issue #93): Freelance mode shipped on `luciano` — E2E added; awaiting EB deploy verify after push.
+Epic 11 (issue #93): **completed** — freelance mode deployed to `tatalance-luciano`, CI green (55 E2E tests).
 
 ## Recent Decisions
 
@@ -26,3 +26,4 @@ Epic 11 (issue #93): Freelance mode shipped on `luciano` — E2E added; awaiting
 
 - 2026-06-21: Implemented freelance mode (TimerService, workSegments, freelance.html). Commits `51c530f`, `d87118c`. Local smoke passed. Plan updated with Epic 11.
 - 2026-06-21: Fixed mark paid in freelance UI; improved Start timer discoverability on dashboard + after book.
+- 2026-06-21: Shipped Epic 11 story 10 — fixed mobile header overflow (`1a6a766`), m5 login E2E for freelance redirect (`1ad5193`). CI deploy success; cloud smoke verified.

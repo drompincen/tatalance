@@ -390,7 +390,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 ---
 
 # Epic 11: Freelance mode — book job, track time, invoice (issue #93)
-**Status:** in-progress
+**Status:** completed
 **Outcome:** Luciano can bill Tatalance dev work hourly: book a job without starting the timer, start/pause/resume with server-side segments, see billable amount, complete the day, and generate an invoice. Chauffeur ops (`index.html`) stays unchanged for David.
 **Depends on:** Epic 10 (#75 hourly pricing on rides) — done
 **Design reference:** `docs/freelance-jobs-mockup.html`, `docs/ui-redesign-mockups.html`
@@ -419,7 +419,7 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | 8 | Start timer discoverability (dashboard ready-jobs + auto-navigate after book) | completed | luciano | #93 |
 | 8b | Fix booking failures (past pickup time, silent API errors) | completed | luciano | #93 |
 | 9 | E2E: freelance book → start → pause → complete → invoice | completed | luciano | #93 |
-| 10 | Deploy + verify on `tatalance-luciano` EB sandbox | in-progress | luciano | #93 |
+| 10 | Deploy + verify on `tatalance-luciano` EB sandbox | completed | luciano | #93 |
 
 ## Dependencies
 
