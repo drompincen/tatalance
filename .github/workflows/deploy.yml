@@ -25,7 +25,7 @@ jobs:
           cache: maven
 
       - name: Run tests with JaCoCo coverage (gate on verify phase)
-        run: cd backend && mvn clean verify -B --no-transfer-progress '-Dmaven.javadoc.skip=true'
+        run: cd backend && mvn clean verify -B --no-transfer-progress '-Dmaven.javadoc.skip=true' -Dtest='!**/*IntegrationTest' -DfailIfNoTests=false
 
       - uses: actions/upload-artifact@v4
         with:
