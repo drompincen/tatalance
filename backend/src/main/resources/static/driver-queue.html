@@ -36,6 +36,17 @@
             color: white;
             padding: 14px 16px;
         }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255,255,255,.75);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .back-link:hover { color: white; }
         header h1 {
             font-size: 1.05rem;
             font-weight: 700;
@@ -46,6 +57,27 @@
             opacity: 0.7;
             margin-top: 2px;
         }
+        .refresh-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #e8ecf1;
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+        .refresh-btn {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: white;
+            color: #334155;
+            cursor: pointer;
+        }
+        .refresh-btn:active { background: #f1f5f9; }
 
         main {
             padding: 16px;
@@ -206,14 +238,19 @@
 </head>
 <body>
     <header>
+        <a href="/index.html" class="back-link" data-test="back-link">← Dashboard</a>
         <h1 id="header-title">My Queue</h1>
         <div class="subtitle" id="header-subtitle">Today and upcoming rides</div>
     </header>
+    <div class="refresh-bar">
+        <span id="refresh-status" data-test="refresh-status">Loading…</span>
+        <button type="button" class="refresh-btn" data-test="refresh-btn" onclick="loadQueue()">Refresh</button>
+    </div>
 
     <main id="content">
         <div class="empty-state" data-test="empty-state" id="empty-state" style="display:none">
             <div class="icon">🚘</div>
-            <p>No rides assigned. Pull down to refresh.</p>
+            <p>No rides assigned. Queue refreshes automatically every 15s.</p>
         </div>
         <div id="rides"></div>
     </main>
@@ -417,17 +454,38 @@
                 .catch(() => {});
         }
 
+        let lastRefreshAt = null;
+
+        function updateRefreshStatus() {
+            const el = document.getElementById('refresh-status');
+            if (!el) return;
+            if (!lastRefreshAt) {
+                el.textContent = 'Loading…';
+                return;
+            }
+            const secs = Math.max(0, Math.floor((Date.now() - lastRefreshAt) / 1000));
+            el.textContent = `Last updated ${secs}s ago · auto-refresh every 15s`;
+        }
+
         function loadQueue() {
             if (!driverId) {
                 document.getElementById('empty-state').style.display = 'block';
+                lastRefreshAt = Date.now();
+                updateRefreshStatus();
                 return;
             }
             fetch(`/api/drivers/${encodeURIComponent(driverId)}/rides`)
                 .then(r => r.json())
-                .then(render)
+                .then(rides => {
+                    lastRefreshAt = Date.now();
+                    updateRefreshStatus();
+                    render(rides);
+                })
                 .catch(() => {
+                    lastRefreshAt = Date.now();
+                    updateRefreshStatus();
                     document.getElementById('rides').innerHTML =
-                        '<div class="error-state">Could not load your queue. Pull down to retry.</div>';
+                        '<div class="error-state">Could not load your queue. Tap Refresh to retry.</div>';
                 });
         }
 
@@ -450,6 +508,7 @@
         loadQueue();
         setInterval(loadQueue, 15000);
         setInterval(tickStopwatches, 1000);
+        setInterval(updateRefreshStatus, 1000);
     </script>
 </body>
 </html>
