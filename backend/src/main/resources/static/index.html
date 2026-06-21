@@ -2548,7 +2548,7 @@
             const el = document.getElementById('username-display');
             if (el) el.textContent = data.username;
             const linkBtn = document.getElementById('link-google-btn');
-            if (linkBtn && data.googleLinked === false) linkBtn.style.display = '';
+            if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = '';
         })
         .catch(() => {});
 
@@ -2814,7 +2814,11 @@
         try {
             var res = await fetch('/api/users/link-google', { method: 'POST', headers: headers, credentials: 'same-origin' });
             var data = await res.json();
-            if (data.redirect) window.location.href = data.redirect;
+            if (res.ok && data.redirect) {
+                window.location.href = data.redirect;
+                return;
+            }
+            alert(data.message || 'Could not start Google linking. Try again.');
         } catch (err) {
             alert('Could not start Google linking. Try again.');
         }

@@ -91,6 +91,30 @@ Atlas → Database Access → confirm user exists and is not locked.
 
 ---
 
+### Google sign-in / Link Google does not work
+
+**Symptom:** "Sign in with Google" on the login page does nothing, shows **Unauthorized**, or **Link Google** in the header fails.
+
+**Cause:** Google OAuth is only active when both environment variables are set on the Elastic Beanstalk environment:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+Without them, Spring Security does not register the OAuth routes and `/oauth2/authorization/google` returns **401**. The UI now hides Google buttons when OAuth is disabled (`/api/info` → `googleOAuthEnabled: false`).
+
+**Fix (drom / admin):**
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → OAuth 2.0 Client ID (Web application).
+2. Authorized redirect URIs must include each EB hostname, e.g.  
+   `http://tatalance-luciano.eba-7u2dj39y.us-east-1.elasticbeanstalk.com/login/oauth2/code/google`  
+   (repeat for `tatalance-qa`, `tatalance-prod`, and `http://localhost:8080/...` for local dev).
+3. EB → Environment → Configuration → Software → Environment properties → add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+4. Restart the environment; confirm `GET /api/info` returns `"googleOAuthEnabled": true`.
+
+**Link Google flow:** Log in with username/password first, then click **Link Google** — it attaches your Google account to the existing user (issue #72).
+
+---
+
 ### Check environment health
 
 ```bash

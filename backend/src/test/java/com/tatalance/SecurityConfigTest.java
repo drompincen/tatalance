@@ -81,6 +81,13 @@ class SecurityConfigTest {
     }
 
     @Test
+    void should_returnOk_when_infoRequestUnauthenticated() throws Exception {
+        mockMvc.perform(get("/api/info"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.googleOAuthEnabled").value(false));
+    }
+
+    @Test
     void should_redirectToCustomLoginPage_when_browserRequestUnauthenticated() throws Exception {
         // SecurityConfig.formLogin().loginPage("/login.html") — the mobile-friendly
         // login page (issue #35) replaced Spring Security's default /login form.

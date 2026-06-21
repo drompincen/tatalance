@@ -68,6 +68,7 @@ class InfoControllerTest {
     void should_returnEmbedded_when_noDbTypeConfigured() throws Exception {
         mockMvc.perform(get("/api/info"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.dbType").value("embedded"));
+            .andExpect(jsonPath("$.dbType").value("embedded"))
+            .andExpect(jsonPath("$.googleOAuthEnabled").value(false));
     }
 }

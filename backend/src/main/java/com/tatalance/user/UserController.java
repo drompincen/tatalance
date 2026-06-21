@@ -1,10 +1,12 @@
 package com.tatalance.user;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -19,6 +21,9 @@ public class UserController {
     private final AppUserRepository repository;
     private final PasswordEncoder passwordEncoder;
 
+    @Autowired(required = false)
+    private ClientRegistrationRepository clientRegistrationRepository;
+
     public UserController(AppUserRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
@@ -31,6 +36,7 @@ public class UserController {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("username", auth.getName());
         out.put("googleLinked", googleLinked);
+        out.put("googleOAuthEnabled", clientRegistrationRepository != null);
         if (user != null) {
             out.put("businessMode", user.getBusinessMode() != null ? user.getBusinessMode().name() : BusinessMode.CHAUFFEUR.name());
             out.put("defaultHourlyRate", user.getDefaultHourlyRate());
@@ -70,6 +76,10 @@ public class UserController {
 
     @PostMapping("/link-google")
     public ResponseEntity<?> linkGoogle(Authentication auth, HttpSession session) {
+        if (clientRegistrationRepository == null) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", "Google sign-in is not configured on this server (GOOGLE_CLIENT_ID missing)"));
+        }
         session.setAttribute("linkUsername", auth.getName());
         return ResponseEntity.ok(Map.of("redirect", "/oauth2/authorization/google"));
     }
