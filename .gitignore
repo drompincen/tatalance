@@ -1,4 +1,5 @@
 .claude/.state/
+.claude/settings.local.json
 .claude/edit-log.jsonl
 .mcp.json
 .claude/.javaducker/

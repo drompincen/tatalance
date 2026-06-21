@@ -1,11 +1,12 @@
 package com.tatalance.ride;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Ride extends Job (Category A refactor for Issue #93).
@@ -21,6 +22,9 @@ public class Ride extends Job {
     @NotBlank
     private String dropoffLocation;
 
+    /** Freelance job title (issue #93); optional for chauffeur rides. */
+    private String jobTitle;
+
     private String assignedDriverId;
     private String assignedDriverName;
 
@@ -30,17 +34,21 @@ public class Ride extends Job {
     private BigDecimal driverPayout;
     private boolean payoutPaid;
 
+    // Freelance timer segments (pause/resume with audit trail)
+    private List<WorkSegment> workSegments = new ArrayList<>();
+
     public Ride() {
         setType("RIDE");
     }
-
-    // --- Ride-specific getters/setters ---
 
     public String getPickupLocation() { return pickupLocation; }
     public void setPickupLocation(String pickupLocation) { this.pickupLocation = pickupLocation; }
 
     public String getDropoffLocation() { return dropoffLocation; }
     public void setDropoffLocation(String dropoffLocation) { this.dropoffLocation = dropoffLocation; }
+
+    public String getJobTitle() { return jobTitle; }
+    public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
 
     public String getAssignedDriverId() { return assignedDriverId; }
     public void setAssignedDriverId(String assignedDriverId) { this.assignedDriverId = assignedDriverId; }
@@ -57,9 +65,10 @@ public class Ride extends Job {
     public boolean isPayoutPaid() { return payoutPaid; }
     public void setPayoutPaid(boolean payoutPaid) { this.payoutPaid = payoutPaid; }
 
+    public List<WorkSegment> getWorkSegments() { return workSegments; }
+    public void setWorkSegments(List<WorkSegment> workSegments) { this.workSegments = workSegments; }
+
     // --- PickupDateTime compatibility layer (for existing UI, tests, old data, driver queue etc) ---
-    // Backs onto Job.scheduledTime. Allows JSON to continue using "pickupDateTime".
-    // Also @Field helps with legacy mongo docs containing "pickupDateTime".
 
     @Field("pickupDateTime")
     public Instant getPickupDateTime() {
@@ -71,7 +80,6 @@ public class Ride extends Job {
         setScheduledTime(pickupDateTime);
     }
 
-    // Ensure type always RIDE even if set externally
     @Override
     public void setType(String type) {
         super.setType("RIDE");

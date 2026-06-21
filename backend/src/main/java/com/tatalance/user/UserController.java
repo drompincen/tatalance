@@ -1,13 +1,17 @@
 package com.tatalance.user;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -16,6 +20,9 @@ public class UserController {
 
     private final AppUserRepository repository;
     private final PasswordEncoder passwordEncoder;
+
+    @Autowired(required = false)
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     public UserController(AppUserRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
@@ -26,11 +33,53 @@ public class UserController {
     public Map<String, Object> me(Authentication auth) {
         AppUser user = repository.findByUsername(auth.getName()).orElse(null);
         boolean googleLinked = user != null && user.getGoogleId() != null;
-        return Map.of("username", auth.getName(), "googleLinked", googleLinked);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("username", auth.getName());
+        out.put("googleLinked", googleLinked);
+        out.put("googleOAuthEnabled", clientRegistrationRepository != null);
+        if (user != null) {
+            out.put("businessMode", user.getBusinessMode() != null ? user.getBusinessMode().name() : BusinessMode.CHAUFFEUR.name());
+            out.put("defaultHourlyRate", user.getDefaultHourlyRate());
+        } else {
+            out.put("businessMode", BusinessMode.CHAUFFEUR.name());
+            out.put("defaultHourlyRate", new BigDecimal("20.00"));
+        }
+        return out;
+    }
+
+    @PatchMapping("/me/settings")
+    public ResponseEntity<?> updateSettings(Authentication auth, @RequestBody Map<String, Object> body) {
+        AppUser user = repository.findByUsername(auth.getName())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+        if (body.containsKey("businessMode")) {
+            try {
+                user.setBusinessMode(BusinessMode.valueOf(body.get("businessMode").toString().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid businessMode"));
+            }
+        }
+        if (body.containsKey("defaultHourlyRate")) {
+            Object rate = body.get("defaultHourlyRate");
+            if (rate instanceof Number n) {
+                if (n.doubleValue() <= 0) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Hourly rate must be positive"));
+                }
+                user.setDefaultHourlyRate(new BigDecimal(n.toString()));
+            }
+        }
+        repository.save(user);
+        return ResponseEntity.ok(Map.of(
+                "businessMode", user.getBusinessMode().name(),
+                "defaultHourlyRate", user.getDefaultHourlyRate()
+        ));
     }
 
     @PostMapping("/link-google")
     public ResponseEntity<?> linkGoogle(Authentication auth, HttpSession session) {
+        if (clientRegistrationRepository == null) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", "Google sign-in is not configured on this server (GOOGLE_CLIENT_ID missing)"));
+        }
         session.setAttribute("linkUsername", auth.getName());
         return ResponseEntity.ok(Map.of("redirect", "/oauth2/authorization/google"));
     }
