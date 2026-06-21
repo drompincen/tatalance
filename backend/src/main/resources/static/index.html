@@ -12,14 +12,41 @@
         header {
             background: #1a1a2e;
             color: white;
-            padding: 0 32px;
-            height: 56px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-top {
             display: flex;
             align-items: center;
-            gap: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+            gap: 12px;
+            padding: 0 24px;
+            height: 48px;
+            min-width: 0;
         }
-        header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
+        .header-nav-row {
+            display: none;
+            border-top: 1px solid rgba(255,255,255,.1);
+            padding: 0 12px 6px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .header-nav-row nav { margin-left: 0; flex-wrap: nowrap; white-space: nowrap; }
+        header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.5px; flex-shrink: 0; }
+        .header-spacer { flex: 1; min-width: 8px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
+        .status-footer {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 5px 16px; background: #12121f; border-top: 1px solid rgba(255,255,255,.06);
+            font-size: 0.68rem;
+        }
+        .status-footer .badge { margin: 0; }
+        @media (min-width: 769px) {
+            body.has-status-footer { padding-bottom: 30px; }
+            .status-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; }
+            .header-nav-row { display: block; }
+        }
         .badge { font-size: 0.7rem; padding: 3px 9px; border-radius: 20px; border: 1px solid; font-weight: 500; }
         .badge-poc  { background: rgba(255,165,0,.1); border-color: rgba(255,165,0,.3); color: #ffa500; }
         .badge-mongo { background: rgba(78,204,163,.12); border-color: rgba(78,204,163,.35); color: #4ecca3; }
@@ -319,11 +346,45 @@
         .help-nav-btn.primary:hover { background: #16213e; }
         .help-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-        /* ── User menu ── */
-        .user-menu { display: flex; align-items: center; gap: 10px; margin-left: 12px; }
-        .user-menu .username { font-size: 0.82rem; color: rgba(255,255,255,.7); font-weight: 500; }
+        /* ── User / account menu ── */
+        .user-menu { position: relative; display: flex; align-items: center; }
+        .account-trigger {
+            font-size: 0.82rem; color: rgba(255,255,255,.85); font-weight: 600;
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.2);
+            background: rgba(255,255,255,.06); cursor: pointer;
+        }
+        .account-trigger:hover { background: rgba(255,255,255,.12); color: #fff; }
+        .account-menu-panel {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px;
+            background: #fff; color: #1a1a2e; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
+            padding: 10px 0; z-index: 200;
+        }
+        .account-menu-panel.open { display: block; }
+        .account-menu-label {
+            display: block; padding: 6px 14px 4px; font-size: 0.68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .04em; color: #64748b;
+        }
+        .account-menu-panel select {
+            display: block; width: calc(100% - 28px); margin: 0 14px 8px;
+            padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.82rem;
+        }
+        .account-menu-panel a,
+        .account-menu-panel button.menu-item {
+            display: block; width: 100%; text-align: left; padding: 9px 14px; font-size: 0.85rem;
+            border: none; background: none; color: #1a1a2e; cursor: pointer; text-decoration: none;
+        }
+        .account-menu-panel a:hover,
+        .account-menu-panel button.menu-item:hover { background: #f1f5f9; }
+        .account-menu-panel .menu-item-danger { color: #b91c1c; }
+        .account-menu-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
         .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
         .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+        .search-box input {
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25);
+            background: rgba(255,255,255,.1); color: white; font-size: .82rem; width: 160px;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,.45); }
+        .mobile-logout-only { display: none; }
         .nav-external-link { display: none; text-decoration: none; }
 
         /* ── Hamburger menu ── */
@@ -342,13 +403,15 @@
                 padding-top: env(safe-area-inset-top); 
                 padding-bottom: env(safe-area-inset-bottom); 
             }
-            header { padding: 0 12px; position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); min-width: 0; overflow: hidden; }
+            .header-top { padding: 0 12px; padding-top: env(safe-area-inset-top); height: auto; min-height: 48px; }
             header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .user-menu { flex-shrink: 0; gap: 4px; }
-            .user-menu .logout-btn { padding: 4px 8px; font-size: 0.72rem; }
+            .header-nav-row { display: block; position: absolute; width: 0; height: 0; overflow: visible; }
+            .user-menu { flex-shrink: 0; }
+            .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
+            .account-menu-panel { position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 12px 12px 0 0; max-height: 70vh; overflow-y: auto; }
             #link-google-btn { display: none !important; }
             .hamburger { display: flex; align-items: center; }
-            header .badge { display: none; }
+            .status-footer { display: none; }
             nav {
                 display: none; position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
                 background: #1a1a2e; flex-direction: column; padding: 20px 0; z-index: 100;
@@ -360,9 +423,11 @@
             nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            .user-menu { margin-left: auto; gap: 6px; flex-shrink: 0; }
-            .user-menu .username { display: none; }
-            .user-menu .header-mobile-hide { display: none; }
+            .user-menu { margin-left: auto; }
+            .account-trigger { display: none; }
+            .account-menu-panel { display: none !important; }
+            .mobile-logout-only { display: inline-block; }
+            .search-box { display: none; }
             .nav-external-link { display: block; }
             header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             nav #custom-tab-buttons { display: contents; }
@@ -377,7 +442,6 @@
             #job-list .btn-sm { min-height: 44px; min-width: 44px; padding: 8px 12px; font-size: 0.85rem; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
             #dash-detail-row { grid-template-columns: 1fr !important; }
-            .search-box { display: none; }
         }
 
         @media (max-width: 640px) {
@@ -394,45 +458,54 @@
         }
     </style>
 </head>
-<body>
+<body class="has-status-footer">
 
 <header>
-    <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
-    <h1>Tatalance <span style="font-size:0.6rem; color: #4ecca3;">(LOCAL WIFI TEST)</span></h1>
-    <span class="badge badge-poc">POC</span>
-    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
-    <nav id="main-nav">
-        <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')">Dashboard</button>
-        <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
-        <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
-        <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
-        <button class="tab-btn" id="btn-jobs" onclick="showTab('jobs')">Jobs</button>
-        <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
-        <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
-        <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
-        <span id="custom-tab-buttons"></span>
-        <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
-        <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile">Freelance</a>
-        <button class="help-btn" onclick="openHelp()" title="Help">?</button>
-    </nav>
-    <div id="profile-switcher-wrap" style="margin-left:8px;display:flex;align-items:center;gap:6px;">
-        <span style="color:rgba(255,255,255,.6);font-size:0.72rem;">Profile:</span>
-        <select id="profile-switcher" onchange="switchProfile(this.value)" style="font-size:0.78rem;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;min-width:140px;">
-            <option value="">All (account)</option>
-        </select>
+    <div class="header-top">
+        <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Open menu">&#9776;</button>
+        <h1>Tatalance</h1>
+        <div class="header-spacer"></div>
+        <div class="header-actions">
+            <div class="search-box" style="position:relative;">
+                <input type="search" id="global-search" placeholder="Search…" autocomplete="off" aria-label="Search clients, drivers, and rides"
+                       oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)">
+                <div id="search-results" style="display:none;position:absolute;top:100%;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
+            </div>
+            <div class="user-menu">
+                <button type="button" class="account-trigger" id="account-menu-btn" onclick="toggleAccountMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel">
+                    <span id="username-display">Account</span> ▾
+                </button>
+                <div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
+                    <span class="account-menu-label">Profile</span>
+                    <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
+                        <option value="">All (account)</option>
+                    </select>
+                    <div class="account-menu-divider"></div>
+                    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none">Link Google account</button>
+                    <a href="/freelance.html" class="menu-item nav-external-link" role="menuitem">Freelance mode</a>
+                    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem">Change password</button>
+                    <div class="account-menu-divider"></div>
+                    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem">Logout</button>
+                </div>
+            </div>
+            <button class="logout-btn mobile-logout-only" onclick="doLogout()" aria-label="Logout">Logout</button>
+        </div>
     </div>
-    <div class="search-box" style="position:relative;margin-left:12px;">
-        <input type="text" id="global-search" placeholder="Search..." autocomplete="off"
-               style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:white;font-size:.85rem;width:180px;"
-               oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)">
-        <div id="search-results" style="display:none;position:absolute;top:100%;left:0;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
-    </div>
-    <div class="user-menu">
-        <span class="username" id="username-display"></span>
-        <button class="logout-btn" id="link-google-btn" onclick="linkGoogle()" style="display:none">Link Google</button>
-        <a href="/freelance.html" class="logout-btn header-mobile-hide" style="text-decoration:none;line-height:1.6">Freelance</a>
-        <button class="logout-btn header-mobile-hide" onclick="openChangePassword()">Password</button>
-        <button class="logout-btn" onclick="doLogout()">Logout</button>
+    <div class="header-nav-row">
+        <nav id="main-nav" aria-label="Main navigation">
+            <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
+            <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
+            <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
+            <button class="tab-btn" id="btn-jobs" onclick="showTab('jobs')">Jobs</button>
+            <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
+            <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
+            <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
+            <span id="custom-tab-buttons"></span>
+            <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table" aria-label="Create custom table">+</button>
+            <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile">Freelance</a>
+            <button class="help-btn" onclick="openHelp()" title="Help" aria-label="Help">?</button>
+        </nav>
     </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
@@ -1047,6 +1120,23 @@
         document.getElementById('main-nav').classList.remove('open');
         document.getElementById('nav-overlay').classList.remove('open');
     }
+    function toggleAccountMenu() {
+        const panel = document.getElementById('account-menu-panel');
+        const btn = document.getElementById('account-menu-btn');
+        if (!panel || !btn) return;
+        const open = !panel.classList.contains('open');
+        panel.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function closeAccountMenu() {
+        const panel = document.getElementById('account-menu-panel');
+        const btn = document.getElementById('account-menu-btn');
+        if (panel) panel.classList.remove('open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.user-menu')) closeAccountMenu();
+    });
 
     /* ── Tab switching ── */
     function showTab(name) {
@@ -3094,7 +3184,7 @@
             const el = document.getElementById('username-display');
             if (el) el.textContent = data.username;
             const linkBtn = document.getElementById('link-google-btn');
-            if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = '';
+            if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = 'block';
 
             // Only load data after confirmed auth — prevents extra fetches + partial UI that can look like hang on mobile
             loadCustomTables();
@@ -3426,5 +3516,10 @@
         }
     };
 </script>
+
+<footer class="status-footer" aria-label="Environment status">
+    <span class="badge badge-poc">POC</span>
+    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
+</footer>
 </body>
 </html>
