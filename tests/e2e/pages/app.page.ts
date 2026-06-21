@@ -38,7 +38,7 @@ export class AppPage {
 
   async goto() {
     await this.page.goto('/');
-    await this.page.waitForLoadState('networkidle');
+    await expect(this.page.getByRole('heading', { name: 'Tatalance' })).toBeVisible();
   }
 
   /** Click a nav tab by name */

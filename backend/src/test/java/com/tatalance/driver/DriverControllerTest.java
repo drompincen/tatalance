@@ -2,7 +2,7 @@ package com.tatalance.driver;
 
 import com.tatalance.SecurityConfig;
 import com.tatalance.ride.RideRepository;
-import com.tatalance.ride.RideStatus;
+import com.tatalance.ride.RideStatus; // JobRepository extension + unified jobs collection #93 backend refactor
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.BeforeEach;

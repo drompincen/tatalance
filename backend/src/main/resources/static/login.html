@@ -6,17 +6,20 @@
     <title>Sign in — Tatalance</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { height: -webkit-fill-available; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
             color: #1a1a2e;
             min-height: 100dvh;
+            min-height: -webkit-fill-available;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
             padding-top: calc(24px + env(safe-area-inset-top));
             padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            overflow: auto;
         }
         .login-card {
             background: white;
@@ -105,6 +108,10 @@
         @media (max-height: 500px) {
             body { align-items: flex-start; padding-top: 16px; }
         }
+        @media (max-height: 600px) {
+            body { align-items: flex-start; padding-top: 8px; padding-bottom: 8px; }
+            .login-card { padding: 16px 12px; }
+        }
         .message {
             padding: 10px 12px;
             border-radius: 6px;
@@ -188,8 +195,18 @@
         var btn = form.querySelector('button');
         var msgError = document.getElementById('msg-error');
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+        // Inject CSRF token (read from cookie set by Spring) into the form.
+        // Without this, Spring Security CsrfFilter rejects the POST /login (403 or back to login page).
+        // getCsrfToken helper was defined but never used — this was causing form login to fail.
+        form.addEventListener('submit', function() {
+            var token = getCsrfToken();
+            if (token) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = '_csrf';
+                input.value = token;
+                form.appendChild(input);
+            }
             btn.disabled = true;
             btn.textContent = 'Signing in\u2026';
             msgError.style.display = 'none';

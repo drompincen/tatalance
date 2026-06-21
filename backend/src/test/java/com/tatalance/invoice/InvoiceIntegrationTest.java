@@ -25,7 +25,7 @@ class InvoiceIntegrationTest {
     @BeforeEach
     void cleanUp() {
         mongoTemplate.dropCollection("invoices");
-        mongoTemplate.dropCollection("rides");
+        mongoTemplate.dropCollection("jobs");
         mongoTemplate.dropCollection("clients");
         mongoTemplate.dropCollection("drivers");
         this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
@@ -62,7 +62,7 @@ class InvoiceIntegrationTest {
     }
 
     @Test
-    void should_generateInvoice_fromCompletedRide() {
+    void should_generateInvoice_fromCompletedRide() { // #93: uses ride endpoints but model now unifies under Job base
         var rideId = createCompletedRide();
 
         var response = restTemplate.postForEntity("/api/invoices",

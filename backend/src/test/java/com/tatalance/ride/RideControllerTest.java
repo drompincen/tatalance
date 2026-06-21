@@ -7,6 +7,7 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
 import com.tatalance.driver.Driver;
 import com.tatalance.driver.DriverRepository;
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,7 @@ class RideControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private RideRepository rideRepository;
+    private RideRepository rideRepository; // JobRepository base in #93; RideRepository extends for ride queries + type filter
 
     @MockBean
     private ClientRepository clientRepository;
@@ -62,6 +63,9 @@ class RideControllerTest {
 
     @MockBean
     private ActivityLogger activityLogger;
+
+    @MockBean
+    private ProfileRepository profileRepository;
 
     @BeforeEach
     void setUp() {
@@ -360,6 +364,17 @@ class RideControllerTest {
     }
 
     @Test
+    void should_return409_when_startingAlreadyInProgressRide() throws Exception {
+        // M4 (#34) — double-start guard
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.IN_PROGRESS);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/start"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void should_completeRide_andCalculateBillable() throws Exception {
         // M4 (#34) — complete endpoint, transitions to COMPLETED + billable = base + extras
         var ride = sampleRide();
@@ -485,5 +500,29 @@ class RideControllerTest {
 
         mockMvc.perform(post("/api/rides/unknown/cancel"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void should_createServiceJob_forFreelance_Issue93() throws Exception {
+        // Category D: direct /jobs endpoint for SERVICE jobs (freelance/developer) — Issue #93
+        when(clientRepository.findByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(Optional.of(sampleClient()));
+        when(rideRepository.save(any(Job.class))).thenAnswer(inv -> {
+            Job j = inv.getArgument(0);
+            j.setId("job001");
+            return j;
+        });
+
+        mockMvc.perform(post("/api/jobs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clientId":"cli001","pickupDateTime":"2028-06-10T10:00:00Z",
+                                 "pickupLocation":"Landing page dev","dropoffLocation":"Freelance Job",
+                                 "pricingMode":"HOURLY","hourlyRate":20,"notes":"EST:3|scope"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value("job001"))
+                .andExpect(jsonPath("$.status").value("SCHEDULED"))
+                .andExpect(jsonPath("$.clientName").value("Ana Torres"))
+                .andExpect(jsonPath("$.hourlyRate").value(20));
     }
 }

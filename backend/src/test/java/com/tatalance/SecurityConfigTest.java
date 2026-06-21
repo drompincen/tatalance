@@ -7,8 +7,9 @@ import com.tatalance.customtable.CustomTableRepository;
 import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
-import com.tatalance.ride.RideRepository;
+import com.tatalance.ride.RideRepository; // updated during Category A Job model refactor (Issue #93)
 import com.tatalance.ride.TimerService;
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -69,6 +70,12 @@ class SecurityConfigTest {
     AuthHelper authHelper;
 
     @MockBean
+    ProfileRepository profileRepository;
+
+    @MockBean
+    TimerService timerService;
+
+    @MockBean
     ActivityLogger activityLogger;
 
     @MockBean
@@ -85,6 +92,18 @@ class SecurityConfigTest {
         mockMvc.perform(get("/api/info"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.googleOAuthEnabled").value(false));
+    }
+
+    @Test
+    void should_permitRegisterPage_withoutAuth() throws Exception {
+        mockMvc.perform(get("/register.html"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void should_permitForgotPasswordPage_withoutAuth() throws Exception {
+        mockMvc.perform(get("/forgot-password.html"))
+            .andExpect(status().isOk());
     }
 
     @Test

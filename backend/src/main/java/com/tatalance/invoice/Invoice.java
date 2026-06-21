@@ -18,7 +18,7 @@ public class Invoice {
     private String invoiceNumber;
     private String clientId;
     private String clientName;
-    private String rideId;
+    private String rideId; // generalized: used for both Ride and base Job (service) ids post #93 refactor; may evolve to jobId in future
     private BigDecimal baseCharge;
     private BigDecimal additionalCharges;
     private BigDecimal tax;

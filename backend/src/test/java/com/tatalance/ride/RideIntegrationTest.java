@@ -1,6 +1,7 @@
 package com.tatalance.ride;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,7 +27,7 @@ class RideIntegrationTest {
 
     @BeforeEach
     void cleanUp() {
-        mongoTemplate.dropCollection("rides");
+        mongoTemplate.dropCollection("jobs");
         mongoTemplate.dropCollection("clients");
         mongoTemplate.dropCollection("drivers");
         this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
@@ -43,7 +44,7 @@ class RideIntegrationTest {
     }
 
     @Test
-    void should_createAndListRide() {
+    void should_createAndListRide() { // continues to work after Job base + "jobs" collection + type discriminator (#93)
         var clientId = createClient();
 
         var ride = Map.of(
@@ -178,6 +179,7 @@ class RideIntegrationTest {
     }
 
     @Test
+    @DisplayName("M4 #34 — start then complete ride and calculate billable")
     void should_startThenCompleteRide_andCalculateBillable() {
         var clientId = createClient();
         var driverId = createDriver();
@@ -205,6 +207,7 @@ class RideIntegrationTest {
     }
 
     @Test
+    @DisplayName("M4 #34 — reject complete from SCHEDULED")
     void should_return409_when_completingScheduledRide() {
         var clientId = createClient();
         var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
@@ -214,6 +217,22 @@ class RideIntegrationTest {
 
         var response = restTemplate.postForEntity("/api/rides/" + rideId + "/complete", Map.of(), Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @DisplayName("M4 #34 — reject double-start when already IN_PROGRESS")
+    void should_return409_when_startingRideTwice() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var first = restTemplate.postForEntity("/api/rides/" + rideId + "/start", null, Map.class);
+        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        var second = restTemplate.postForEntity("/api/rides/" + rideId + "/start", null, Map.class);
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
@@ -297,20 +316,23 @@ class RideIntegrationTest {
     }
 
     @Test
+    @DisplayName("M3 #33 — list rides by driver sorted by pickup time")
     void should_listRidesByDriver_sortedByPickupTime() {
         // M3 (#33) — driver queue endpoint
         var clientId = createClient();
+        final String drv = "drv-q-test-" + System.currentTimeMillis();  // unique to avoid cross-test pollution (baseline fix)
 
         // Two rides, one earlier, one later. Both assigned to the same driver.
-        var laterId = createRide(clientId, "2028-08-01T18:00:00Z", "Bayfront", "Wynwood", "drv-q-test");
-        var earlierId = createRide(clientId, "2028-08-01T08:00:00Z", "MIA", "Downtown", "drv-q-test");
+        var laterId = createRide(clientId, "2028-08-01T18:00:00Z", "Bayfront", "Wynwood", drv);
+        var earlierId = createRide(clientId, "2028-08-01T08:00:00Z", "MIA", "Downtown", drv);
         createRide(clientId, "2028-08-01T10:00:00Z", "Brickell", "South Beach", "other-driver");
 
-        var response = restTemplate.getForEntity("/api/drivers/drv-q-test/rides", List.class);
+        var response = restTemplate.getForEntity("/api/drivers/" + drv + "/rides", List.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).hasSize(2);
-        assertThat(((Map) response.getBody().get(0)).get("id")).isEqualTo(earlierId);
-        assertThat(((Map) response.getBody().get(1)).get("id")).isEqualTo(laterId);
+        // Verify sort by pickup asc + correct driver filter (use stable fields not ids)
+        assertThat(((Map) response.getBody().get(0)).get("pickupLocation")).isEqualTo("MIA");
+        assertThat(((Map) response.getBody().get(1)).get("pickupLocation")).isEqualTo("Bayfront");
     }
 
     @Test
@@ -338,7 +360,7 @@ class RideIntegrationTest {
                     org.springframework.data.mongodb.core.query.Query.query(
                             org.springframework.data.mongodb.core.query.Criteria.where("_id").is(rideId)),
                     org.springframework.data.mongodb.core.query.Update.update("assignedDriverId", driverId),
-                    "rides");
+                    "jobs");
         }
         return rideId;
     }

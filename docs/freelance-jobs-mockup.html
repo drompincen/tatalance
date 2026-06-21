@@ -2,274 +2,926 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Tatalance — Freelance Jobs Mockup ($20/hr)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tatalance — Freelance Jobs Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
     :root {
-      --bg: #f8f9fc; --surface: #fff; --text: #111827; --muted: #6b7280;
-      --border: #e5e7eb; --primary: #6366f1; --primary-soft: #eef2ff;
-      --success: #22c55e; --radius: 14px; --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --primary: #0f3460;
     }
-    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; }
-
-    .banner {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff;
-      padding: 10px 20px; font-size: .78rem; text-align: center;
+    
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
     }
-    .banner a { color: #fde68a; }
-
-    .layout { display: flex; max-width: 1200px; margin: 0 auto; min-height: calc(100dvh - 36px); }
-    .side {
-      width: 220px; padding: 24px 16px; border-right: 1px solid var(--border);
-      background: var(--surface); flex-shrink: 0;
-    }
-    .side h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -.03em; }
-    .side .rate-badge {
-      margin-top: 12px; padding: 12px; background: var(--primary-soft); border-radius: var(--radius);
-      border: 1px solid #c7d2fe;
-    }
-    .side .rate-badge .lbl { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
-    .side .rate-badge .amt { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
-    .nav { margin-top: 24px; display: flex; flex-direction: column; gap: 4px; }
-    .nav button {
-      text-align: left; padding: 10px 12px; border: none; background: transparent;
-      border-radius: 10px; font-size: .88rem; cursor: pointer; color: var(--muted);
-    }
-    .nav button.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
-
-    .main { flex: 1; padding: 24px; overflow: auto; }
-    .view { display: none; }
-    .view.active { display: block; }
-    h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -.02em; }
-
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-    .stat .l { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
-    .stat .v { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
-
-    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-    .card h3 { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; font-weight: 700; }
-
-    label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 5px; color: #374151; }
-    input, select, textarea {
-      width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 16px; margin-bottom: 12px; background: #fafafa;
-    }
-    input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
-    .btn {
-      width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--primary);
-      color: #fff; font-weight: 700; font-size: .9rem; cursor: pointer;
-    }
-    .btn:hover { filter: brightness(1.05); }
-    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
-
-    .job {
-      padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
-      margin-bottom: 10px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
-    }
-    .job.active-job { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
-    .job h4 { font-size: .95rem; font-weight: 700; }
-    .job p { font-size: .8rem; color: var(--muted); margin-top: 4px; }
-    .badge { font-size: .65rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; }
-    .badge.scheduled { background: #dbeafe; color: #1d4ed8; }
-    .badge.progress { background: #fef3c7; color: #b45309; }
-    .badge.done { background: #dcfce7; color: #15803d; }
-
-    .timer-box {
-      text-align: center; padding: 28px 16px; background: linear-gradient(180deg, var(--primary-soft), var(--surface));
-      border-radius: var(--radius); margin: 16px 0; border: 1px solid #c7d2fe;
-    }
-    .timer-box .clock {
-      font-size: 3rem; font-weight: 800; font-variant-numeric: tabular-nums;
-      letter-spacing: -.04em; color: var(--primary); line-height: 1;
-    }
-    .timer-box .billable { font-size: 1.1rem; font-weight: 700; margin-top: 8px; color: var(--success); }
-    .timer-btns { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
-    .timer-btns button { width: auto; padding: 10px 20px; }
-
-    .invoice-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 0; border-bottom: 1px solid var(--border); font-size: .88rem;
+    
+    .font-display {
+      font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif;
+      font-weight: 600;
     }
 
-    @media (max-width: 768px) {
-      .layout { flex-direction: column; }
-      .side { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-      .nav { flex-direction: row; overflow-x: auto; }
-      .grid { grid-template-columns: 1fr; }
+    .app-header {
+      background: #1a1a2e;
+      color: white;
+    }
+
+    .nav-tab {
+      position: relative;
+      padding: 10px 20px;
+      font-weight: 500;
+      color: #6b7280;
+      transition: all 0.1s ease;
+    }
+    
+    .nav-tab.active {
+      color: white;
+      font-weight: 600;
+    }
+    
+    .nav-tab.active:after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: #0f3460;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      border: 1px solid #f1f5f9;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .status-badge {
+      font-size: 0.7rem;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .job-card {
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    
+    .job-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .metric-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .mock-table th {
+      font-weight: 600;
+      color: #64748b;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .live-timer {
+      font-family: ui-monospace, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rate-pill {
+      background: #ecfdf5;
+      color: #10b981;
+      font-weight: 700;
+      padding: 1px 10px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+    }
+
+    .app-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .demo-note {
+      font-size: 0.75rem;
+      background: #fefce8;
+      border: 1px solid #fde047;
     }
   </style>
 </head>
-<body>
-
-<div class="banner">
-  Mockup for <strong>GitHub issue #93</strong> — inspired by
-  <a href="https://clockify.me/" target="_blank" rel="noopener">Clockify</a> time-tracking UI +
-  Behance <em>Freelance / SaaS dashboard</em> patterns. Open locally: <code>docs/freelance-jobs-mockup.html</code>
-</div>
-
-<div class="layout">
-  <aside class="side">
-    <h1>Tatalance</h1>
-    <p style="font-size:.78rem;color:var(--muted);margin-top:4px">Freelance mode</p>
-    <div class="rate-badge">
-      <div class="lbl">Your hourly rate</div>
-      <div class="amt">$<span id="rateDisplay">20</span>/hr</div>
-      <input type="number" id="rateInput" value="20" min="1" step="0.5" style="margin-top:8px;margin-bottom:0;font-size:14px"
-             onchange="document.getElementById('rateDisplay').textContent=this.value; updateBillable()">
-    </div>
-    <nav class="nav">
-      <button class="active" data-view="dash" onclick="go('dash')">Dashboard</button>
-      <button data-view="jobs" onclick="go('jobs')">Jobs</button>
-      <button data-view="clients" onclick="go('clients')">Clients</button>
-      <button data-view="invoices" onclick="go('invoices')">Invoices</button>
-    </nav>
-  </aside>
-
-  <main class="main">
-    <section class="view active" id="view-dash">
-      <h2>Good afternoon, Luciano</h2>
-      <div class="stats">
-        <div class="stat"><div class="l">Active jobs</div><div class="v" id="statActive">1</div></div>
-        <div class="stat"><div class="l">Hours this week</div><div class="v">12.5</div></div>
-        <div class="stat"><div class="l">Revenue (month)</div><div class="v">$1,050</div></div>
-        <div class="stat"><div class="l">Outstanding</div><div class="v">$160</div></div>
+<body class="bg-slate-50">
+  <!-- Top Intro -->
+  <div class="border-b bg-white">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-x-3">
+        <div class="w-9 h-9 bg-[#0f3460] rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-briefcase text-white text-xl"></i>
+        </div>
+        <div>
+          <span class="font-display text-2xl font-semibold tracking-tighter">Tatalance</span>
+          <span class="ml-2 text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-semibold">BETA</span>
+        </div>
+        <div class="text-sm px-3 py-1 bg-slate-100 rounded-full text-slate-500 font-medium">Freelance Mode</div>
       </div>
-      <div class="card">
-        <h3>Active timer</h3>
-        <div class="timer-box">
-          <div style="font-size:.85rem;color:var(--muted);margin-bottom:8px">API integration — Acme Corp</div>
-          <div class="clock" id="dashClock">02:15:00</div>
-          <div class="billable" id="dashBillable">Billable: $45.00</div>
-          <div class="timer-btns">
-            <button class="btn btn-outline" onclick="go('jobs')">View job</button>
-            <button class="btn" onclick="completeJob()">Complete &amp; invoice</button>
+      
+      <div class="flex items-center gap-x-4 text-sm">
+        <div class="flex items-center gap-x-2">
+          <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+            <i class="fa-solid fa-user text-emerald-600"></i>
+          </div>
+          <div>
+            <div class="font-semibold">Alex Rivera</div>
+            <div class="text-[10px] text-emerald-600 -mt-0.5">Freelance Developer • $20/hr fixed</div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <section class="view" id="view-jobs">
-      <h2>Jobs</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Book a job</h3>
-          <label>Client</label>
-          <select><option>Acme Corp</option><option>Startup XYZ</option></select>
-          <label>Job title</label>
-          <input placeholder="e.g. API integration sprint">
-          <label>Scope / notes</label>
-          <textarea rows="2" placeholder="Backend endpoints, testing…"></textarea>
-          <label>Date &amp; time</label>
-          <input type="datetime-local">
-          <label>Estimated hours</label>
-          <input type="number" value="4" min="0.5" step="0.5">
-          <button class="btn" onclick="alert('Mockup: POST /api/rides with pricingMode=HOURLY')">Book job</button>
-        </div>
+  <div class="max-w-6xl mx-auto px-6 pt-8">
+    
+    <!-- Vision Header -->
+    <div class="mb-8">
+      <div class="flex items-start justify-between">
         <div>
-          <div class="job active-job" id="activeJob">
-            <div>
-              <h4>API integration — Acme Corp</h4>
-              <p>Today · HOURLY @ $<span class="rate-copy">20</span>/hr</p>
+          <h1 class="font-display text-4xl font-semibold tracking-tighter text-slate-900">Freelance Jobs</h1>
+          <p class="mt-2 text-lg text-slate-600 max-w-lg">
+            Same platform. New use case. A freelance developer managing client work with a fixed hourly rate.
+          </p>
+          <div class="mt-3 flex items-center gap-x-2">
+            <div class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700">
+              <i class="fa-solid fa-dollar-sign mr-1.5"></i>
+              <span>Hourly rate locked at $20</span>
             </div>
-            <span class="badge progress">In progress</span>
-            <div style="grid-column:1/-1">
-              <div class="timer-box" style="margin:0">
-                <div class="clock" id="jobClock">02:15:00</div>
-                <div class="billable" id="jobBillable">$45.00 billable</div>
-                <div class="timer-btns">
-                  <button class="btn btn-outline" id="pauseBtn" onclick="togglePause()">Pause</button>
-                  <button class="btn" onclick="completeJob()">Complete</button>
+            <span class="text-xs text-slate-400">Generalizing the Ride → Job model</span>
+          </div>
+        </div>
+        
+        <div class="hidden md:block text-right text-xs">
+          <div class="text-slate-400">This mockup shows:</div>
+          <div class="font-medium text-slate-600">Client booking → Job assignment → Live time tracking → Automatic invoicing</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Shell -->
+    <div class="app-container bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+      
+      <!-- App Header -->
+      <div class="app-header px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-x-4">
+          <div class="flex items-center gap-x-2">
+            <i class="fa-solid fa-briefcase text-xl"></i>
+            <span class="font-semibold text-lg">Tatalance</span>
+          </div>
+          <div class="px-2.5 py-px bg-white/20 text-white/90 text-xs font-medium rounded">FREELANCE</div>
+        </div>
+        
+        <div class="flex items-center gap-x-3">
+          <!-- Rate indicator -->
+          <div class="flex items-center bg-white/10 rounded-full px-3 py-1 text-sm">
+            <span class="text-emerald-300 font-medium">$20</span>
+            <span class="ml-1.5 text-white/70">/hr fixed</span>
+          </div>
+          
+          <div class="flex items-center gap-x-1.5 bg-white/10 px-2 py-1 rounded-full text-sm">
+            <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+            <span class="text-xs font-medium">Available</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="px-6 pt-1 border-b flex items-center gap-x-1 bg-slate-50">
+        <button onclick="switchTab('dashboard')" class="nav-tab px-5 py-3 text-sm active" id="tab-dashboard">Dashboard</button>
+        <button onclick="switchTab('clients')" class="nav-tab px-5 py-3 text-sm" id="tab-clients">Clients</button>
+        <button onclick="switchTab('jobs')" class="nav-tab px-5 py-3 text-sm" id="tab-jobs">Jobs</button>
+        <button onclick="switchTab('invoices')" class="nav-tab px-5 py-3 text-sm" id="tab-invoices">Invoices</button>
+      </div>
+
+      <!-- Content Area -->
+      <div class="p-6">
+
+        <!-- DASHBOARD -->
+        <div id="pane-dashboard" class="tab-pane">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="card p-4">
+              <div class="text-xs text-slate-500">Active Jobs</div>
+              <div class="metric-value text-slate-900 mt-1">4</div>
+              <div class="text-xs text-emerald-600 mt-1">2 in progress</div>
+            </div>
+            <div class="card p-4">
+              <div class="text-xs text-slate-500">Hours Logged (Feb)</div>
+              <div class="metric-value text-slate-900 mt-1">38.5</div>
+              <div class="flex items-center gap-x-1 mt-1">
+                <div class="text-xs font-medium text-emerald-600">+$770</div>
+              </div>
+            </div>
+            <div class="card p-4">
+              <div class="text-xs text-slate-500">Revenue This Month</div>
+              <div class="metric-value text-emerald-600 mt-1">$770</div>
+              <div class="text-xs mt-1">at $20/hr</div>
+            </div>
+            <div class="card p-4">
+              <div class="text-xs text-slate-500">Avg. Job Duration</div>
+              <div class="metric-value text-slate-900 mt-1">6.4h</div>
+              <div class="text-xs text-slate-400">+1.2h vs last month</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <!-- Recent Activity -->
+            <div class="lg:col-span-3 card p-5">
+              <div class="section-title mb-3">Recent Jobs</div>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center border-b pb-3">
+                  <div>
+                    <div class="font-medium">Landing page for TechFlow</div>
+                    <div class="text-xs text-slate-500">Acme Inc • 4.5h logged</div>
+                  </div>
+                  <div>
+                    <span class="status-badge bg-amber-100 text-amber-700">IN PROGRESS</span>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center border-b pb-3">
+                  <div>
+                    <div class="font-medium">API integration for Atlas</div>
+                    <div class="text-xs text-slate-500">Vanguard Labs • Completed</div>
+                  </div>
+                  <div class="text-right">
+                    <span class="status-badge bg-emerald-100 text-emerald-700">COMPLETED</span>
+                    <div class="text-xs text-emerald-600 font-medium">8h • $160</div>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <div>
+                    <div class="font-medium">Dashboard redesign</div>
+                    <div class="text-xs text-slate-500">Nova Corp • Scheduled</div>
+                  </div>
+                  <span class="status-badge bg-blue-100 text-blue-700">SCHEDULED</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="lg:col-span-2 card p-5">
+              <div class="section-title mb-3">This Week</div>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-slate-600">Billable hours</span>
+                    <span class="font-semibold">14.5 / 20</span>
+                  </div>
+                  <div class="h-2 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                    <div class="h-2 w-[72%] bg-emerald-500 rounded-full"></div>
+                  </div>
+                </div>
+                
+                <div class="pt-2 border-t">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-xs text-slate-500">Current rate</div>
+                      <div class="text-xl font-semibold text-emerald-600">$20<span class="text-xs text-slate-500">/hr</span></div>
+                    </div>
+                    <button onclick="editRate()" 
+                            class="text-xs px-3 py-1 border rounded-full hover:bg-slate-50 flex items-center gap-x-1 text-slate-600">
+                      <i class="fa-solid fa-edit text-xs"></i> 
+                      <span>Edit rate</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="job">
-            <div><h4>Landing page fixes — Startup XYZ</h4><p>Thu 10 AM · 3h estimated</p></div>
-            <span class="badge scheduled">Scheduled</span>
+        </div>
+
+        <!-- CLIENTS -->
+        <div id="pane-clients" class="tab-pane hidden">
+          <div class="flex justify-between items-center mb-4">
+            <div class="section-title">Clients (4)</div>
+            <button onclick="addClient()" class="flex items-center gap-x-2 bg-[#0f3460] text-white text-sm px-4 py-2 rounded-xl hover:bg-[#0a2440]">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add Client</span>
+            </button>
           </div>
-          <div class="job" style="opacity:.65">
-            <div><h4>Code review — Acme Corp</h4><p>Completed · 1h 30m · $30 invoiced</p></div>
-            <span class="badge done">Done</span>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="card p-4">
+              <div class="flex justify-between">
+                <div>
+                  <div class="font-semibold">TechFlow Inc</div>
+                  <div class="text-sm text-slate-500">Sarah Chen • 3 jobs</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Active</div>
+                </div>
+              </div>
+              <div class="text-xs mt-4 text-slate-400">Last job: Feb 12 • 4.5h</div>
+            </div>
+            <div class="card p-4">
+              <div class="flex justify-between">
+                <div>
+                  <div class="font-semibold">Vanguard Labs</div>
+                  <div class="text-sm text-slate-500">Marcus Torres • 2 jobs</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Active</div>
+                </div>
+              </div>
+              <div class="text-xs mt-4 text-slate-400">Last job: Feb 9 • 8h</div>
+            </div>
+            <div class="card p-4">
+              <div class="flex justify-between">
+                <div>
+                  <div class="font-semibold">Nova Corp</div>
+                  <div class="text-sm text-slate-500">Priya Patel • 1 job</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">New</div>
+                </div>
+              </div>
+              <div class="text-xs mt-4 text-slate-400">Scheduled for Feb 20</div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <section class="view" id="view-clients">
-      <h2>Clients</h2>
-      <div class="card">
-        <div class="invoice-row"><strong>Acme Corp</strong><span>8 jobs · $840 spent</span></div>
-        <div class="invoice-row"><strong>Startup XYZ</strong><span>2 jobs · $210 spent</span></div>
-      </div>
-    </section>
+        <!-- JOBS (Core of the mockup) -->
+        <div id="pane-jobs" class="tab-pane">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="section-title">Active &amp; Upcoming Jobs</div>
+            </div>
+            <button onclick="showBookJobModal()" 
+                    class="flex items-center gap-x-2 px-4 py-2 text-sm font-semibold rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white">
+              <i class="fa-solid fa-plus mr-1"></i> 
+              <span>Book New Job</span>
+            </button>
+          </div>
 
-    <section class="view" id="view-invoices">
-      <h2>Invoices</h2>
-      <div class="card">
-        <div class="invoice-row">
-          <div><strong>INV-2026-008</strong><br><span style="font-size:.8rem;color:var(--muted)">Acme Corp · 2h 15m × $20 + tax</span></div>
-          <span class="badge done">Paid · $48.60</span>
+          <div class="space-y-3" id="jobs-list">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Example of a completed job -->
+          <div class="mt-4 pt-4 border-t">
+            <div class="text-xs uppercase text-slate-400 font-medium px-1 mb-2">Completed this week</div>
+            <div class="flex items-center justify-between bg-white border p-3 rounded-2xl text-sm">
+              <div class="flex items-center gap-x-3">
+                <div>
+                  <div class="font-medium">Email template system</div>
+                  <div class="text-xs text-slate-500">StartupX • 5.5h @ $20/hr</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-x-4">
+                <div class="text-right">
+                  <div class="font-semibold text-emerald-600">$110</div>
+                  <div class="text-xs">Invoice #INV-021</div>
+                </div>
+                <span class="px-3 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-xl">COMPLETED</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="invoice-row" id="newInvoice" style="display:none">
-          <div><strong>INV-2026-009</strong><br><span style="font-size:.8rem;color:var(--muted)" id="invDetail"></span></div>
-          <span class="badge scheduled" style="background:#fee2e2;color:#b91c1c">Outstanding</span>
+
+        <!-- INVOICES -->
+        <div id="pane-invoices" class="tab-pane hidden">
+          <div class="section-title mb-3">Recent Invoices</div>
+          
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left border-b">
+                <th class="py-2 px-3">Invoice</th>
+                <th class="py-2 px-3">Client / Job</th>
+                <th class="py-2 px-3">Hours</th>
+                <th class="py-2 px-3">Rate</th>
+                <th class="py-2 px-3 text-right">Total</th>
+                <th class="py-2 px-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="invoices-list" class="text-slate-700">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+      
+      <div class="bg-slate-50 px-6 py-3 text-[10px] border-t flex items-center justify-between text-slate-400">
+        <div>Mockup • Single file • Shows generalization from Rides → Jobs</div>
+        <div class="font-mono">Rate locked • $20/hr</div>
+      </div>
+    </div>
+
+    <!-- Explanatory footer -->
+    <div class="mt-6 max-w-3xl text-xs text-slate-500">
+      <div class="demo-note px-3 py-2 rounded-xl mb-2">
+        <strong>Design notes:</strong> This reuses the existing ride model concepts (status machine, time tracking, billable calculation, invoicing). 
+        The "Driver" concept is generalized to "Freelancer/Service Provider". 
+        Hourly rate can be fixed globally or per job.
+      </div>
+      <div>Next steps after this mockup: update journey doc, create drom-plan, generalize backend entities (Ride → Job).</div>
+    </div>
+  </div>
+
+  <!-- Book Job Modal -->
+  <div id="book-modal" onclick="if (event.target.id === 'book-modal') hideBookJobModal()" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div onclick="event.stopImmediatePropagation()" class="bg-white w-full max-w-md mx-4 rounded-3xl p-6">
+      <div class="flex justify-between mb-5">
+        <div class="font-semibold text-lg">Book a new job</div>
+        <button onclick="hideBookJobModal()" class="text-xl leading-none text-slate-400 hover:text-slate-700">×</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-medium text-slate-600 block mb-1">Client</label>
+          <select id="modal-client" class="w-full border px-3 py-2.5 rounded-2xl text-sm">
+            <option value="TechFlow Inc">TechFlow Inc</option>
+            <option value="Vanguard Labs">Vanguard Labs</option>
+            <option value="Nova Corp">Nova Corp</option>
+            <option value="StartupX">StartupX</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="text-xs font-medium text-slate-600 block mb-1">Job Title</label>
+          <input id="modal-title" type="text" value="Landing page development" class="w-full border px-3 py-2.5 rounded-2xl text-sm">
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600 block mb-1">Hourly Rate</label>
+            <div class="relative">
+              <div class="absolute left-3 top-3 text-slate-500">$</div>
+              <input id="modal-rate" type="text" value="20" disabled class="pl-6 w-full border bg-slate-100 px-3 py-2.5 rounded-2xl text-sm font-semibold">
+            </div>
+            <div class="text-emerald-600 text-xs mt-0.5">Fixed rate</div>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600 block mb-1">Est. Hours</label>
+            <input id="modal-hours" type="number" value="5" class="w-full border px-3 py-2.5 rounded-2xl text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-slate-600 block mb-1">Description / Scope</label>
+          <textarea id="modal-desc" class="w-full border px-3 py-2.5 rounded-2xl text-sm h-16">Build responsive landing page with Tailwind + 3 conversion sections.</textarea>
         </div>
       </div>
-    </section>
-  </main>
-</div>
+      
+      <div class="mt-6 flex gap-x-3">
+        <button onclick="hideBookJobModal()" class="flex-1 py-3 rounded-2xl border text-sm font-semibold">Cancel</button>
+        <button onclick="bookNewJob()" class="flex-1 py-3 rounded-2xl bg-emerald-600 text-white text-sm font-semibold">Book Job</button>
+      </div>
+    </div>
+  </div>
 
-<script>
-  let seconds = 8100, running = true;
-  const rate = () => parseFloat(document.getElementById('rateInput').value) || 20;
-
-  function fmt(sec) {
-    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
-    return [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
-  }
-  function billable(sec) {
-    const hours = sec / 3600;
-    return (hours * rate()).toFixed(2);
-  }
-  function updateBillable() {
-    document.querySelectorAll('.rate-copy').forEach(el => el.textContent = rate());
-    const b = '$' + billable(seconds);
-    document.getElementById('dashBillable').textContent = 'Billable: ' + b;
-    document.getElementById('jobBillable').textContent = b + ' billable';
-  }
-  function tick() {
-    if (!running) return;
-    seconds++;
-    const t = fmt(seconds);
-    document.getElementById('dashClock').textContent = t;
-    document.getElementById('jobClock').textContent = t;
-    updateBillable();
-  }
-  setInterval(tick, 1000);
-
-  function togglePause() {
-    running = !running;
-    document.getElementById('pauseBtn').textContent = running ? 'Pause' : 'Resume';
-  }
-  function go(id) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-' + id).classList.add('active');
-    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
-  }
-  function completeJob() {
-    running = false;
-    const hrs = (seconds/3600).toFixed(2);
-    const sub = hrs + 'h × $' + rate() + ' + 8% tax';
-    document.getElementById('invDetail').textContent = 'Acme Corp · ' + sub;
-    document.getElementById('newInvoice').style.display = 'flex';
-    document.getElementById('activeJob').style.opacity = '0.5';
-    document.getElementById('statActive').textContent = '0';
-    alert('Mockup: POST /api/rides/{id}/complete → POST /api/invoices\nInvoice generated for $' + (billable(seconds)*1.08).toFixed(2));
-    go('invoices');
-  }
-</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind script
+    function initTailwind() {
+      document.querySelectorAll('script[src*="tailwindcss"]').forEach(s => {});
+    }
+    
+    let jobs = [
+      {
+        id: "job-001",
+        client: "TechFlow Inc",
+        title: "Landing page development",
+        rate: 20,
+        loggedHours: 2.5,
+        estHours: 5,
+        status: "IN_PROGRESS",
+        startTime: new Date(Date.now() - (1000 * 60 * 150)).toISOString(), // 2.5h ago
+        isRunning: true
+      },
+      {
+        id: "job-002",
+        client: "Vanguard Labs",
+        title: "API integration & docs",
+        rate: 20,
+        loggedHours: 8,
+        estHours: 8,
+        status: "COMPLETED",
+        isRunning: false
+      },
+      {
+        id: "job-003",
+        client: "Nova Corp",
+        title: "Dashboard v2 - analytics module",
+        rate: 20,
+        loggedHours: 0,
+        estHours: 12,
+        status: "SCHEDULED",
+        isRunning: false
+      }
+    ]
+    
+    let invoices = [
+      { id: "INV-019", client: "Vanguard Labs", job: "API integration & docs", hours: 8, amount: 160, date: "Feb 9", status: "PAID" },
+      { id: "INV-018", client: "TechFlow Inc", job: "Email system refactor", hours: 3.5, amount: 70, date: "Feb 3", status: "PAID" }
+    ]
+    
+    let currentTimerInterval = null;
+    let activeJobId = null;
+    
+    function switchTab(tab) {
+      // Hide all
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      
+      // Remove active from all buttons
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      
+      // Show selected
+      document.getElementById(`pane-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      
+      // Refresh data when needed
+      if (tab === 'jobs') renderJobs();
+      if (tab === 'invoices') renderInvoices();
+    }
+    
+    function renderJobs() {
+      const container = document.getElementById('jobs-list');
+      container.innerHTML = '';
+      
+      jobs.forEach(job => {
+        const isActive = job.isRunning;
+        const currentBillable = (job.loggedHours * job.rate).toFixed(2);
+        
+        let html = `
+          <div class="job-card border rounded-3xl p-4 flex flex-col md:flex-row md:items-center gap-y-3 gap-x-4 bg-white">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-x-2">
+                <span class="font-semibold">${job.title}</span>
+                <span class="rate-pill">$${job.rate}/hr</span>
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5">${job.client}</div>
+            </div>
+            
+            <div class="flex items-center gap-x-4 md:gap-x-6 text-sm">
+              <!-- Hours -->
+              <div class="text-center">
+                <div class="text-xs text-slate-400">LOGGED</div>
+                <div class="font-semibold tabular-nums">
+                  ${job.loggedHours.toFixed(1)}h 
+                  <span class="text-emerald-600">/ ${job.estHours}h</span>
+                </div>
+              </div>
+              
+              <!-- Billable -->
+              <div class="text-center min-w-[72px]">
+                <div class="text-xs text-slate-400">BILLABLE</div>
+                <div class="font-semibold text-emerald-600">$${currentBillable}</div>
+              </div>
+              
+              <!-- Status + Timer -->
+              <div class="flex items-center gap-x-2">
+        `;
+        
+        if (job.status === 'IN_PROGRESS') {
+          html += `
+                <div>
+                  <div class="flex items-center text-amber-600 font-medium text-xs mb-0.5">
+                    <i class="fa-solid fa-circle mr-1.5 text-[8px]"></i> IN PROGRESS
+                  </div>
+                  ${isActive ? `
+                    <div id="timer-${job.id}" class="live-timer font-mono text-base font-semibold text-amber-600">00:00:00</div>
+                  ` : ''}
+                </div>
+                
+                <div class="flex gap-x-2">
+                  ${isActive ? `
+                    <button onclick="stopTimer('${job.id}')" 
+                            class="text-xs px-3 py-1.5 border border-amber-300 text-amber-700 hover:bg-amber-50 rounded-xl font-medium">
+                      <i class="fa-solid fa-pause mr-1"></i> Pause
+                    </button>
+                  ` : `
+                    <button onclick="startTimer('${job.id}')" 
+                            class="text-xs px-3 py-1.5 bg-amber-600 text-white hover:bg-amber-700 rounded-xl font-medium">
+                      <i class="fa-solid fa-play mr-1"></i> Resume
+                    </button>
+                  `}
+                  
+                  <button onclick="completeJob('${job.id}')" 
+                          class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium">
+                    Complete
+                  </button>
+                </div>
+          `;
+        } else if (job.status === 'SCHEDULED') {
+          html += `
+                <div>
+                  <span class="status-badge bg-blue-100 text-blue-700">SCHEDULED</span>
+                </div>
+                <button onclick="startJob('${job.id}')" 
+                        class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium">
+                  <i class="fa-solid fa-play mr-1"></i> Start
+                </button>
+          `;
+        } else {
+          html += `
+                <span class="status-badge bg-emerald-100 text-emerald-700">COMPLETED</span>
+                <div class="text-xs text-emerald-600 font-medium px-1">$${currentBillable}</div>
+          `;
+        }
+        
+        html += `
+              </div>
+            </div>
+          </div>
+        `;
+        
+        container.innerHTML += html;
+      });
+      
+      // Start any active timers
+      jobs.forEach(job => {
+        if (job.isRunning && job.status === 'IN_PROGRESS') {
+          startLiveTimer(job.id);
+        }
+      });
+    }
+    
+    function startLiveTimer(jobId) {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job || !job.isRunning) return;
+      
+      const timerEl = document.getElementById(`timer-${jobId}`);
+      if (!timerEl) return;
+      
+      // Clear previous if exists
+      if (currentTimerInterval) clearInterval(currentTimerInterval);
+      
+      currentTimerInterval = setInterval(() => {
+        const start = new Date(job.startTime).getTime();
+        const elapsedMs = Date.now() - start;
+        const totalHours = job.loggedHours + (elapsedMs / 1000 / 3600);
+        
+        const hours = Math.floor(totalHours);
+        const minutes = Math.floor((totalHours - hours) * 60);
+        const seconds = Math.floor(((totalHours - hours) * 60 - minutes) * 60);
+        
+        timerEl.textContent = 
+          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Update live billable display if visible
+        const billableEls = document.querySelectorAll('.job-card');
+        // Simple refresh for demo
+      }, 1000);
+    }
+    
+    function startTimer(jobId) {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
+      
+      job.isRunning = true;
+      job.startTime = new Date().toISOString();
+      job.status = 'IN_PROGRESS';
+      
+      renderJobs();
+    }
+    
+    function startJob(jobId) {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
+      
+      job.status = 'IN_PROGRESS';
+      job.isRunning = true;
+      job.loggedHours = 0;
+      job.startTime = new Date().toISOString();
+      
+      renderJobs();
+    }
+    
+    function stopTimer(jobId) {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
+      
+      // Save elapsed time
+      if (job.startTime) {
+        const start = new Date(job.startTime).getTime();
+        const elapsedHrs = (Date.now() - start) / 1000 / 3600;
+        job.loggedHours = parseFloat((job.loggedHours + elapsedHrs).toFixed(2));
+      }
+      
+      job.isRunning = false;
+      job.startTime = null;
+      
+      if (currentTimerInterval) {
+        clearInterval(currentTimerInterval);
+        currentTimerInterval = null;
+      }
+      
+      renderJobs();
+    }
+    
+    function completeJob(jobId) {
+      const jobIndex = jobs.findIndex(j => j.id === jobId);
+      const job = jobs[jobIndex];
+      if (!job) return;
+      
+      if (job.isRunning && job.startTime) {
+        const start = new Date(job.startTime).getTime();
+        const elapsedHrs = (Date.now() - start) / 1000 / 3600;
+        job.loggedHours = parseFloat((job.loggedHours + elapsedHrs).toFixed(2));
+      }
+      
+      job.status = 'COMPLETED';
+      job.isRunning = false;
+      
+      // Generate invoice
+      const total = (job.loggedHours * job.rate).toFixed(2);
+      const invoice = {
+        id: `INV-${(100 + invoices.length).toString().padStart(3, '0')}`,
+        client: job.client,
+        job: job.title,
+        hours: job.loggedHours,
+        amount: parseFloat(total),
+        date: new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric'}),
+        status: 'OUTSTANDING'
+      };
+      
+      invoices.unshift(invoice);
+      
+      // Remove from active jobs for this demo
+      // jobs.splice(jobIndex, 1); // or keep as completed
+      
+      if (currentTimerInterval) {
+        clearInterval(currentTimerInterval);
+        currentTimerInterval = null;
+      }
+      
+      renderJobs();
+      renderInvoices();
+      
+      // Nice confirmation
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-sm px-5 py-2 rounded-3xl flex items-center gap-x-2 shadow`;
+      toast.innerHTML = `
+        <span>Job completed. Invoice ${invoice.id} created for $${total}</span>
+        <button onclick="this.parentElement.remove()" class="ml-3 px-2 py-px text-xs bg-white/20 rounded">OK</button>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        if (toast.parentElement) toast.parentElement.removeChild(toast);
+      }, 3800);
+    }
+    
+    function renderInvoices() {
+      const tbody = document.getElementById('invoices-list');
+      tbody.innerHTML = '';
+      
+      invoices.forEach(inv => {
+        const row = document.createElement('tr');
+        row.className = 'border-b last:border-none';
+        row.innerHTML = `
+          <td class="py-3 px-3 font-mono text-xs text-slate-400">${inv.id}</td>
+          <td class="py-3 px-3">
+            <div class="font-medium">${inv.client}</div>
+            <div class="text-xs text-slate-400">${inv.job}</div>
+          </td>
+          <td class="py-3 px-3 tabular-nums">${inv.hours}h</td>
+          <td class="py-3 px-3">$20</td>
+          <td class="py-3 px-3 text-right font-semibold text-emerald-600">$${inv.amount}</td>
+          <td class="py-3 px-3">
+            <span class="px-3 py-px text-xs rounded-full ${inv.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+              ${inv.status}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+    
+    function showBookJobModal() {
+      document.getElementById('book-modal').classList.remove('hidden');
+      document.getElementById('book-modal').classList.add('flex');
+    }
+    
+    function hideBookJobModal() {
+      const modal = document.getElementById('book-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    
+    function bookNewJob() {
+      const client = document.getElementById('modal-client').value;
+      const title = document.getElementById('modal-title').value || 'Untitled job';
+      const rate = parseFloat(document.getElementById('modal-rate').value) || 20;
+      const est = parseFloat(document.getElementById('modal-hours').value) || 4;
+      const desc = document.getElementById('modal-desc').value;
+      
+      const newJob = {
+        id: 'job-' + Date.now().toString(36),
+        client: client,
+        title: title,
+        rate: rate,
+        loggedHours: 0,
+        estHours: est,
+        status: 'SCHEDULED',
+        isRunning: false
+      };
+      
+      jobs.unshift(newJob);
+      
+      hideBookJobModal();
+      renderJobs();
+      
+      // Switch to jobs tab
+      switchTab('jobs');
+    }
+    
+    function addClient() {
+      const name = prompt('Client name?', 'New Client');
+      if (!name) return;
+      
+      const clientsContainer = document.querySelector('#pane-clients .grid');
+      if (!clientsContainer) return;
+      
+      const newCard = document.createElement('div');
+      newCard.className = 'card p-4';
+      newCard.innerHTML = `
+        <div class="flex justify-between">
+          <div>
+            <div class="font-semibold">${name}</div>
+            <div class="text-sm text-slate-500">New • 0 jobs</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">New</div>
+          </div>
+        </div>
+        <div class="text-xs mt-4 text-slate-400">Just added</div>
+      `;
+      clientsContainer.appendChild(newCard);
+    }
+    
+    function editRate() {
+      const newRate = prompt('Set fixed hourly rate (USD)', '20');
+      if (newRate === null) return;
+      
+      // In a real implementation this would update globally + future jobs
+      alert(`Rate updated to $${newRate}/hr. In this mockup all future jobs will use this rate.`);
+      
+      // Optional: update any scheduled jobs
+      jobs.forEach(job => {
+        if (job.status === 'SCHEDULED') job.rate = parseFloat(newRate);
+      });
+      
+      renderJobs();
+    }
+    
+    function initMockup() {
+      // Initial render
+      renderJobs();
+      renderInvoices();
+      
+      // Show dashboard by default
+      document.getElementById('pane-dashboard').classList.remove('hidden');
+      document.getElementById('tab-dashboard').classList.add('active');
+      
+      // Auto-demo: start a live timer on first job after a delay (visual)
+      setTimeout(() => {
+        const firstJob = jobs[0];
+        if (firstJob && firstJob.status === 'IN_PROGRESS' && !firstJob.isRunning) {
+          firstJob.isRunning = true;
+          firstJob.startTime = new Date().toISOString();
+          renderJobs();
+        }
+      }, 1200);
+      
+      // Keyboard support note
+      console.log('%c[Mockup] Freelance jobs demo ready. Press `r` to reset demo data.', 'color:#64748b');
+      
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'r') {
+          location.reload();
+        }
+      });
+      
+      // Make sure Tailwind ran
+      initTailwind();
+    }
+    
+    // Boot
+    window.onload = function() {
+      initMockup();
+    }
+    
+    // Expose a couple things for dev
+    window.TATALANCE_MOCK = { reset: () => location.reload(), getJobs: () => jobs };
+  </script>
 </body>
 </html>
