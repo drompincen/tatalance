@@ -53,17 +53,18 @@ This enables a single login to run multiple "businesses" or service types withou
 **Status:** in-progress
 **Depends on:** none
 
-- [ ] **/architect**: Review this plan + current Job/Client/AppUser model + freelance plan. Produce ADR for:
-  - Profile model (new collection vs embed in AppUser)
-  - Where profileId lives (Job only, or also future entities)
-  - How "type" is modeled (enum ProfileType vs free string; extensibility for new types like "PLUMBER")
-  - Client sharing strategy confirmed
-  - Session / context for active profile (client localStorage + server validation vs server session)
-  - Migration strategy for existing data
-  - Impact on stats, activity logs, invoices, search, dashboard
-- [ ] Inventory all places that filter by userId for jobs/clients (controllers, repos, frontend JS, stats, seeder, tests).
-- [ ] Define Profile entity fields (id, userId, type, name?, isDefault?, createdAt, ...).
-- [ ] Decide on "business owner" concept: does AppUser get new fields (e.g. isOwner, ownerDisplayName) or is it implicit?
+- [x] **/architect**: Review this plan + current Job/Client/AppUser model + freelance plan. Produce ADR for:
+  - Profile model (new collection vs embed in AppUser) → **Decision: separate @Document("profiles") for flexibility (future per-profile settings)**
+  - Where profileId lives (Job only, or also future entities) → **Job only for now (clients/drivers shared at account)**
+  - How "type" is modeled (enum ProfileType vs free string; extensibility for new types like "PLUMBER") → **enum ProfileType (DRIVER, ENGINEER, HANDYMAN, OTHER) + free name field on Profile**
+  - Client sharing strategy confirmed → **confirmed: clients on userId only**
+  - Session / context for active profile (client localStorage + server validation vs server session) → **client localStorage + server validation on every job op**
+  - Migration strategy for existing data → **create default profile per user, assign legacy jobs (profileId null → default)**
+  - Impact on stats, activity logs, invoices, search, dashboard → **scope job-related to profile; clients/account unchanged**
+- [x] Inventory all places that filter by userId for jobs/clients (controllers, repos, frontend JS, stats, seeder, tests). → See extensive use in Client*/Driver*/Ride*/CustomTable*/Stats/Search controllers + repos (all via authHelper.getCurrentUserId()). No profile yet.
+- [x] Define Profile entity fields (id, userId, type, name?, isDefault?, createdAt, ...). → Done (Profile.java + ProfileType enum)
+- [x] Decide on "business owner" concept: does AppUser get new fields (e.g. isOwner, ownerDisplayName) or is it implicit? → **Added to AppUser: businessOwner (default true), businessOwnerType. Profiles provide the per-business type (DRIVER etc).**
+- [x] Created initial Profile.java, ProfileType enum, ProfileRepository.java and updated Job.java + AppUser.java (small additive tweaks).
 - [ ] Plan UI: profile switcher location (header?), how it affects tab content, create forms.
 - [ ] Create or link GitHub issue with ACs.
 - [ ] Update any relevant journeys/docs.
@@ -75,6 +76,8 @@ This enables a single login to run multiple "businesses" or service types withou
 - Account = owner. Profile = the "business type" the owner operates under for that set of jobs.
 - Easy switch: client state + filter param or header.
 - Use /architect explicitly for the ADR.
+
+**ADR Summary (Ch1):** Separate Profile collection. Add profileId to Job. Clients remain account-scoped. Validation + scoping in all job paths. Migration for legacy. See full plan for details. (Analysis complete for model; UI decisions pending further inventory.)
 
 ## Chapter 2: Data Model & Persistence Layer (use /implementer + /refactorer)
 **Status:** pending

@@ -27,6 +27,10 @@ public class Job {
     @Indexed
     private String userId;
 
+    /** Profile within the account (owner) that this job belongs to. Clients are shared at account level. */
+    @Indexed
+    private String profileId;
+
     private String clientId;
     private String clientName;
 
@@ -67,6 +71,9 @@ public class Job {
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getProfileId() { return profileId; }
+    public void setProfileId(String profileId) { this.profileId = profileId; }
 
     public String getClientId() { return clientId; }
     public void setClientId(String clientId) { this.clientId = clientId; }
