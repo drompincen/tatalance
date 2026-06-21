@@ -306,6 +306,7 @@
         .user-menu .username { font-size: 0.82rem; color: rgba(255,255,255,.7); font-weight: 500; }
         .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
         .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+        .nav-external-link { display: none; text-decoration: none; }
 
         /* ── Hamburger menu ── */
         .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
@@ -329,8 +330,11 @@
             nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            .user-menu { margin-left: auto; }
+            .user-menu { margin-left: auto; gap: 6px; flex-shrink: 0; }
             .user-menu .username { display: none; }
+            .user-menu .header-mobile-hide { display: none; }
+            .nav-external-link { display: block; }
+            header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             nav #custom-tab-buttons { display: contents; }
             .page { margin: 16px auto; padding: 0 12px; }
             .grid-2 { grid-template-columns: 1fr; gap: 16px; }
@@ -375,6 +379,7 @@
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
         <span id="custom-tab-buttons"></span>
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
+        <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile">Freelance</a>
         <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
     <div class="search-box" style="position:relative;margin-left:12px;">
@@ -386,8 +391,8 @@
     <div class="user-menu">
         <span class="username" id="username-display"></span>
         <button class="logout-btn" id="link-google-btn" onclick="linkGoogle()" style="display:none">Link Google</button>
-        <a href="/freelance.html" class="logout-btn" style="text-decoration:none;line-height:1.6">Freelance</a>
-        <button class="logout-btn" onclick="openChangePassword()">Password</button>
+        <a href="/freelance.html" class="logout-btn header-mobile-hide" style="text-decoration:none;line-height:1.6">Freelance</a>
+        <button class="logout-btn header-mobile-hide" onclick="openChangePassword()">Password</button>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
     </div>
 </header>
