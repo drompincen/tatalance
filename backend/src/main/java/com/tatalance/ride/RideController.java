@@ -270,8 +270,12 @@ public class RideController {
             durationMins = Duration.between(ride.getActualStart(), ride.getActualEnd()).toMinutes();
             ride.setDurationMinutes(durationMins);
         }
-        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null && durationMins > 0) {
-            BigDecimal hours = BigDecimal.valueOf(durationMins).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
+        if (mode != PricingMode.FLAT && ride.getHourlyRate() != null) {
+            // Use precise fractional hours (supports sub-minute for hourly jobs / tests)
+            long millis = (ride.getActualStart() != null)
+                ? Duration.between(ride.getActualStart(), ride.getActualEnd()).toMillis()
+                : 0;
+            BigDecimal hours = BigDecimal.valueOf(millis).divide(BigDecimal.valueOf(3600000), 6, RoundingMode.HALF_UP);
             timeCost = ride.getHourlyRate().multiply(hours).setScale(2, RoundingMode.HALF_UP);
         }
 

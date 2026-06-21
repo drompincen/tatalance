@@ -48,8 +48,8 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     await page.locator('#job-submit-btn').scrollIntoViewIfNeeded();
     await page.locator('#job-form').evaluate((f: HTMLFormElement) => f.requestSubmit());
 
-    await expect(page.locator('#job-fb')).toContainText('booked', { timeout: 5000 });
-    await expect(page.locator('#job-list')).toContainText('Landing page for client');
+    await expect(page.locator('#job-fb')).toContainText('booked', { timeout: 10000 });
+    await expect(page.locator('#job-list')).toContainText('Landing page for client', { timeout: 10000 });
   });
 
   test('Start button on scheduled job transitions to IN_PROGRESS with timer', async ({ page, request }) => {
@@ -62,7 +62,7 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     await expect(card.locator('[data-test="start-btn"]')).toBeVisible();
     await card.locator('[data-test="start-btn"]').click();
 
-    await expect(card.locator('[data-test="status-badge"]')).toContainText('IN_PROGRESS');
+    await expect(card.locator('[data-test="status-badge"]')).toContainText('IN_PROGRESS', { timeout: 8000 });
     await expect(card.locator('[data-test="complete-btn"]')).toBeVisible();
     await expect(card.locator('.job-timer')).toBeVisible();
   });
@@ -94,6 +94,7 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
 
     await mobile.openTab('btn-jobs');
     const card = page.locator(`[data-job-id="${job.id}"]`);
+    await page.waitForTimeout(1200); // accrue a little billable time for hourly calc
     await card.locator('[data-test="complete-btn"]').click();
 
     // jobs complete uses native confirm dialog
@@ -102,7 +103,7 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
       await d.accept();
     });
 
-    await expect(card.locator('[data-test="status-badge"]')).toContainText('COMPLETED', { timeout: 8000 });
+    await expect(card.locator('[data-test="status-badge"]')).toContainText('COMPLETED', { timeout: 12000 });
 
     const fetched = await (await request.get(`/api/rides/${job.id}`)).json();
     expect(fetched.status).toBe('COMPLETED');

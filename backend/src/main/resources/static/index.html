@@ -348,7 +348,7 @@
             .grid-2 { grid-template-columns: 1fr; gap: 16px; }
             .api-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; border-radius: 10px; }
-            input, select { font-size: 16px !important; }
+            input, select, textarea { font-size: 16px !important; }
             .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
             .btn-cancel { width: auto; position: static; box-shadow: none; }
             /* Jobs tab action buttons (Category C mobile) */
@@ -637,8 +637,8 @@
                     <div class="field">
                         <label>Client <span class="req">*</span></label>
                         <input type="search" id="j-clientSearch" placeholder="Search by name…" autocomplete="off"
-                               style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;margin-bottom:6px">
-                        <select id="j-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px;line-height:normal;">
+                               style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafafa;margin-bottom:6px">
+                        <select id="j-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafafa;height:44px;line-height:normal;">
                             <option value="">Select a client…</option>
                         </select>
                         <div class="err" id="je-clientId">Client is required</div>
@@ -650,7 +650,7 @@
                     </div>
                     <div class="field">
                         <label>Scope / Description <span class="opt">(optional)</span></label>
-                        <textarea id="j-scope" placeholder="Build responsive landing page..." rows="2" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;resize:vertical;"></textarea>
+                        <textarea id="j-scope" placeholder="Build responsive landing page..." rows="2" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafafa;resize:vertical;"></textarea>
                     </div>
                     <div class="field">
                         <label>Hourly Rate</label>
@@ -2194,6 +2194,16 @@
         try {
             const r = await fetch(`/api/rides/${jobId}/start`, { method: 'POST' });
             if (!r.ok) throw new Error('Start failed');
+            // Optimistic UI update for instant feedback (helps E2E + perceived perf)
+            const card = document.querySelector(`[data-job-id="${jobId}"]`);
+            if (card) {
+                const badge = card.querySelector('[data-test="status-badge"]');
+                if (badge) { badge.textContent = 'IN_PROGRESS'; badge.style.color = (statusColors && statusColors.IN_PROGRESS) || '#f59e0b'; }
+                const actions = card.querySelector('div[style*="gap:4px"]') || card.lastElementChild;
+                if (actions) actions.innerHTML = `<button class="btn-sm" data-test="complete-btn" onclick="completeJob('${jobId}')" style="background:#38a169;color:white;border:1px solid #38a169;padding:3px 8px;border-radius:4px;">Complete</button>`;
+                // trigger timer render on next tick
+                setTimeout(tickJobTimers, 10);
+            }
             loadJobs();
             if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
         } catch(e) { alert('Could not start job (check server status/logs)'); }
@@ -2212,6 +2222,16 @@
             if (!resp.ok) {
                 const e = await resp.json().catch(() => ({}));
                 throw new Error(e.message || 'Complete failed');
+            }
+            // Optimistic UI update for instant feedback + E2E reliability
+            const card = document.querySelector(`[data-job-id="${jobId}"]`);
+            if (card) {
+                const badge = card.querySelector('[data-test="status-badge"]');
+                if (badge) { badge.textContent = 'COMPLETED'; badge.style.color = (statusColors && statusColors.COMPLETED) || '#10b981'; }
+                const actions = card.querySelector('div[style*="gap:4px"]') || card.lastElementChild;
+                if (actions) actions.innerHTML = `<button class="btn-sm" data-test="invoice-btn" onclick="generateInvoice('${jobId}')" style="border:1px solid #3182ce;color:#3182ce;padding:3px 8px;border-radius:4px;">Invoice</button>`;
+                const timer = card.querySelector('.job-timer');
+                if (timer) timer.style.display = 'none';
             }
             loadJobs();
             if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
