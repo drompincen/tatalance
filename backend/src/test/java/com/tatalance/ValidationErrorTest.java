@@ -1,84 +1,61 @@
 package com.tatalance;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-import java.util.Map;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false)
 class ValidationErrorTest {
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private MockMvc mockMvc;
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
-    @BeforeEach
-    void authenticate() {
-        this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
+    @Test
+    void should_returnStructuredErrors_when_clientValidationFails() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phone\":\"bad\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[*].field", containsInAnyOrder("firstName")))
+                .andExpect(jsonPath("$.errors[?(@.field=='firstName')].message").value("First name is required"));
     }
 
     @Test
-    void should_returnStructuredErrors_when_clientValidationFails() {
-        var request = Map.of("phone", "bad");
-        var response = restTemplate.postForEntity("/api/clients", request, Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-
-        var body = response.getBody();
-        assertThat(body).containsKey("errors");
-        var errors = (List<Map<String, String>>) body.get("errors");
-        assertThat(errors).isNotEmpty();
-
-        var fields = errors.stream().map(e -> e.get("field")).toList();
-        assertThat(fields).contains("firstName");
-
-        var firstNameError = errors.stream()
-                .filter(e -> "firstName".equals(e.get("field")))
-                .findFirst().orElseThrow();
-        assertThat(firstNameError.get("message")).isEqualTo("First name is required");
+    void should_returnFriendlyPhoneError() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"phone\":\"+123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[?(@.field=='phone')].message[0]", containsString("+13055551234")));
     }
 
     @Test
-    void should_returnFriendlyPhoneError() {
-        var request = Map.of("firstName", "Test", "lastName", "User", "phone", "+123");
-        var response = restTemplate.postForEntity("/api/clients", request, Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-
-        var errors = (List<Map<String, String>>) response.getBody().get("errors");
-        var phoneError = errors.stream()
-                .filter(e -> "phone".equals(e.get("field")))
-                .findFirst().orElseThrow();
-        assertThat(phoneError.get("message")).contains("+13055551234");
+    void should_returnFriendlyErrors_forDriver() throws Exception {
+        mockMvc.perform(post("/api/drivers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"Driver\",\"phone\":\"+15551234567\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("payoutType")));
     }
 
     @Test
-    void should_returnFriendlyErrors_forDriver() {
-        var request = Map.of("firstName", "Test", "lastName", "Driver", "phone", "+15551234567");
-        var response = restTemplate.postForEntity("/api/drivers", request, Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-
-        var errors = (List<Map<String, String>>) response.getBody().get("errors");
-        var fields = errors.stream().map(e -> e.get("field")).toList();
-        assertThat(fields).contains("payoutType");
-    }
-
-    @Test
-    void should_returnFriendlyErrors_forRide() { // updated post #93: scheduled/pickupDateTime not @NotNull enforced at create (optional per jobs MVP; only Ride location fields are)
-        var request = Map.of("clientId", "x");
-        var response = restTemplate.postForEntity("/api/rides", request, Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-
-        var errors = (List<Map<String, String>>) response.getBody().get("errors");
-        var fields = errors.stream().map(e -> e.get("field")).toList();
-        assertThat(fields).contains("pickupLocation", "dropoffLocation");
+    void should_returnFriendlyErrors_forRide() throws Exception {
+        // updated post #93: scheduled/pickupDateTime not @NotNull enforced at create (optional per jobs MVP; only Ride location fields are)
+        mockMvc.perform(post("/api/rides")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"x\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("pickupLocation", "dropoffLocation")));
     }
 }
