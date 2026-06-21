@@ -3,7 +3,7 @@ title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
 status: in-progress
 created: 2026-04-27
 updated: 2026-06-21
-current_chapter: epic-12
+current_chapter: epic-13
 ---
 
 # Tatalance v1 Plan
@@ -216,6 +216,13 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #99 | Wire picker into book/edit ride form | Epic 12 | feature | pending |
 | #100 | Store lat/lng on Ride for precise links | Epic 12 | enhancement | pending |
 | #101 | E2E: book ride using LocationPicker | Epic 12 | qa | pending |
+| #102 | Spanish UI for Tata — EN/ES toggle (epic) | Epic 13 | epic | pending |
+| #103 | i18n foundation — toggle + shared module | Epic 13 | feature | pending |
+| #104 | Translate chauffeur UI (`index.html`) | Epic 13 | feature | pending |
+| #108 | Translate ? help overlay to Spanish | Epic 13 | feature | pending |
+| #105 | Translate login/register/forgot-password | Epic 13 | feature | pending |
+| #106 | Spanish API validation messages | Epic 13 | enhancement | pending |
+| #107 | E2E: language toggle smoke | Epic 13 | qa | pending |
 
 ---
 
@@ -494,6 +501,54 @@ Opening external `google.com/maps` in another tab cannot return the picked pin t
 
 ---
 
+# Epic 13: Spanish UI for Tata — EN/ES toggle (issue #102)
+**Status:** pending
+**Outcome:** Tata and other Spanish-speaking users use Tatalance in Spanish: tabs, forms, buttons, the **? help guide**, and auth pages — with an EN/ES toggle that remembers their choice.
+**Depends on:** Epic 3 #41 (Help page) — done; UI stable enough to port i18n from mockup
+**Reference:** `docs/js/i18n.js`, `docs/index.html` (redesign mockup with working EN/ES toggle)
+
+## Persona
+
+**Tata** — chauffeur-ops user who prefers Spanish. Should not need to decode English labels to book rides or read the ? guide.
+
+## User journey
+
+1. Open Tatalance → tap **ES** in header (or auto-detect Spanish browser)
+2. Tabs, forms, and buttons show Spanish (Clientes, Viajes, Guardar, etc.)
+3. Tap **?** → help panels in plain Spanish (how to add clients, book rides, invoice)
+4. Toggle **EN** anytime; choice saved in `localStorage`
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | i18n foundation — `i18n.js`, `data-i18n`, EN/ES toggle, `localStorage` | pending | luciano | #103 |
+| 2 | Translate chauffeur UI (`index.html`) | pending | luciano | #104 |
+| 3 | Translate ? help overlay (6 panels) | pending | luciano | #108 |
+| 4 | Translate login / register / forgot-password | pending | luciano | #105 |
+| 5 | Spanish API validation messages | pending | luciano | #106 |
+| 6 | E2E: language toggle smoke | pending | luciano | #107 |
+
+## Dependencies
+
+```
+#103 (i18n foundation)
+  ├──> #104 (index.html UI)
+  ├──> #108 (help overlay)
+  ├──> #105 (auth pages)
+  └──> #107 (E2E) — after #104 + #108
+#106 (API messages) — optional after #104
+```
+
+## Out of scope (v1)
+
+- `freelance.html` translation
+- User-entered data (client names, notes)
+- PDF invoices in Spanish
+- Languages beyond EN/ES
+
+---
+
 # What's NOT in v1 (nice-to-haves for later)
 
 | Feature | Why deferred |
@@ -506,6 +561,6 @@ Opening external `google.com/maps` in another tab cannot return the picked pin t
 | Driver payouts | Not needed for core book-to-pay loop |
 | VIP preferences | Nice-to-have fields for later |
 | Reports/analytics | Needs data volume |
-| i18n (EN/ES) | Port when UI is stable |
+| i18n beyond EN/ES | Epic 13 covers EN/ES for Tata; other languages later |
 | React/Vite | Plain HTML/JS works for MVP scope |
 | In-app payment processing | David collects payment directly from clients — app is for management, not transactions |

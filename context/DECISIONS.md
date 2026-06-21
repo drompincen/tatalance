@@ -67,6 +67,11 @@
 **Decision:** Single Spring Boot app with two static UIs. `businessMode` on `AppUser` (`CHAUFFEUR` | `FREELANCE`). Login redirects to `/freelance.html` or `/index.html`. Freelance reuses `Ride` with `pricingMode=HOURLY`, `jobTitle`, and `workSegments` for pause/resume audit. `TimerService` handles server-side timer state; `GET /api/rides/{id}/timer` for recovery after refresh.
 **Consequences:** Chauffeur UI unchanged. Freelance book flow does not auto-start timer — user explicitly presses Start. Two HTML surfaces to maintain until a unified redesign. Mockups in `docs/freelance-jobs-mockup.html`.
 
+## 2026-06-21 EN/ES i18n for Tata (client-side toggle, mockup port)
+**Context:** Tata prefers Spanish. Production UI (`index.html`) is English-only; `docs/js/i18n.js` already prototypes EN/ES for the redesign mockup. Help overlay (`?`) is English hardcoded in `helpPanels`.
+**Decision:** Epic 13 (#102): port `docs/js/i18n.js` pattern to production static UI. `data-i18n` keys + `localStorage` for language. Default to Spanish when `navigator.language` starts with `es`. Translate chauffeur UI, ? help (6 panels), and auth pages. API validation in Spanish (#106) via `Accept-Language` is optional follow-up. Freelance surface out of scope for v1.
+**Consequences:** Duplicate string maintenance in `i18n.js` until/unless extracted. Help panel HTML must use translation keys or parallel ES content. No backend locale framework in v1.
+
 ## 2026-06-21 Embedded in-app map picker over external Google Maps redirect
 **Context:** Users want to pick pickup/dropoff by dropping a pin on Google Maps instead of typing addresses. Epic 9 #73 already links table text to `google.com/maps/search/...`.
 **Decision:** Build an in-app `LocationPicker` modal using Google Maps JavaScript API + Places. Reverse-geocode pin/search result to human-readable text stored in existing `pickupLocation` / `dropoffLocation` strings. Optional `lat/lng` on `Ride` (#100) for precise navigation links. API key in EB env (`GOOGLE_MAPS_API_KEY`), never in git. External Google Maps tab cannot return picked coordinates to the web app.

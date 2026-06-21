@@ -295,4 +295,4 @@ These are visible in the prototype but deferred to later iterations:
 | 11. Reports/Performance | Analytics layer — needs data volume to be meaningful |
 | Client preferences (vehicle type, language, VIP instructions) | Nice-to-have fields — can be added to the client form later |
 | Airport-specific fields (flight number, waiting instructions) | Ride subtype — add when airport rides need special handling |
-| i18n (EN/ES toggle) | Already prototyped in mock — port when UI is stable |
+| i18n (EN/ES toggle) | **Planned** — Epic 13 #102 (`docs/js/i18n.js` mockup → production) |
