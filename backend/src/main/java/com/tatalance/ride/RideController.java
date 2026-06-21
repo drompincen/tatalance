@@ -6,6 +6,7 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
 import com.tatalance.driver.Driver;
 import com.tatalance.driver.DriverRepository;
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,26 +37,33 @@ public class RideController {
     private final DriverRepository driverRepository;
     private final AuthHelper authHelper;
     private final ActivityLogger activityLog;
+    private final ProfileRepository profileRepository;
 
     public RideController(RideRepository rideRepository, ClientRepository clientRepository,
                           DriverRepository driverRepository, AuthHelper authHelper,
-                          ActivityLogger activityLog) {
+                          ActivityLogger activityLog, ProfileRepository profileRepository) {
         this.rideRepository = rideRepository;
         this.clientRepository = clientRepository;
         this.driverRepository = driverRepository;
         this.authHelper = authHelper;
         this.activityLog = activityLog;
+        this.profileRepository = profileRepository;
     }
 
     @Operation(summary = "Create a ride")
     @ApiResponse(responseCode = "201", description = "Ride created")
     @PostMapping("/rides")
     @ResponseStatus(HttpStatus.CREATED)
-    public Ride create(@Valid @RequestBody Ride ride) {
+    public Ride create(@Valid @RequestBody Ride ride, @RequestParam(required = false) String profileId) {
         if (ride.getPickupDateTime() != null && ride.getPickupDateTime().isBefore(Instant.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pickup date/time cannot be in the past");
         }
         String userId = authHelper.getCurrentUserId();
+        if (profileId != null && !profileId.isBlank()) {
+            profileRepository.findByIdAndUserId(profileId, userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile not found or does not belong to user"));
+            ride.setProfileId(profileId);
+        }
         Client client = clientRepository.findByIdAndUserId(ride.getClientId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
         ride.setUserId(userId);
@@ -65,7 +73,7 @@ public class RideController {
         ride.setCreatedAt(Instant.now());
         Ride saved = rideRepository.save(ride);
         activityLog.log(userId, "CREATE", "Ride", saved.getId(),
-                "Booked ride for " + saved.getClientName());
+                "Booked ride for " + saved.getClientName() + (profileId != null ? " under profile " + profileId : ""));
         return saved;
     }
 
@@ -83,6 +91,8 @@ public class RideController {
         }
         job.setUserId(userId);
         if (profileId != null && !profileId.isBlank()) {
+            profileRepository.findByIdAndUserId(profileId, userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile not found or does not belong to user"));
             job.setProfileId(profileId);
         }
         if (job.getType() == null || job.getType().isBlank()) {
@@ -101,8 +111,16 @@ public class RideController {
     @Operation(summary = "List all rides")
     @ApiResponse(responseCode = "200", description = "Ride list")
     @GetMapping("/rides")
-    public Page<Ride> list(@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return rideRepository.findByUserId(authHelper.getCurrentUserId(), pageable);
+    public Page<Ride> list(@RequestParam(required = false) String profileId,
+                           @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        String userId = authHelper.getCurrentUserId();
+        if (profileId != null && !profileId.isBlank()) {
+            // validate ownership
+            profileRepository.findByIdAndUserId(profileId, userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile not found or does not belong to user"));
+            return rideRepository.findByUserIdAndProfileId(userId, profileId, pageable);
+        }
+        return rideRepository.findByUserId(userId, pageable);
     }
 
     @Operation(summary = "Get ride by id")

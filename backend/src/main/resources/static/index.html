@@ -392,6 +392,12 @@
         <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
         <button class="help-btn" onclick="openHelp()" title="Help">?</button>
     </nav>
+    <div id="profile-switcher-wrap" style="margin-left:8px;display:flex;align-items:center;gap:6px;">
+        <span style="color:rgba(255,255,255,.6);font-size:0.72rem;">Profile:</span>
+        <select id="profile-switcher" onchange="switchProfile(this.value)" style="font-size:0.78rem;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;min-width:140px;">
+            <option value="">All (account)</option>
+        </select>
+    </div>
     <div class="search-box" style="position:relative;margin-left:12px;">
         <input type="text" id="global-search" placeholder="Search..." autocomplete="off"
                style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:white;font-size:.85rem;width:180px;"
@@ -861,6 +867,10 @@
     const pageState = { clients: 0, drivers: 0, rides: 0, invoices: 0, tables: 0 };
     const pageMeta = { clients: {}, drivers: {}, rides: {}, invoices: {}, tables: {} };
     const PAGE_SIZE = 20;
+
+    /* ── Multi-profile state (account level clients, profile-scoped jobs/rides) ── */
+    let profilesCache = [];
+    let activeProfileId = localStorage.getItem('activeProfileId') || '';
 
     function paginationHtml(tab, onPrev, onNext) {
         const m = pageMeta[tab];
@@ -1868,8 +1878,34 @@
     function ridePrev() { if (pageState.rides > 0) { pageState.rides--; loadRides(); } }
     function rideNext() { if (pageState.rides < (pageMeta.rides.totalPages || 1) - 1) { pageState.rides++; loadRides(); } }
 
+    /* Profile helpers for switcher (shared clients, scoped rides/jobs) */
+    function getProfileParam() {
+        return activeProfileId ? `&profileId=${encodeURIComponent(activeProfileId)}` : '';
+    }
+    async function loadProfiles() {
+        try {
+            const r = await fetch('/api/profiles?size=50');
+            if (!r.ok) return;
+            const data = await r.json();
+            profilesCache = data.content || data || [];
+            const sel = document.getElementById('profile-switcher');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">All (account)</option>' +
+                profilesCache.map(p => `<option value="${p.id}">${(p.name || p.type || 'Profile')}</option>`).join('');
+            if (activeProfileId) sel.value = activeProfileId;
+        } catch (e) { /* non-fatal */ }
+    }
+    window.switchProfile = function(pid) {
+        activeProfileId = pid || '';
+        localStorage.setItem('activeProfileId', activeProfileId);
+        // reload scoped views
+        if (typeof loadRides === 'function') loadRides();
+        if (typeof loadJobs === 'function') loadJobs();
+    };
+
     function loadRides() {
-        fetch(`/api/rides?page=${pageState.rides}&size=${PAGE_SIZE}`)
+        const prof = getProfileParam();
+        fetch(`/api/rides?page=${pageState.rides}&size=${PAGE_SIZE}${prof}`)
             .then(r => r.json())
             .then(data => {
                 allRidesCache = data.content || [];
@@ -2036,6 +2072,8 @@
     loadAvailableDrivers();
     loadRides();
     setInterval(loadRides, 10000);
+    // load profiles for switcher (business owner multi-profile)
+    loadProfiles();
     setInterval(loadClientDropdown, 10000);
     setInterval(loadAvailableDrivers, 10000);
 
@@ -2086,7 +2124,8 @@
     }
 
     function loadJobs() {
-        fetch(`/api/rides?page=0&size=100`)
+        const prof = getProfileParam();
+        fetch(`/api/rides?page=0&size=100${prof}`)
             .then(r => r.json())
             .then(data => {
                 allJobsCache = data.content || [];
@@ -2295,7 +2334,8 @@
                     hourlyRate: 20,
                     notes: notesVal
                 };
-                const url = editingJobId ? `/api/rides/${editingJobId}` : '/api/rides';
+                const profQ = activeProfileId ? `?profileId=${encodeURIComponent(activeProfileId)}` : '';
+                const url = editingJobId ? `/api/rides/${editingJobId}${profQ}` : `/api/rides${profQ}`;
                 const method = editingJobId ? 'PUT' : 'POST';
                 const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 if (!r.ok) throw new Error();

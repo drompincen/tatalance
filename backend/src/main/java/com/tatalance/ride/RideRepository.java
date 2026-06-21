@@ -53,4 +53,21 @@ public interface RideRepository extends JobRepository {
 
     @Query("{ 'assignedDriverId': ?0, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
     List<Ride> findByAssignedDriverId(String assignedDriverId);
+
+    // Profile-scoped variants for multi-profile support (profileId on Job, clients remain userId shared)
+    @Query("{ 'userId': ?0, 'profileId': ?1, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
+    Page<Ride> findByUserIdAndProfileId(String userId, String profileId, Pageable pageable);
+
+    @Query("{ 'userId': ?0, 'profileId': ?1, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
+    List<Ride> findByUserIdAndProfileId(String userId, String profileId);
+
+    @Query("{ 'userId': ?0, 'profileId': ?1, 'status': { $in: ?2 }, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
+    List<Ride> findByUserIdAndProfileIdAndStatusIn(String userId, String profileId, Collection<RideStatus> statuses);
+
+    // SERVICE / Jobs profile scoped (for /jobs endpoints + profile switcher)
+    @Query("{ 'userId': ?0, 'profileId': ?1, 'type': 'SERVICE' }")
+    Page<Job> findJobsByUserIdAndProfileId(String userId, String profileId, Pageable pageable);
+
+    @Query("{ 'userId': ?0, 'profileId': ?1, 'type': 'SERVICE' }")
+    List<Job> findJobsByUserIdAndProfileId(String userId, String profileId);
 }

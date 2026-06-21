@@ -8,6 +8,7 @@ import com.tatalance.customtable.CustomTableRowRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.ride.RideRepository; // #93 Job refactor touch - collection now jobs, Ride extends Job
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -56,6 +57,9 @@ class InfoControllerTest {
 
     @MockBean
     AuthHelper authHelper;
+
+    @MockBean
+    ProfileRepository profileRepository;
 
     @MockBean
     ActivityLogger activityLogger;

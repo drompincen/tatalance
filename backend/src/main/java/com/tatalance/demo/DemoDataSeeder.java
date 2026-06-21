@@ -5,6 +5,9 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.customtable.*;
 import com.tatalance.driver.*;
 import com.tatalance.invoice.*;
+import com.tatalance.profile.Profile;
+import com.tatalance.profile.ProfileRepository;
+import com.tatalance.profile.ProfileType;
 import com.tatalance.ride.*;
 import com.tatalance.user.AppUser;
 import com.tatalance.user.AppUserRepository;
@@ -32,6 +35,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final InvoiceRepository invoiceRepo;
     private final CustomTableRepository tableRepo;
     private final CustomTableRowRepository rowRepo;
+    private final ProfileRepository profileRepo;
 
     public DemoDataSeeder(AppUserRepository userRepo,
                           ClientRepository clientRepo,
@@ -39,7 +43,8 @@ public class DemoDataSeeder implements CommandLineRunner {
                           RideRepository rideRepo,
                           InvoiceRepository invoiceRepo,
                           CustomTableRepository tableRepo,
-                          CustomTableRowRepository rowRepo) {
+                          CustomTableRowRepository rowRepo,
+                          ProfileRepository profileRepo) {
         this.userRepo = userRepo;
         this.clientRepo = clientRepo;
         this.driverRepo = driverRepo;
@@ -47,13 +52,14 @@ public class DemoDataSeeder implements CommandLineRunner {
         this.invoiceRepo = invoiceRepo;
         this.tableRepo = tableRepo;
         this.rowRepo = rowRepo;
+        this.profileRepo = profileRepo;
     }
 
     @Override
     public void run(String... args) {
         try {
-            if (clientRepo.count() > 0) {
-                log.info("Demo data already present - skipping");
+            if (clientRepo.count() > 0 && profileRepo.count() > 0) {
+                log.info("Demo data + profiles already present - skipping");
                 return;
             }
 
@@ -119,10 +125,29 @@ public class DemoDataSeeder implements CommandLineRunner {
             d2.setCreatedAt(now.minus(5, ChronoUnit.DAYS));
             d2 = driverRepo.save(d2);
 
+            // --- Profiles for multi-profile business owner demo (clients shared, jobs/rides scoped) ---
+            Profile pDriver = new Profile();
+            pDriver.setUserId(uid);
+            pDriver.setType(ProfileType.DRIVER);
+            pDriver.setName("Main Taxi / Driver");
+            pDriver.setCreatedAt(now.minus(20, ChronoUnit.DAYS));
+            pDriver = profileRepo.save(pDriver);
+
+            Profile pFreelance = new Profile();
+            pFreelance.setUserId(uid);
+            pFreelance.setType(ProfileType.ENGINEER);
+            pFreelance.setName("Freelance Engineer");
+            pFreelance.setCreatedAt(now.minus(15, ChronoUnit.DAYS));
+            pFreelance = profileRepo.save(pFreelance);
+
+            String pidDriver = pDriver.getId();
+            String pidFreelance = pFreelance.getId();
+
             // --- Rides (stored as jobs with type RIDE) ---
             // 1. Scheduled (today-ish)
             Ride r1 = new Ride();
             r1.setUserId(uid);
+            r1.setProfileId(pidDriver);
             r1.setClientId(c1.getId());
             r1.setClientName(c1.getFirstName() + " " + c1.getLastName());
             r1.setPickupLocation("123 Main St, City");
@@ -138,6 +163,7 @@ public class DemoDataSeeder implements CommandLineRunner {
             // 2. Assigned
             Ride r2 = new Ride();
             r2.setUserId(uid);
+            r2.setProfileId(pidDriver);
             r2.setClientId(c2.getId());
             r2.setClientName(c2.getFirstName() + " " + c2.getLastName());
             r2.setPickupLocation("456 Oak Ave");
@@ -172,6 +198,7 @@ public class DemoDataSeeder implements CommandLineRunner {
             // 4. Completed (revenue + payout)
             Ride r4 = new Ride();
             r4.setUserId(uid);
+            r4.setProfileId(pidFreelance);
             r4.setClientId(c1.getId());
             r4.setClientName(c1.getFirstName() + " " + c1.getLastName());
             r4.setPickupLocation("Downtown Plaza");

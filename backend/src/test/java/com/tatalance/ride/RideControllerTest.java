@@ -7,6 +7,7 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.Availability;
 import com.tatalance.driver.Driver;
 import com.tatalance.driver.DriverRepository;
+import com.tatalance.profile.ProfileRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,6 +63,9 @@ class RideControllerTest {
 
     @MockBean
     private ActivityLogger activityLogger;
+
+    @MockBean
+    private ProfileRepository profileRepository;
 
     @BeforeEach
     void setUp() {
