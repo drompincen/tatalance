@@ -27,7 +27,7 @@ jobs:
       - name: Run tests with JaCoCo coverage (gate on verify phase)
         run: |
           set +H
-          cd backend && mvn clean verify -B --no-transfer-progress '-Dmaven.javadoc.skip=true' -P-dev -Dtest='!**/*IntegrationTest' -DfailIfNoTests=false
+          cd backend && mvn clean test -B --no-transfer-progress '-Dmaven.javadoc.skip=true' -P-dev -Dtest='!**/*IntegrationTest' -DfailIfNoTests=false && mvn jacoco:report jacoco:check -B --no-transfer-progress '-Dmaven.javadoc.skip=true'
 
       - uses: actions/upload-artifact@v4
         with:
