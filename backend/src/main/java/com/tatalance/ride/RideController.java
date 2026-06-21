@@ -69,11 +69,11 @@ public class RideController {
         return saved;
     }
 
-    @Operation(summary = "Create a service/freelance Job (base Job, for developer jobs etc, Issue #93)")
+    @Operation(summary = "Create a service/freelance Job (base Job, for developer jobs etc, Issue #93). Link to profile for multi-profile support.")
     @ApiResponse(responseCode = "201", description = "Job created")
     @PostMapping("/jobs")
     @ResponseStatus(HttpStatus.CREATED)
-    public Job createJob(@RequestBody Job job) {
+    public Job createJob(@RequestBody Job job, @RequestParam(required = false) String profileId) {
         // For base Job (SERVICE) use case. No destination validation. scheduledTime optional for MVP.
         String userId = authHelper.getCurrentUserId();
         if (job.getClientId() != null) {
@@ -82,6 +82,9 @@ public class RideController {
             job.setClientName(client.getFirstName() + " " + client.getLastName());
         }
         job.setUserId(userId);
+        if (profileId != null && !profileId.isBlank()) {
+            job.setProfileId(profileId);
+        }
         if (job.getType() == null || job.getType().isBlank()) {
             job.setType("SERVICE");
         }
@@ -91,7 +94,7 @@ public class RideController {
         // Note: save via rideRepository (which extends JobRepository) works for base Job too
         Job saved = rideRepository.save(job);
         activityLog.log(userId, "CREATE", "Job", saved.getId(),
-                "Booked job for " + saved.getClientName());
+                "Booked job for " + saved.getClientName() + (profileId != null ? " under profile " + profileId : ""));
         return saved;
     }
 
