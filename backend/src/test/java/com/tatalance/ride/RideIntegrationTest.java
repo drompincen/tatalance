@@ -1,6 +1,7 @@
 package com.tatalance.ride;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -178,6 +179,7 @@ class RideIntegrationTest {
     }
 
     @Test
+    @DisplayName("M4 #34 — start then complete ride and calculate billable")
     void should_startThenCompleteRide_andCalculateBillable() {
         var clientId = createClient();
         var driverId = createDriver();
@@ -205,6 +207,7 @@ class RideIntegrationTest {
     }
 
     @Test
+    @DisplayName("M4 #34 — reject complete from SCHEDULED")
     void should_return409_when_completingScheduledRide() {
         var clientId = createClient();
         var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
@@ -214,6 +217,22 @@ class RideIntegrationTest {
 
         var response = restTemplate.postForEntity("/api/rides/" + rideId + "/complete", Map.of(), Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @DisplayName("M4 #34 — reject double-start when already IN_PROGRESS")
+    void should_return409_when_startingRideTwice() {
+        var clientId = createClient();
+        var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
+                "pickupLocation", "MIA", "dropoffLocation", "FLL");
+        var created = restTemplate.postForEntity("/api/rides", ride, Map.class);
+        var rideId = created.getBody().get("id").toString();
+
+        var first = restTemplate.postForEntity("/api/rides/" + rideId + "/start", null, Map.class);
+        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        var second = restTemplate.postForEntity("/api/rides/" + rideId + "/start", null, Map.class);
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
@@ -297,6 +316,7 @@ class RideIntegrationTest {
     }
 
     @Test
+    @DisplayName("M3 #33 — list rides by driver sorted by pickup time")
     void should_listRidesByDriver_sortedByPickupTime() {
         // M3 (#33) — driver queue endpoint
         var clientId = createClient();

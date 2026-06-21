@@ -206,7 +206,8 @@ public class RideController {
     public Ride start(@PathVariable String id) {
         Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
-        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED) {
+        if (ride.getStatus() == RideStatus.COMPLETED || ride.getStatus() == RideStatus.CANCELLED
+                || ride.getStatus() == RideStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Cannot start a ride in status " + ride.getStatus());
         }

@@ -360,6 +360,17 @@ class RideControllerTest {
     }
 
     @Test
+    void should_return409_when_startingAlreadyInProgressRide() throws Exception {
+        // M4 (#34) — double-start guard
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.IN_PROGRESS);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/start"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void should_completeRide_andCalculateBillable() throws Exception {
         // M4 (#34) — complete endpoint, transitions to COMPLETED + billable = base + extras
         var ride = sampleRide();

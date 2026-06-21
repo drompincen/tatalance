@@ -80,6 +80,18 @@ class SecurityConfigTest {
     }
 
     @Test
+    void should_permitRegisterPage_withoutAuth() throws Exception {
+        mockMvc.perform(get("/register.html"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void should_permitForgotPasswordPage_withoutAuth() throws Exception {
+        mockMvc.perform(get("/forgot-password.html"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
     void should_redirectToCustomLoginPage_when_browserRequestUnauthenticated() throws Exception {
         // SecurityConfig.formLogin().loginPage("/login.html") — the mobile-friendly
         // login page (issue #35) replaced Spring Security's default /login form.

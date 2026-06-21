@@ -314,8 +314,13 @@
 
         /* ── Mobile responsive ── */
         @media (max-width: 768px) {
+            html, body { overflow-x: clip; }
             body { min-height: 100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-            header { padding: 0 12px; position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); }
+            header { padding: 0 12px; position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); min-width: 0; overflow: hidden; }
+            header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .user-menu { flex-shrink: 0; gap: 4px; }
+            .user-menu .logout-btn { padding: 4px 8px; font-size: 0.72rem; }
+            #link-google-btn { display: none !important; }
             .hamburger { display: flex; align-items: center; }
             header .badge { display: none; }
             nav {
