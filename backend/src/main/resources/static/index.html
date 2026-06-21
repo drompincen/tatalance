@@ -826,7 +826,11 @@
     /* Early auth guard — redirect fast on phone/desktop before painting data or doing other fetches.
        Prevents "hanging" or flash of empty UI when not authenticated. */
     (function earlyAuthGuard() {
-        document.documentElement.style.visibility = 'hidden';
+        const p = new URLSearchParams(location.search);
+        const hasFlag = p.get('mobile') != null || p.get('m') != null || p.get('forceMobile') != null;
+        if (!hasFlag) {
+            document.documentElement.style.visibility = 'hidden';
+        }
         fetch('/api/users/me')
             .then(r => {
                 if (!r.ok) {
@@ -837,15 +841,22 @@
             })
             .then(data => {
                 if (data) {
-                    // reveal when we have user; full loads and username set happen in the main block below
+                    document.documentElement.style.visibility = '';
+                } else if (!hasFlag) {
                     document.documentElement.style.visibility = '';
                 }
             })
             .catch(() => {
                 if (!location.pathname.includes('login')) {
                     window.location.href = '/login.html';
+                } else if (!hasFlag) {
+                    document.documentElement.style.visibility = '';
                 }
             });
+        // If flag present (mobile test), never hide - show UI immediately for flag testing
+        if (hasFlag) {
+            document.documentElement.style.visibility = '';
+        }
     })();
 
     /* ── Sort state ── */
@@ -963,6 +974,11 @@
                 body.force-mobile .nav-overlay.open { display: block !important; }
                 body.force-mobile header { padding: 0 12px !important; }
                 body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; }
+                /* Full mobile simulation for flag testing (dvh, fonts, btns, jobs etc) */
+                body.force-mobile input, body.force-mobile select, body.force-mobile textarea { font-size: 16px !important; }
+                body.force-mobile .btn { width: 100% !important; padding: 12px !important; min-height: 44px !important; font-size: 1rem !important; }
+                body.force-mobile #job-list .btn-sm { min-height: 44px !important; min-width: 44px !important; }
+                body.force-mobile body, body.force-mobile html { min-height: 100dvh !important; min-height: -webkit-fill-available !important; }
             `;
             document.head.appendChild(style);
         }
