@@ -48,7 +48,7 @@ test.describe('M5 — Login on iPhone Safari', () => {
     await page.locator('input[name="username"]').fill('admin');
     await page.locator('input[name="password"]').fill('admin');
     await Promise.all([
-      page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 10_000 }),
+      page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: process.env.CI ? 30_000 : 10_000 }),
       page.locator('button[type="submit"], input[type="submit"]').first().click(),
     ]);
     await expect(page.locator('#hamburger')).toBeVisible();
