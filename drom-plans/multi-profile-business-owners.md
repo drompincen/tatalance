@@ -217,3 +217,150 @@ Start by using **/planner** + **/architect** for Chapter 1 if not already done i
 Source of truth: this document + the running app behavior.
 
 Let's build this right.
+
+## Closed-Loop Completion Cycle (Implementation + Test + Push + Deploy Monitor + Checkout Verify)
+
+To complete the full feature (after per-chapter work), run a **formal closed-loop pipeline** following `workflows/closed-loop.md` and using `/orchestrator` + `scripts/orchestrate.sh`.
+
+**Purpose**: Ensure implementation is solid, tests pass, code is pushed to `drom` (triggers build/deploy to tatalance-drom), deployment succeeds, and we "checkout"/verify the live feature (on deployed EB URL with ?m=1 for mobile profiles).
+
+### 1. Setup the Orchestrator for this Plan
+- Copy/customize `scripts/orchestrate.sh` → e.g. `scripts/orchestrate-multi-profile.sh`
+- Set:
+  - `CHECK_CMD="powershell -File scripts/check-multi-profile.ps1"` (extend `check-tests.ps1`)
+  - `MAX_ITERATIONS=5` (or 10)
+  - `REPORT_DIR="./reports/multi-profile"`
+- The check script should:
+  - Run backend: `mvn clean compile test -Pdev` (or full)
+  - Run E2E: `npm run test:e2e --prefix tests/e2e -- --project=mobile,desktop` (add profile-specific specs e.g. multi-profile switch, job scoping per profile)
+  - Output JSON like `test-check-report.json` with passed/failed + summary
+  - Pass condition: `totalFailed == 0` + no critical issues
+- Extend `check-tests.ps1` or create `scripts/check-multi-profile.ps1` that also optionally runs a "deploy-check" step.
+
+### 2. Full Loop Protocol (adapt from workflows/closed-loop.md)
+1. **Capture baseline** (Iteration 0):
+   - Run check (local tests + current code state).
+   - Record in `context/MEMORY.md`:
+     ```
+     ### Multi-Profile Closed-Loop Iteration 0 (baseline)
+     - Pass: X/Y
+     - Issues: N (categorized e.g. Model, API, UI-Switcher, Tests, Deploy)
+     - Baseline from: mvn test + e2e + code review
+     ```
+2. **Analyze**: Read reports. Categorize (e.g. "profileId scoping bugs", "switcher UI not filtering jobs", "migration fails", "deploy timeout").
+3. **Fix (PARALLEL)**: Spawn agents in ONE message (use /implementer, /refactorer, /debugger per category). All background. E.g.:
+   ```
+   Spawn /implementer: Fix profileId in Job model/queries + validation.
+   Spawn /implementer: Add profile switcher + scope loads in index.html.
+   Spawn /reviewer: Audit all userId → userId+profileId changes.
+   ```
+4. **Review**: Read ALL agent results. Resolve conflicts. Update plan checkboxes.
+5. **Re-check**: Run check again. Compare:
+   - Improved → continue
+   - Regression → revert the bad changes, log, try alt approach
+   - Pass → proceed to Push+Deploy phase
+6. **Log every iteration** to `context/MEMORY.md` (as in example in memory file).
+7. **Loop or exit**: If issues + < max → repeat from 2. Else stop/report.
+
+### 3. Push + Monitor Build/Deploy Sub-Loop (inside or after local passes)
+Once local check passes:
+- Commit changes on `drom` (with plan ref).
+- `git push origin drom` (triggers GitHub Actions → build JAR without Flapdoodle + deploy to tatalance-drom EB).
+- **Monitor loop** (use gh + aws in a sub-script or manual with sleep/poll):
+  - Poll `gh run list --branch drom --limit 1 --json status,conclusion,url` until "completed" + "success".
+  - Then poll AWS: `aws elasticbeanstalk describe-environments --environment-names tatalance-drom --query "Environments[0].{Status:Status,Health:Health}" --profile drom-dev`
+  - Wait for Health=Green + Status=Ready (timeout after e.g. 10min, fail loop).
+  - Log: "Build: success (run url), Deploy: Green at <timestamp>"
+- If build/deploy fails: treat as "issue", analyze logs (aws logs or gh logs), spawn fix agent, re-push in next iter.
+
+### 4. Checkout / Verify on Deployed Env
+After deploy success:
+- "Checkout" the live feature:
+  - Run targeted E2E against deployed URL: set BASE_URL= the EB URL (e.g. http://tatalance-drom....) + ?m=1 for mobile, run profile-switch + job-scoping specs.
+  - Or manual: open in browser (desktop + real iPhone Safari), switch profiles, verify:
+    - Different job lists per profile
+    - Clients shared
+    - Create job under one profile doesn't appear in other
+    - No breakage to existing rides/clients
+  - Use `scripts/check-tests.ps1` variant with deployed BASE_URL.
+- If verification fails: log as regression, fix, loop back (re-push or hotfix?).
+
+### 5. Final Confirm & Memory
+- One last full check (local + deployed).
+- Update plan: all chapters complete, frontmatter status=completed, current_chapter=final.
+- Write full summary to `context/MEMORY.md` (see example iterations there).
+- Close #93 (or new multi-profile issue) if all green.
+- Optional: use JavaDucker hygiene for the changes.
+
+**Integration with chapters**:
+- Run mini closed-loops at end of each chapter (e.g. after Ch2: impl+local test loop).
+- Full end-to-end closed-loop (above) after Ch5 + carried items.
+- Use `scripts/orchestrate.sh --iteration N --max 5` (customize CHECK_CMD per phase: local vs deploy).
+
+**Pass condition for full cycle**: 
+- 0 test failures (Java + E2E desktop/mobile)
+- Build success
+- EB deploy Health=Green
+- Manual + E2E "checkout" on deployed confirms profile switching + scoping works (no shared job leakage, clients visible everywhere)
+
+**Max iterations**: 5 (adjust in orchestrate).
+
+This turns the "finish the plan" into a repeatable, auditable closed loop with deployment monitoring and live checkouts, exactly as drom-flow supports.
+
+Update this plan section as we execute the loop (log iterations here too). 
+
+See `workflows/closed-loop.md`, `scripts/orchestrate.sh`, `scripts/check-tests.ps1`, and prior memory logs for patterns (e.g. the mobile uplift loop).
+
+## Pending Items Carried Over from Previous Refactoring Plan (freelance-jobs-implementation.md)
+
+The following items were pending (unchecked `[ ]`) in the prior freelance jobs plan (Ch1 and implementation chapters). They are relevant to the multi-profile extension (jobs now profile-scoped, UI for multiple profiles, shared clients, etc.). Adapted or carried forward here for completeness. Update checkboxes in this plan as work progresses.
+
+### From Chapter 1: Analysis, Design & Setup (was pending)
+- [ ] **/architect** + **/planner**: Review mockup HTML + issue ACs in detail. Produce high-level architecture decision (reuse strategy, separation of concerns).
+- [ ] Inventory existing rides/pricing/time/invoice code paths in `index.html` and backend
+- [ ] **/architect**: Decide on model: reuse/extend Rides vs new lightweight Jobs abstraction (prefer reuse + "Jobs" UI layer for now). Create ADR.
+- [ ] Update `docs/journeys/` or add freelance journey note if needed
+- [ ] Ensure `gh` auth + repo access (already done per create-github-issues plan)
+- [ ] Create branch if needed (from `drom`)
+
+### From Chapter 3: Desktop / PC UI Implementation (many pending)
+- [ ] **/architect**: High-level UI layout decision for Jobs tab (placement relative to Rides). (Adapt for profile switcher + per-profile jobs lists)
+- [ ] **/implementer**: Add "Jobs" nav tab (after Rides or as new primary for freelance view) (ensure supports profile context)
+- [ ] **/implementer** + **/api-expert**: Add `#tab-jobs` pane modeled after `#tab-rides`; define any supporting endpoints.
+- [ ] Job booking form: client search (reuse existing), title, description/scope, hourlyRate (default/locked to 20), estHours, date/time (extend for profile selection)
+- [ ] Jobs list: cards/table with status badges, client, title, rate, logged hours, current billable (scope to active profile)
+- [ ] Live timer / stopwatch on IN_PROGRESS jobs (reuse or adapt driver-queue logic) (per-profile)
+- [ ] Start / pause / complete actions with live billable recalc
+- [ ] Complete flow: show total (hours × rate), confirm, persist, auto-create invoice
+- [ ] Dashboard updates: hours logged this month, revenue, active jobs (extend existing stats) (per active profile)
+- [ ] Invoices tab: show job-derived invoices (reuse + filter by type if needed) (filter by profile)
+- [ ] Freelancer rate display / setter (simple profile section, default $20)
+- [ ] **/implementer** + **/refactorer** + **/reviewer**: Polish: search, filters, rebook-like "rebook job", error states
+
+### From Chapter 4: Mobile Implementation (pending)
+- [ ] **/architect** + **/implementer**: Ensure Jobs tab and forms are responsive (768px/640px breakpoints, card layout, 16px inputs, min 44px taps)
+- [ ] Mobile nav (hamburger) includes Jobs tab
+- [ ] Safe-area, 100dvh, sticky buttons, no horizontal scroll on jobs views
+- [ ] Live timer and complete form work well on small screens + keyboard
+- [ ] **/implementer** + **/reviewer**: Add dedicated mobile E2E coverage for Jobs (new or extend m*-specs)
+- [ ] Test driver-queue-like field view if freelance uses a simplified mobile jobs page (or just main app on mobile)
+- [ ] **/accessibility** + **/performance**: Audit mobile experience
+
+### From Chapter 5: Full Testing (PC + Mobile) (pending)
+- [ ] **/implementer**: Desktop E2E: new or updated specs for booking job, live timer, complete → invoice (modeled after ride specs)
+- [ ] **/implementer** + **/reviewer**: Mobile E2E: iPhone SE (and 14) viewport tests for Jobs flow, responsive shell on jobs tab, tap targets, fonts, no scroll, sticky elements, axe
+- [ ] **/implementer** + **/debugger**: Unit / integration: billable calc at exactly $20/hr, state transitions (SCHEDULED → IN_PROGRESS → COMPLETED), invoice totals
+- [ ] Run full test matrix: `npm run test:e2e` (desktop + mobile) + `mvn test`
+- [ ] **/reviewer**: Update `tests/e2e/README.md` and any gap matrix
+- [ ] Add to CI if not covered
+
+### From Chapter 6: Verification, Polish & Close (pending)
+- [ ] **/implementer** + **/reviewer**: Manual smoke on desktop + real iPhone Safari (or emulator)
+- [ ] Update docs (README, journeys if new, ai-workflow-guide)
+- [ ] **/architect**: Update tatalance-v1.md or create follow-up epic reference
+- [ ] **/reviewer** + close loop: Close #93 once all ACs pass + tests green
+- [ ] Optional: add "freelance" label usage, assignee, project board move
+- [ ] **/refactorer**: Any final cleanup
+
+**Notes on carried items:**
+These were left as pending in the prior plan (Ch1 fully, and many in implementation chapters despite "completed" headers). They are now folded into this multi-profile plan as the jobs feature is extended with profile scoping. Prioritize in Ch1 (analysis) and Ch4 (frontend for profiles/jobs). Re-check and move [x] as work is done here. Many can be adapted directly (e.g., replace "Jobs tab" scoping with "active profile jobs list").
