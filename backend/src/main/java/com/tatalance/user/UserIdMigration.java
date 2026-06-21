@@ -33,7 +33,12 @@ public class UserIdMigration implements CommandLineRunner {
         }
 
         String adminId = admin.getId();
-        String[] collections = {"clients", "drivers", "rides", "invoices", "custom_tables", "custom_table_rows"};
+        String[] collections = {"clients", "drivers", "jobs", "invoices", "custom_tables", "custom_table_rows"};
+        // NOTE: rides collection refactored to "jobs" in Category A (Issue #93).
+        // Data migration for existing data (manual or via mongo shell):
+        //   db.rides.renameCollection("jobs")
+        //   db.jobs.updateMany({type: {$exists: false}}, {$set: {type: "RIDE", _class: "com.tatalance.ride.Ride"}})
+        // Old "rides" kept here? No, updated. UserIdMigration will target jobs going forward.
 
         for (String collection : collections) {
             Query query = new Query(Criteria.where("userId").is(null));

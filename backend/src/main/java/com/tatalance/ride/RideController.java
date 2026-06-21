@@ -26,7 +26,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-@Tag(name = "Rides", description = "Ride booking and management")
+@Tag(name = "Rides / Jobs", description = "Ride and unified Job (service/freelance) booking and management. Category A refactor #93: base Job + Ride extends, collection=jobs")
 @RestController
 @RequestMapping("/api")
 public class RideController {
@@ -66,6 +66,32 @@ public class RideController {
         Ride saved = rideRepository.save(ride);
         activityLog.log(userId, "CREATE", "Ride", saved.getId(),
                 "Booked ride for " + saved.getClientName());
+        return saved;
+    }
+
+    @Operation(summary = "Create a service/freelance Job (base Job, for developer jobs etc, Issue #93)")
+    @ApiResponse(responseCode = "201", description = "Job created")
+    @PostMapping("/jobs")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Job createJob(@RequestBody Job job) {
+        // For base Job (SERVICE) use case. No destination validation. scheduledTime optional for MVP.
+        String userId = authHelper.getCurrentUserId();
+        if (job.getClientId() != null) {
+            Client client = clientRepository.findByIdAndUserId(job.getClientId(), userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client not found"));
+            job.setClientName(client.getFirstName() + " " + client.getLastName());
+        }
+        job.setUserId(userId);
+        if (job.getType() == null || job.getType().isBlank()) {
+            job.setType("SERVICE");
+        }
+        job.setStatus(RideStatus.SCHEDULED);
+        job.addStatusEvent(RideStatus.SCHEDULED);
+        job.setCreatedAt(Instant.now());
+        // Note: save via rideRepository (which extends JobRepository) works for base Job too
+        Job saved = rideRepository.save(job);
+        activityLog.log(userId, "CREATE", "Job", saved.getId(),
+                "Booked job for " + saved.getClientName());
         return saved;
     }
 

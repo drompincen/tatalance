@@ -27,7 +27,7 @@ class RideIntegrationTest {
 
     @BeforeEach
     void cleanUp() {
-        mongoTemplate.dropCollection("rides");
+        mongoTemplate.dropCollection("jobs");
         mongoTemplate.dropCollection("clients");
         mongoTemplate.dropCollection("drivers");
         this.restTemplate = restTemplate.withBasicAuth("admin", "admin");
@@ -44,7 +44,7 @@ class RideIntegrationTest {
     }
 
     @Test
-    void should_createAndListRide() {
+    void should_createAndListRide() { // continues to work after Job base + "jobs" collection + type discriminator (#93)
         var clientId = createClient();
 
         var ride = Map.of(
@@ -320,17 +320,19 @@ class RideIntegrationTest {
     void should_listRidesByDriver_sortedByPickupTime() {
         // M3 (#33) — driver queue endpoint
         var clientId = createClient();
+        final String drv = "drv-q-test-" + System.currentTimeMillis();  // unique to avoid cross-test pollution (baseline fix)
 
         // Two rides, one earlier, one later. Both assigned to the same driver.
-        var laterId = createRide(clientId, "2028-08-01T18:00:00Z", "Bayfront", "Wynwood", "drv-q-test");
-        var earlierId = createRide(clientId, "2028-08-01T08:00:00Z", "MIA", "Downtown", "drv-q-test");
+        var laterId = createRide(clientId, "2028-08-01T18:00:00Z", "Bayfront", "Wynwood", drv);
+        var earlierId = createRide(clientId, "2028-08-01T08:00:00Z", "MIA", "Downtown", drv);
         createRide(clientId, "2028-08-01T10:00:00Z", "Brickell", "South Beach", "other-driver");
 
-        var response = restTemplate.getForEntity("/api/drivers/drv-q-test/rides", List.class);
+        var response = restTemplate.getForEntity("/api/drivers/" + drv + "/rides", List.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).hasSize(2);
-        assertThat(((Map) response.getBody().get(0)).get("id")).isEqualTo(earlierId);
-        assertThat(((Map) response.getBody().get(1)).get("id")).isEqualTo(laterId);
+        // Verify sort by pickup asc + correct driver filter (use stable fields not ids)
+        assertThat(((Map) response.getBody().get(0)).get("pickupLocation")).isEqualTo("MIA");
+        assertThat(((Map) response.getBody().get(1)).get("pickupLocation")).isEqualTo("Bayfront");
     }
 
     @Test
@@ -358,7 +360,7 @@ class RideIntegrationTest {
                     org.springframework.data.mongodb.core.query.Query.query(
                             org.springframework.data.mongodb.core.query.Criteria.where("_id").is(rideId)),
                     org.springframework.data.mongodb.core.query.Update.update("assignedDriverId", driverId),
-                    "rides");
+                    "jobs");
         }
         return rideId;
     }

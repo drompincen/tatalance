@@ -4,6 +4,7 @@ import com.tatalance.client.ClientRepository;
 import com.tatalance.driver.DriverRepository;
 import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.invoice.InvoiceStatus;
+import com.tatalance.ride.JobRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
 import com.tatalance.user.AuthHelper;
@@ -35,6 +36,8 @@ public class StatsController {
         this.invoiceRepo = invoiceRepo;
         this.authHelper = authHelper;
     }
+
+    // #93 Category A: rideRepo now backed by jobs collection + Job base model. Ride-specific queries filtered by type.
 
     @GetMapping
     public Map<String, Object> stats() {

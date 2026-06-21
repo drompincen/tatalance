@@ -1,6 +1,7 @@
 package com.tatalance.invoice;
 
 import com.tatalance.activity.ActivityLogger;
+import com.tatalance.ride.Job;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
@@ -48,7 +49,9 @@ public class InvoiceController {
         this.activityLog = activityLog;
     }
 
-    @Operation(summary = "Generate invoice from a completed ride")
+    // Note: generalized in #93 Category A. Invoice generation logic moved to base Job fields.
+
+    @Operation(summary = "Generate invoice from a completed ride/job (supports unified Job model post #93 refactor)")
     @ApiResponse(responseCode = "201", description = "Invoice created")
     @ApiResponse(responseCode = "400", description = "Ride not completed or not found")
     @PostMapping
@@ -67,12 +70,14 @@ public class InvoiceController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ride must be COMPLETED to generate invoice");
         }
 
-        BigDecimal baseCharge = ride.getTotalAmount() != null ? ride.getTotalAmount()
-                : (ride.getBasePrice() != null ? ride.getBasePrice() : BigDecimal.ZERO);
+        // Use base Job fields (ride is-a Job after #93 refactor)
+        Job job = ride;
+        BigDecimal baseCharge = job.getTotalAmount() != null ? job.getTotalAmount()
+                : (job.getBasePrice() != null ? job.getBasePrice() : BigDecimal.ZERO);
         BigDecimal extras = BigDecimal.ZERO;
-        if (ride.getTolls() != null) extras = extras.add(ride.getTolls());
-        if (ride.getParking() != null) extras = extras.add(ride.getParking());
-        if (ride.getAdditionalCharges() != null) extras = extras.add(ride.getAdditionalCharges());
+        if (job.getTolls() != null) extras = extras.add(job.getTolls());
+        if (job.getParking() != null) extras = extras.add(job.getParking());
+        if (job.getAdditionalCharges() != null) extras = extras.add(job.getAdditionalCharges());
 
         BigDecimal subtotal = baseCharge.add(extras);
         BigDecimal tax = subtotal.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
@@ -81,16 +86,16 @@ public class InvoiceController {
         Invoice invoice = new Invoice();
         invoice.setUserId(userId);
         invoice.setInvoiceNumber(generateInvoiceNumber(userId));
-        invoice.setClientId(ride.getClientId());
-        invoice.setClientName(ride.getClientName());
+        invoice.setClientId(job.getClientId());
+        invoice.setClientName(job.getClientName());
         invoice.setRideId(rideId);
         invoice.setBaseCharge(baseCharge);
         invoice.setAdditionalCharges(extras);
         invoice.setTax(tax);
         invoice.setTotal(total);
-        invoice.setPricingMode(ride.getPricingMode() != null ? ride.getPricingMode().name() : null);
-        invoice.setHourlyRate(ride.getHourlyRate());
-        invoice.setDurationMinutes(ride.getDurationMinutes());
+        invoice.setPricingMode(job.getPricingMode() != null ? job.getPricingMode().name() : null);
+        invoice.setHourlyRate(job.getHourlyRate());
+        invoice.setDurationMinutes(job.getDurationMinutes());
         invoice.setStatus(InvoiceStatus.OUTSTANDING);
         invoice.setCreatedAt(Instant.now());
 

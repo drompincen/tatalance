@@ -80,3 +80,26 @@ export async function seedAssignedRide(
     { basePrice },
   );
 }
+
+/** Seed a freelance/service job via the unified rides API (used by Jobs tab for #93).
+ *  Sets HOURLY $20, title in pickupLocation, dropoff hack for distinction.
+ */
+export async function seedJob(
+  request: APIRequestContext,
+  clientId: string,
+  title = 'Test Job',
+) {
+  const r = await request.post('/api/rides', {
+    data: {
+      clientId,
+      pickupDateTime: futureDateTime(1),
+      pickupLocation: title,
+      dropoffLocation: 'Freelance Job',
+      pricingMode: 'HOURLY',
+      hourlyRate: 20,
+      notes: 'EST:2|Mobile test scope',
+    },
+  });
+  assertOk(r.ok(), `seed job failed: ${r.status()}`);
+  return await r.json();
+}

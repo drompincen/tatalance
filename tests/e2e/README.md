@@ -65,6 +65,7 @@ $env:APP_USERNAME = "admin"; $env:APP_PASSWORD = "admin"; npm run test:e2e
 | #34 M4 Start + complete | `m4-driver-start-complete.spec.ts` | implemented |
 | #35 M5 Login | `m5-login-mobile.spec.ts` | implemented |
 | #35 M5 Register + forgot | `m5-register-forgot-mobile.spec.ts` | implemented |
+| #93 M6 Jobs (freelance) | `m6-jobs-mobile.spec.ts` | implemented (booking, live timer, complete @ $20/hr) |
 
 Shared helpers: `pages/mobile.page.ts`, `fixtures/mobile-seed.ts`.
 

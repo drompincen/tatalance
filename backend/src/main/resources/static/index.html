@@ -314,8 +314,15 @@
 
         /* ── Mobile responsive ── */
         @media (max-width: 768px) {
-            html, body { overflow-x: clip; }
-            body { min-height: 100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+            html, body { overflow-x: hidden; }
+            /* Robust full-height for real iOS Safari (100dvh + webkit fill) */
+            html { height: -webkit-fill-available; }
+            body { 
+                min-height: 100dvh; 
+                min-height: -webkit-fill-available; 
+                padding-top: env(safe-area-inset-top); 
+                padding-bottom: env(safe-area-inset-bottom); 
+            }
             header { padding: 0 12px; position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); min-width: 0; overflow: hidden; }
             header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .user-menu { flex-shrink: 0; gap: 4px; }
@@ -344,6 +351,8 @@
             input, select { font-size: 16px !important; }
             .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
             .btn-cancel { width: auto; position: static; box-shadow: none; }
+            /* Jobs tab action buttons (Category C mobile) */
+            #job-list .btn-sm { min-height: 44px; min-width: 44px; padding: 8px 12px; font-size: 0.85rem; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
             #dash-detail-row { grid-template-columns: 1fr !important; }
             .search-box { display: none; }
@@ -375,6 +384,7 @@
         <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
         <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
         <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
+        <button class="tab-btn" id="btn-jobs" onclick="showTab('jobs')">Jobs</button>
         <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
         <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
         <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
@@ -617,6 +627,74 @@
     </div>
 </div>
 
+<!-- ── Jobs tab (Category B - Desktop UI for freelance hourly jobs, reusing /api/rides backend) -->
+<div id="tab-jobs" class="tab-pane">
+    <div class="page">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">Book a Job</div>
+                <form id="job-form" novalidate>
+                    <div class="field">
+                        <label>Client <span class="req">*</span></label>
+                        <input type="search" id="j-clientSearch" placeholder="Search by name…" autocomplete="off"
+                               style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;margin-bottom:6px">
+                        <select id="j-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px;line-height:normal;">
+                            <option value="">Select a client…</option>
+                        </select>
+                        <div class="err" id="je-clientId">Client is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Job Title <span class="req">*</span></label>
+                        <input type="text" id="j-title" placeholder="Landing page development" autocomplete="off">
+                        <div class="err" id="je-title">Job title is required</div>
+                    </div>
+                    <div class="field">
+                        <label>Scope / Description <span class="opt">(optional)</span></label>
+                        <textarea id="j-scope" placeholder="Build responsive landing page..." rows="2" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;resize:vertical;"></textarea>
+                    </div>
+                    <div class="field">
+                        <label>Hourly Rate</label>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="text" value="20" disabled style="width:80px;background:#f0f0f0;font-weight:600;">
+                            <span style="color:#10b981;font-weight:600;font-size:0.9rem;">$/hr — fixed</span>
+                        </div>
+                    </div>
+                    <div class="field" style="display:flex; gap:12px;">
+                        <div style="flex:1;">
+                            <label>Est. Hours <span class="opt">(opt)</span></label>
+                            <input type="number" id="j-estHours" value="4" min="0" step="0.5" style="width:100%;">
+                        </div>
+                        <div style="flex:2;">
+                            <label>Scheduled Date/Time <span class="req">*</span></label>
+                            <input type="datetime-local" id="j-scheduled" autocomplete="off">
+                            <div class="err" id="je-scheduled">Scheduled date/time is required</div>
+                        </div>
+                    </div>
+                    <button class="btn" type="submit" id="job-submit-btn">Book Job</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-job-edit-btn" style="display:none" onclick="cancelJobEdit()">Cancel</button>
+                </form>
+                <div class="form-feedback" id="job-fb"></div>
+            </div>
+
+            <div class="card">
+                <div class="list-header">
+                    <div class="card-title" style="margin-bottom:0">Jobs</div>
+                    <span class="count" id="job-count"></span>
+                </div>
+                <div id="job-status-filter" style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="filter-btn active" onclick="setJobFilter('ALL')">All</button>
+                    <button class="filter-btn" onclick="setJobFilter('SCHEDULED')">Scheduled</button>
+                    <button class="filter-btn" onclick="setJobFilter('IN_PROGRESS')">In Progress</button>
+                    <button class="filter-btn" onclick="setJobFilter('COMPLETED')">Completed</button>
+                    <button class="filter-btn" onclick="setJobFilter('CANCELLED')">Cancelled</button>
+                </div>
+                <div id="job-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+                <div class="refresh-ts" id="job-ts"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Invoices tab ── -->
 <div id="tab-invoices" class="tab-pane">
     <div class="page">
@@ -846,6 +924,25 @@
     }
 
     /* ── Mobile nav ── */
+    // Support ?mobile=1 or ?m=1 to force mobile styles in desktop browser for testing
+    (function forceMobileIfRequested() {
+        const p = new URLSearchParams(location.search);
+        if (p.get('mobile') != null || p.get('m') != null || p.get('forceMobile') != null) {
+            document.body.classList.add('force-mobile');
+            // Also ensure mobile nav elements are visible by forcing some styles
+            const style = document.createElement('style');
+            style.textContent = `
+                body.force-mobile .hamburger { display: flex !important; }
+                body.force-mobile nav { display: none; }
+                body.force-mobile nav.open { display: flex !important; }
+                body.force-mobile .nav-overlay.open { display: block !important; }
+                body.force-mobile header { padding: 0 12px !important; }
+                body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; }
+            `;
+            document.head.appendChild(style);
+        }
+    })();
+
     function toggleNav() {
         document.getElementById('main-nav').classList.toggle('open');
         document.getElementById('nav-overlay').classList.toggle('open');
@@ -866,6 +963,7 @@
         // Refresh the client picker when opening the booking tab so newly
         // added clients appear without waiting for the 10s poll.
         if (name === 'rides') loadClientDropdown();
+        if (name === 'jobs') { loadJobClientDropdown(); loadJobs(); }
         if (name === 'dashboard') loadDashboard();
         if (name === 'activity') loadActivity();
         closeNav();
@@ -1929,6 +2027,289 @@
     setInterval(loadClientDropdown, 10000);
     setInterval(loadAvailableDrivers, 10000);
 
+    /* ── Jobs (Category B desktop UI — cards, live timer via driver-queue pattern, $20/hr hourly, start/complete via /start + /complete, est/scope via notes hack, title via pickupLocation) ── */
+    let allJobsCache = [];
+    let jobStatusFilter = 'ALL';
+    let editingJobId = null;
+
+    function loadJobClientDropdown() {
+        fetch('/api/clients?page=0&size=500').then(r => r.json()).then(data => {
+            const clients = data.content || [];
+            const sel = document.getElementById('j-clientId');
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Select a client…</option>' +
+                clients.map(c => `<option value="${c.id}">${esc(c.firstName)} ${esc(c.lastName)}</option>`).join('');
+            if (current) sel.value = current;
+            applyJobClientSearchFilter();
+        }).catch(() => {});
+    }
+
+    function applyJobClientSearchFilter() {
+        const q = (document.getElementById('j-clientSearch')?.value || '').trim().toLowerCase();
+        const sel = document.getElementById('j-clientId');
+        if (!sel) return;
+        Array.from(sel.options).forEach(opt => {
+            if (!opt.value) return;
+            const match = !q || opt.textContent.toLowerCase().includes(q);
+            opt.hidden = !match;
+            opt.style.display = match ? '' : 'none';
+        });
+        if (sel.selectedOptions[0]?.hidden) sel.value = '';
+    }
+
+    setTimeout(() => {
+        const search = document.getElementById('j-clientSearch');
+        if (search && !search._jobListener) {
+            search._jobListener = true;
+            search.addEventListener('input', applyJobClientSearchFilter);
+        }
+    }, 50);
+
+    function parseJobNotes(notes) {
+        if (!notes) return {est: 4, scope: ''};
+        const m = notes.match(/^EST:([\d.]+)\|(.*)$/);
+        if (m) return {est: parseFloat(m[1]) || 4, scope: m[2] || ''};
+        return {est: 4, scope: notes};
+    }
+
+    function loadJobs() {
+        fetch(`/api/rides?page=0&size=100`)
+            .then(r => r.json())
+            .then(data => {
+                allJobsCache = data.content || [];
+                if (!isUserEditingTab('tab-jobs')) {
+                    applyJobFilter();
+                }
+                const ts = document.getElementById('job-ts');
+                if (ts) ts.textContent = `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+            })
+            .catch(() => {
+                const el = document.getElementById('job-list');
+                if (el) el.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+            });
+    }
+
+    window.setJobFilter = function(status) {
+        jobStatusFilter = status;
+        document.querySelectorAll('#job-status-filter .filter-btn').forEach(b => {
+            const txt = b.textContent.toUpperCase().replace(' ', '');
+            b.classList.toggle('active', (status === 'ALL' && b.textContent === 'All') || txt === status || (status === 'IN_PROGRESS' && txt === 'INPROGRESS'));
+        });
+        applyJobFilter();
+    };
+
+    function applyJobFilter() {
+        let filtered = jobStatusFilter === 'ALL' ? allJobsCache : allJobsCache.filter(r => r.status === jobStatusFilter);
+        renderJobs(filtered);
+    }
+
+    function renderJobs(jobs) {
+        const el = document.getElementById('job-list');
+        if (!el) return;
+        const countEl = document.getElementById('job-count');
+        if (countEl) countEl.textContent = `(${jobs.length})`;
+        if (!jobs.length) {
+            el.innerHTML = jobStatusFilter !== 'ALL'
+                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${jobStatusFilter.toLowerCase().replace('_',' ')} jobs</p></div>`
+                : `<div class="empty-state"><div class="icon">💼</div><p>No jobs yet — book the first one!</p></div>`;
+            return;
+        }
+        el.innerHTML = jobs.map(r => {
+            const {est, scope} = parseJobNotes(r.notes);
+            const title = r.pickupLocation || 'Untitled job';
+            const client = r.clientName || '—';
+            const rate = Number(r.hourlyRate || 20);
+            let loggedH = r.durationMinutes ? (r.durationMinutes / 60) : 0;
+            const isInProg = r.status === 'IN_PROGRESS';
+            const hasStart = !!r.actualStart;
+            if (isInProg && hasStart) {
+                // compute tentative live logged for initial render
+                const startMs = new Date(r.actualStart).getTime();
+                const liveH = Math.max(loggedH, (Date.now() - startMs) / 3600000);
+                loggedH = liveH;
+            }
+            const billable = (r.billableAmount != null) ? Number(r.billableAmount).toFixed(2) : (loggedH * rate).toFixed(2);
+            let actions = '';
+            if (r.status === 'SCHEDULED' || r.status === 'ASSIGNED') {
+                actions = `<button class="btn-sm" data-test="start-btn" onclick="startJob('${r.id}')" style="background:#0f3460;color:white;border:1px solid #0f3460;padding:3px 8px;border-radius:4px;">Start</button>`;
+            } else if (isInProg) {
+                actions = `<button class="btn-sm" data-test="complete-btn" onclick="completeJob('${r.id}')" style="background:#38a169;color:white;border:1px solid #38a169;padding:3px 8px;border-radius:4px;">Complete</button>`;
+            } else if (r.status === 'COMPLETED') {
+                actions = `<button class="btn-sm" data-test="invoice-btn" onclick="generateInvoice('${r.id}')" style="border:1px solid #3182ce;color:#3182ce;padding:3px 8px;border-radius:4px;">Invoice $${(r.totalAmount||billable)}</button>`;
+            }
+            const timerHtml = (isInProg && hasStart)
+                ? `<div style="font-family:ui-monospace,monospace;font-size:0.92rem;color:#d97706;font-weight:600;margin-top:2px;"><span class="job-timer" data-start="${r.actualStart}" data-rate="${rate}" data-billable-id="bill-${r.id}">00:00:00</span> <span style="font-size:0.6rem">LIVE</span></div>`
+                : '';
+            const loggedDisplay = isInProg ? `${loggedH.toFixed(1)}h live` : `${loggedH.toFixed(1)}h / ${est}h`;
+            const billId = `bill-${r.id}`;
+            return `
+                <div data-job-id="${r.id}" style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:white;">
+                    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:0.92rem;line-height:1.2;">${esc(title)}</div>
+                            <div style="font-size:0.78rem;color:#6b7280;">${esc(client)}</div>
+                            ${scope ? `<div style="font-size:0.72rem;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${esc(scope)}">${esc(scope)}</div>` : ''}
+                        </div>
+                        <div style="text-align:right;white-space:nowrap;">
+                            <span style="font-size:0.68rem;background:#ecfdf5;color:#10b981;font-weight:700;padding:0 6px;border-radius:999px;">$${rate}/hr</span>
+                            <div style="margin-top:3px;font-size:0.82rem;"><strong id="${billId}" style="color:#10b981;">$${billable}</strong></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:0.78rem;">
+                        <div><span style="color:#64748b;font-size:0.68rem;">LOGGED</span><br><span style="font-weight:600;">${loggedDisplay}</span></div>
+                        <div style="flex:1;"><span style="color:#64748b;font-size:0.68rem;">STATUS</span><br><span style="font-weight:700;color:${statusColors[r.status]||'#555'};font-size:0.78rem;" data-test="status-badge">${r.status}</span>${timerHtml}</div>
+                        <div style="display:flex;gap:4px;">${actions}</div>
+                    </div>
+                </div>`;
+        }).join('');
+        tickJobTimers();
+    }
+
+    function tickJobTimers() {
+        document.querySelectorAll('#job-list .job-timer[data-start]').forEach(el => {
+            const startMs = new Date(el.dataset.start || 0).getTime();
+            if (!startMs) return;
+            const elapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            el.textContent = `${h}:${m}:${s}`;
+
+            // live billable update
+            const rate = parseFloat(el.dataset.rate || '20');
+            const billId = el.dataset.billableId;
+            if (billId) {
+                const billEl = document.getElementById(billId);
+                if (billEl) {
+                    const liveH = elapsed / 3600;
+                    const liveBill = (liveH * rate).toFixed(2);
+                    billEl.textContent = '$' + liveBill;
+                }
+            }
+        });
+    }
+
+    window.startJob = async function(jobId) {
+        try {
+            const r = await fetch(`/api/rides/${jobId}/start`, { method: 'POST' });
+            if (!r.ok) throw new Error('Start failed');
+            loadJobs();
+            if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
+        } catch(e) { alert('Could not start job (check server status/logs)'); }
+    };
+
+    window.completeJob = async function(jobId) {
+        if (!confirm('Mark job complete now? (uses live elapsed since start × $20)')) return;
+        const btns = document.querySelectorAll(`button[onclick*="completeJob('${jobId}')"]`);
+        if (btns[0]) { btns[0].disabled = true; btns[0].textContent = '…'; }
+        try {
+            const resp = await fetch(`/api/rides/${jobId}/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            if (!resp.ok) {
+                const e = await resp.json().catch(() => ({}));
+                throw new Error(e.message || 'Complete failed');
+            }
+            loadJobs();
+            if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
+            loadDashboard();
+            const fb = document.getElementById('job-fb');
+            if (fb) { fb.className = 'form-feedback ok'; fb.textContent = '✓ Job completed. Total hours × rate calculated.'; setTimeout(()=>{if(fb)fb.textContent='';}, 2400); }
+        } catch(e) {
+            alert('Complete failed: ' + e.message);
+            if (btns[0]) { btns[0].disabled = false; btns[0].textContent = 'Complete'; }
+        }
+    };
+
+    const _jobForm = document.getElementById('job-form');
+    if (_jobForm) {
+        _jobForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const clientId = document.getElementById('j-clientId').value;
+            const title = (document.getElementById('j-title').value || '').trim();
+            const scope = (document.getElementById('j-scope').value || '').trim();
+            const est = (document.getElementById('j-estHours').value || '4').trim();
+            const scheduled = document.getElementById('j-scheduled').value;
+
+            let valid = true;
+            const cSel = document.getElementById('j-clientId');
+            cSel.classList.toggle('invalid', !clientId);
+            document.getElementById('je-clientId').classList.toggle('show', !clientId);
+            const tIn = document.getElementById('j-title');
+            tIn.classList.toggle('invalid', !title);
+            document.getElementById('je-title').classList.toggle('show', !title);
+            const sIn = document.getElementById('j-scheduled');
+            sIn.classList.toggle('invalid', !scheduled);
+            document.getElementById('je-scheduled').classList.toggle('show', !scheduled);
+            if (!clientId || !title || !scheduled) valid = false;
+            if (!valid) return;
+
+            const btn = document.getElementById('job-submit-btn');
+            const fb = document.getElementById('job-fb');
+            btn.disabled = true; btn.textContent = 'Booking…';
+            fb.className = 'form-feedback'; fb.textContent = '';
+
+            try {
+                const notesVal = `EST:${est}|${scope}`;
+                const body = {
+                    clientId,
+                    pickupDateTime: new Date(scheduled).toISOString(),
+                    pickupLocation: title,
+                    dropoffLocation: 'Freelance Job',
+                    pricingMode: 'HOURLY',
+                    hourlyRate: 20,
+                    notes: notesVal
+                };
+                const url = editingJobId ? `/api/rides/${editingJobId}` : '/api/rides';
+                const method = editingJobId ? 'PUT' : 'POST';
+                const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                if (!r.ok) throw new Error();
+                const wasEdit = !!editingJobId;
+                cancelJobEdit();
+                fb.className = 'form-feedback ok';
+                fb.textContent = wasEdit ? '✓ Job updated' : '✓ Job booked ($20/hr)';
+                loadJobs();
+            } catch {
+                fb.className = 'form-feedback fail';
+                fb.textContent = '✗ Save failed — check server logs';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = editingJobId ? 'Update Job' : 'Book Job';
+            }
+        });
+    }
+
+    ['j-clientId','j-title','j-scheduled'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => {
+            el.classList.remove('invalid');
+            const errEl = document.getElementById('je-' + id.replace('j-',''));
+            if (errEl) errEl.classList.remove('show');
+        });
+    });
+
+    window.cancelJobEdit = function() {
+        editingJobId = null;
+        ['j-title','j-scope','j-estHours','j-scheduled'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const cs = document.getElementById('j-clientId'); if (cs) cs.value = '';
+        const sbtn = document.getElementById('job-submit-btn'); if (sbtn) sbtn.textContent = 'Book Job';
+        const ct = document.querySelector('#job-form') ? document.querySelector('#job-form').closest('.card').querySelector('.card-title') : null;
+        if (ct) ct.textContent = 'Book a Job';
+        const cb = document.getElementById('cancel-job-edit-btn'); if (cb) cb.style.display = 'none';
+        const fbb = document.getElementById('job-fb'); if (fbb) { fbb.className = 'form-feedback'; fbb.textContent = ''; }
+    };
+
+    // bootstrap for jobs is lazy - only on tab switch via showTab
+    // (was unconditional before; caused extra fetches on every page load)
+    // loadJobClientDropdown();
+    // loadJobs();
+    // setInterval(loadJobs, 10000);
+    // setInterval(loadJobClientDropdown, 10000);
+    setInterval(tickJobTimers, 1000);
+
     /* ── Invoices ── */
     function generateInvoice(rideId) {
         fetch('/api/invoices', {
@@ -2524,14 +2905,27 @@
         .catch(() => {});
 
     fetch('/api/users/me')
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) {
+                // Not authenticated - redirect to login instead of showing empty/hanging UI
+                window.location.href = '/login.html';
+                return null;
+            }
+            return r.json();
+        })
         .then(data => {
+            if (!data) return;
             const el = document.getElementById('username-display');
             if (el) el.textContent = data.username;
             const linkBtn = document.getElementById('link-google-btn');
             if (linkBtn && data.googleLinked === false) linkBtn.style.display = '';
         })
-        .catch(() => {});
+        .catch(() => {
+            // On any error (incl network/auth), go to login
+            if (!location.pathname.includes('login')) {
+                window.location.href = '/login.html';
+            }
+        });
 
     /* ── Help Overlay ── */
     const helpPanels = [
@@ -2660,6 +3054,11 @@
                 <div class="stat-label">Drivers</div>
                 <div class="stat-value">${s.totalDrivers}</div>
             </div>
+            <div class="stat-card accent-orange">
+                <div class="stat-label">Active Jobs</div>
+                <div class="stat-value">${(s.ridesByStatus && s.ridesByStatus.IN_PROGRESS) || 0}</div>
+                <div class="stat-sub">IN PROGRESS · Jobs tab</div>
+            </div>
             <div class="stat-card accent-blue">
                 <div class="stat-label">Rides today</div>
                 <div class="stat-value">${s.ridesToday}</div>
@@ -2707,6 +3106,7 @@
             <div class="revenue-line"><span class="revenue-label">Outstanding</span><span class="revenue-value red">$${Number(s.outstandingAmount).toFixed(2)}</span></div>
             <div class="revenue-line"><span class="revenue-label">Driver payouts owed</span><span class="revenue-value red">$${Number(s.payoutsOwed || 0).toFixed(2)}</span></div>
             <div class="revenue-line"><span class="revenue-label">Total rides</span><span class="revenue-value">${s.totalRides}</span></div>
+            <div class="revenue-line" style="font-size:0.75rem;color:#64748b;border-top:1px dashed #eee;margin-top:4px;padding-top:4px;">Jobs use $20/hr · see Jobs tab for live timers</div>
         `;
     }
 

@@ -16,3 +16,19 @@ playwright/.cache/
 aws/
 awscliv2.zip
 iam attach-role-policy *
+
+# Agent / drom-flow session artifacts (local only)
+agent-tools/
+terminals/
+
+# Session one-off scripts and reports (GH issue temp, closed-loop reports)
+create-issue*.ps1
+download-gh*.ps1
+extract-gh*.ps1
+payload.json
+*-response.json
+test-check-report.json
+
+# Per-user / local Claude/Grok config (not shared)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
