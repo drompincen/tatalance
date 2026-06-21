@@ -95,13 +95,14 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     await mobile.openTab('btn-jobs');
     const card = page.locator(`[data-job-id="${job.id}"]`);
     await page.waitForTimeout(1200); // accrue a little billable time for hourly calc
-    await card.locator('[data-test="complete-btn"]').click();
 
-    // jobs complete uses native confirm dialog
+    // jobs complete uses native confirm dialog - set handler BEFORE clicking
     page.once('dialog', async (d) => {
       expect(d.message()).toContain('Mark job complete');
       await d.accept();
     });
+
+    await card.locator('[data-test="complete-btn"]').click();
 
     await expect(card.locator('[data-test="status-badge"]')).toContainText('COMPLETED', { timeout: 12000 });
 
