@@ -195,18 +195,8 @@
         var btn = form.querySelector('button');
         var msgError = document.getElementById('msg-error');
 
-        // Inject CSRF token (read from cookie set by Spring) into the form.
-        // Without this, Spring Security CsrfFilter rejects the POST /login (403 or back to login page).
-        // getCsrfToken helper was defined but never used — this was causing form login to fail.
-        form.addEventListener('submit', function() {
-            var token = getCsrfToken();
-            if (token) {
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = '_csrf';
-                input.value = token;
-                form.appendChild(input);
-            }
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
             btn.disabled = true;
             btn.textContent = 'Signing in\u2026';
             msgError.style.display = 'none';
@@ -214,9 +204,10 @@
             var formData = new URLSearchParams();
             formData.append('username', document.getElementById('username').value);
             formData.append('password', document.getElementById('password').value);
+            var csrf = getCsrfToken();
+            if (csrf) formData.append('_csrf', csrf);
 
             var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            var csrf = getCsrfToken();
             if (csrf) headers['X-XSRF-TOKEN'] = csrf;
 
             try {
@@ -241,8 +232,8 @@
                         window.location.href = profile.businessMode === 'FREELANCE' ? '/freelance.html' : '/index.html';
                         return;
                     }
-                } catch (e) { /* fall through */ }
-                window.location.href = '/freelance.html';
+                } catch (err) { /* fall through */ }
+                window.location.href = '/index.html';
             } catch (err) {
                 msgError.textContent = 'Could not reach server. Try again.';
                 msgError.style.display = 'block';

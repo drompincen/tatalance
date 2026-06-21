@@ -19,7 +19,6 @@ public class AppUser {
     private String googleId;
     private String securityQuestion;
     private String securityAnswer;
-import com.tatalance.user.BusinessMode;
     private BusinessMode businessMode = BusinessMode.CHAUFFEUR;
     private BigDecimal defaultHourlyRate = new BigDecimal("20.00");
 
@@ -42,13 +41,14 @@ import com.tatalance.user.BusinessMode;
     public String getSecurityQuestion() { return securityQuestion; }
     public void setSecurityQuestion(String securityQuestion) { this.securityQuestion = securityQuestion; }
     public String getSecurityAnswer() { return securityAnswer; }
+    public void setSecurityAnswer(String securityAnswer) { this.securityAnswer = securityAnswer; }
     public BusinessMode getBusinessMode() { return businessMode; }
     public void setBusinessMode(BusinessMode businessMode) { this.businessMode = businessMode; }
     public BigDecimal getDefaultHourlyRate() { return defaultHourlyRate; }
     public void setDefaultHourlyRate(BigDecimal defaultHourlyRate) { this.defaultHourlyRate = defaultHourlyRate; }
+
     public boolean isBusinessOwner() { return businessOwner; }
     public void setBusinessOwner(boolean businessOwner) { this.businessOwner = businessOwner; }
     public String getBusinessOwnerType() { return businessOwnerType; }
     public void setBusinessOwnerType(String businessOwnerType) { this.businessOwnerType = businessOwnerType; }
 }
-

@@ -1,4 +1,14 @@
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
+
+/** Jobs tab scopes rides by active profile; E2E uses account-wide scope for stable assertions. */
+export async function useAccountWideProfileScope(page: Page) {
+  await page.addInitScript(() => localStorage.removeItem('activeProfileId'));
+  await page.goto('/');
+  const sel = page.locator('#profile-switcher');
+  if (await sel.count()) {
+    await sel.selectOption('');
+  }
+}
 
 export const uniq = () => Math.random().toString(36).slice(2, 8);
 

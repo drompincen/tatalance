@@ -12,14 +12,41 @@
         header {
             background: #1a1a2e;
             color: white;
-            padding: 0 32px;
-            height: 56px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-top {
             display: flex;
             align-items: center;
-            gap: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+            gap: 12px;
+            padding: 0 24px;
+            height: 48px;
+            min-width: 0;
         }
-        header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
+        .header-nav-row {
+            display: none;
+            border-top: 1px solid rgba(255,255,255,.1);
+            padding: 0 12px 6px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .header-nav-row nav { margin-left: 0; flex-wrap: nowrap; white-space: nowrap; }
+        header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.5px; flex-shrink: 0; }
+        .header-spacer { flex: 1; min-width: 8px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
+        .status-footer {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 5px 16px; background: #12121f; border-top: 1px solid rgba(255,255,255,.06);
+            font-size: 0.68rem;
+        }
+        .status-footer .badge { margin: 0; }
+        @media (min-width: 769px) {
+            body.has-status-footer { padding-bottom: 30px; }
+            .status-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; }
+            .header-nav-row { display: block; }
+        }
         .badge { font-size: 0.7rem; padding: 3px 9px; border-radius: 20px; border: 1px solid; font-weight: 500; }
         .badge-poc  { background: rgba(255,165,0,.1); border-color: rgba(255,165,0,.3); color: #ffa500; }
         .badge-mongo { background: rgba(78,204,163,.12); border-color: rgba(78,204,163,.35); color: #4ecca3; }
@@ -131,7 +158,25 @@
         .muted { color: #6b7280; }
         .empty-state { text-align: center; padding: 48px 24px; color: #6b7280; }
         .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
-        .empty-state p { font-size: 0.85rem; }
+        .empty-state p { font-size: 0.85rem; margin-bottom: 12px; }
+        .empty-state-cta {
+            margin-top: 4px; padding: 10px 18px; font-size: 0.88rem; font-weight: 600;
+            border: none; border-radius: 8px; background: #0f3460; color: #fff; cursor: pointer;
+        }
+        .empty-state-cta:hover { background: #1a4a7a; }
+        .onboarding-banner {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+            border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;
+        }
+        .onboarding-banner h3 { margin: 0 0 8px; font-size: 1.05rem; color: #1e3a5f; }
+        .onboarding-banner p { margin: 0 0 14px; font-size: 0.88rem; color: #475569; }
+        .onboarding-steps { display: flex; flex-wrap: wrap; gap: 8px; }
+        .onboarding-steps button {
+            padding: 8px 14px; font-size: 0.82rem; font-weight: 600; border-radius: 8px;
+            border: 1px solid #93c5fd; background: #fff; color: #1d4ed8; cursor: pointer;
+        }
+        .onboarding-steps button:hover { background: #dbeafe; }
+        .field-hint { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
         .refresh-ts { font-size: 0.72rem; color: #6b7280; margin-top: 12px; text-align: right; }
 
         /* ── Pagination ── */
@@ -301,11 +346,50 @@
         .help-nav-btn.primary:hover { background: #16213e; }
         .help-nav-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-        /* ── User menu ── */
-        .user-menu { display: flex; align-items: center; gap: 10px; margin-left: 12px; }
-        .user-menu .username { font-size: 0.82rem; color: rgba(255,255,255,.7); font-weight: 500; }
+        /* ── User / account menu ── */
+        .user-menu { position: relative; display: flex; align-items: center; }
+        .account-trigger {
+            font-size: 0.82rem; color: rgba(255,255,255,.85); font-weight: 600;
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.2);
+            background: rgba(255,255,255,.06); cursor: pointer;
+        }
+        .account-trigger:hover { background: rgba(255,255,255,.12); color: #fff; }
+        .account-menu-panel {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px;
+            background: #fff; color: #1a1a2e; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
+            padding: 10px 0; z-index: 200;
+        }
+        .account-menu-panel.open { display: block; }
+        .account-menu-label {
+            display: block; padding: 6px 14px 4px; font-size: 0.68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .04em; color: #64748b;
+        }
+        .account-menu-panel select {
+            display: block; width: calc(100% - 28px); margin: 0 14px 8px;
+            padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.82rem;
+            background: #fff; color: #1a1a2e;
+        }
+        .account-menu-panel select option {
+            background: #fff;
+            color: #1a1a2e;
+        }
+        .account-menu-panel a,
+        .account-menu-panel button.menu-item {
+            display: block; width: 100%; text-align: left; padding: 9px 14px; font-size: 0.85rem;
+            border: none; background: none; color: #1a1a2e; cursor: pointer; text-decoration: none;
+        }
+        .account-menu-panel a:hover,
+        .account-menu-panel button.menu-item:hover { background: #f1f5f9; }
+        .account-menu-panel .menu-item-danger { color: #b91c1c; }
+        .account-menu-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
         .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
         .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+        .search-box input {
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25);
+            background: rgba(255,255,255,.1); color: white; font-size: .82rem; width: 160px;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,.45); }
+        .mobile-logout-only { display: none; }
         .nav-external-link { display: none; text-decoration: none; }
 
         /* ── Hamburger menu ── */
@@ -324,13 +408,15 @@
                 padding-top: env(safe-area-inset-top); 
                 padding-bottom: env(safe-area-inset-bottom); 
             }
-            header { padding: 0 12px; position: sticky; top: 0; z-index: 100; padding-top: env(safe-area-inset-top); min-width: 0; overflow: hidden; }
+            .header-top { padding: 0 12px; padding-top: env(safe-area-inset-top); height: auto; min-height: 48px; }
             header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .user-menu { flex-shrink: 0; gap: 4px; }
-            .user-menu .logout-btn { padding: 4px 8px; font-size: 0.72rem; }
+            .header-nav-row { display: block; position: absolute; width: 0; height: 0; overflow: visible; }
+            .user-menu { flex-shrink: 0; }
+            .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
+            .account-menu-panel { position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 12px 12px 0 0; max-height: 70vh; overflow-y: auto; }
             #link-google-btn { display: none !important; }
             .hamburger { display: flex; align-items: center; }
-            header .badge { display: none; }
+            .status-footer { display: none; }
             nav {
                 display: none; position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
                 background: #1a1a2e; flex-direction: column; padding: 20px 0; z-index: 100;
@@ -342,9 +428,11 @@
             nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            .user-menu { margin-left: auto; gap: 6px; flex-shrink: 0; }
-            .user-menu .username { display: none; }
-            .user-menu .header-mobile-hide { display: none; }
+            .user-menu { margin-left: auto; }
+            .account-trigger { display: none; }
+            .account-menu-panel { display: none !important; }
+            .mobile-logout-only { display: inline-block; }
+            .search-box { display: none; }
             .nav-external-link { display: block; }
             header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             nav #custom-tab-buttons { display: contents; }
@@ -359,7 +447,6 @@
             #job-list .btn-sm { min-height: 44px; min-width: 44px; padding: 8px 12px; font-size: 0.85rem; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
             #dash-detail-row { grid-template-columns: 1fr !important; }
-            .search-box { display: none; }
         }
 
         @media (max-width: 640px) {
@@ -376,45 +463,55 @@
         }
     </style>
 </head>
-<body>
+<body class="has-status-footer">
 
 <header>
-    <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
-    <h1>Tatalance <span style="font-size:0.6rem; color: #4ecca3;">(LOCAL WIFI TEST)</span></h1>
-    <span class="badge badge-poc">POC</span>
-    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
-    <nav id="main-nav">
-        <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')">Dashboard</button>
-        <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
-        <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
-        <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
-        <button class="tab-btn" id="btn-jobs" onclick="showTab('jobs')">Jobs</button>
-        <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
-        <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
-        <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
-        <span id="custom-tab-buttons"></span>
-        <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table">+</button>
-        <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile">Freelance</a>
-        <button class="help-btn" onclick="openHelp()" title="Help">?</button>
-    </nav>
-    <div id="profile-switcher-wrap" style="margin-left:8px;display:flex;align-items:center;gap:6px;">
-        <span style="color:rgba(255,255,255,.6);font-size:0.72rem;">Profile:</span>
-        <select id="profile-switcher" onchange="switchProfile(this.value)" style="font-size:0.78rem;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;min-width:140px;">
-            <option value="">All (account)</option>
-        </select>
+    <div class="header-top">
+        <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Open menu">&#9776;</button>
+        <h1>Tatalance</h1>
+        <div class="header-spacer"></div>
+        <div class="header-actions">
+            <div class="search-box" style="position:relative;">
+                <input type="search" id="global-search" placeholder="Search…" autocomplete="off" aria-label="Search clients, drivers, and rides"
+                       oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)">
+                <div id="search-results" style="display:none;position:absolute;top:100%;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
+            </div>
+            <div class="user-menu">
+                <button type="button" class="account-trigger" id="account-menu-btn" onclick="toggleAccountMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel">
+                    <span id="username-display">Account</span> ▾
+                </button>
+                <div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
+                    <span class="account-menu-label">Profile</span>
+                    <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
+                        <option value="">All (account)</option>
+                    </select>
+                    <div class="account-menu-divider"></div>
+                    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem">Manage profiles</button>
+                    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none">Link Google account</button>
+                    <a href="/freelance.html" class="menu-item nav-external-link" role="menuitem">Freelance mode</a>
+                    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem">Change password</button>
+                    <div class="account-menu-divider"></div>
+                    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem">Logout</button>
+                </div>
+            </div>
+            <button class="logout-btn mobile-logout-only" onclick="doLogout()" aria-label="Logout">Logout</button>
+        </div>
     </div>
-    <div class="search-box" style="position:relative;margin-left:12px;">
-        <input type="text" id="global-search" placeholder="Search..." autocomplete="off"
-               style="padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:white;font-size:.85rem;width:180px;"
-               oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)">
-        <div id="search-results" style="display:none;position:absolute;top:100%;left:0;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
-    </div>
-    <div class="user-menu">
-        <span class="username" id="username-display"></span>
-        <button class="logout-btn" id="link-google-btn" onclick="linkGoogle()" style="display:none">Link Google</button>
-        <a href="/freelance.html" class="logout-btn header-mobile-hide" style="text-decoration:none;line-height:1.6">Freelance</a>
-        <button class="logout-btn header-mobile-hide" onclick="openChangePassword()">Password</button>
-        <button class="logout-btn" onclick="doLogout()">Logout</button>
+    <div class="header-nav-row">
+        <nav id="main-nav" aria-label="Main navigation">
+            <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
+            <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
+            <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
+            <button class="tab-btn" id="btn-jobs" onclick="showTab('jobs')">Jobs</button>
+            <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
+            <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
+            <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
+            <span id="custom-tab-buttons"></span>
+            <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table" aria-label="Create custom table">+</button>
+            <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile">Freelance</a>
+            <button class="help-btn" onclick="openHelp()" title="Help" aria-label="Help">?</button>
+        </nav>
     </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
@@ -423,6 +520,15 @@
 <div id="tab-dashboard" class="tab-pane active">
     <div class="page">
         <p style="text-align: center; padding: 10px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; margin-bottom: 10px; font-size: 0.9rem;">LOCAL WIFI TEST - ?m=1 flag. If you see this banner + header, page loaded. Content loads via API (may be limited without full DB). Tap hamburger for menu.</p>
+        <div id="dash-onboarding" class="onboarding-banner" style="display:none" role="region" aria-label="Getting started">
+            <h3>Welcome to Tatalance</h3>
+            <p>Your dashboard is empty. Follow these steps to get your chauffeur business running.</p>
+            <div class="onboarding-steps">
+                <button type="button" onclick="showTab('clients');focusClientForm()">1. Add a client</button>
+                <button type="button" onclick="showTab('drivers');focusDriverForm()">2. Add a driver</button>
+                <button type="button" onclick="showTab('rides');focusRideForm()">3. Book a ride</button>
+            </div>
+        </div>
         <div class="dash-grid" id="dash-cards">
             <div class="stat-card accent-blue"><div class="stat-label">Clients</div><div class="stat-value">...</div></div>
             <div class="stat-card accent-purple"><div class="stat-label">Drivers</div><div class="stat-value">...</div></div>
@@ -462,7 +568,8 @@
                         </div>
                         <div class="field">
                             <label>Phone <span class="req">*</span><span class="schema-type" id="type-phone">string</span></label>
-                            <input type="text" id="f-phone" placeholder="+1 555 000 0000" autocomplete="off">
+                            <input type="tel" id="f-phone" placeholder="+15551234567" autocomplete="tel" inputmode="tel" aria-describedby="e-phone phone-hint-f">
+                            <div class="field-hint" id="phone-hint-f">E.164 format — start with +, then digits only (no spaces)</div>
                             <div class="err" id="e-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
                         </div>
                         <div class="field">
@@ -515,7 +622,8 @@
                     </div>
                     <div class="field">
                         <label>Phone <span class="req">*</span></label>
-                        <input type="text" id="d-phone" placeholder="+1 555 000 0000" autocomplete="off">
+                        <input type="tel" id="d-phone" placeholder="+15551234567" autocomplete="tel" inputmode="tel" aria-describedby="de-phone phone-hint-d">
+                        <div class="field-hint" id="phone-hint-d">E.164 format — start with +, then digits only (no spaces)</div>
                         <div class="err" id="de-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
                     </div>
                     <div class="field">
@@ -801,6 +909,37 @@
     </div>
 </div>
 
+<!-- ── Profile Manager Modal (create/edit profiles to distinguish hourly jobs from rides) ── -->
+<div class="modal-overlay" id="profile-manager-modal" onclick="if(event.target===this)closeProfileManager()">
+    <div class="modal" style="max-width:520px">
+        <h2>Manage Profiles</h2>
+        <div style="margin:8px 0">
+            <div id="profile-list" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;max-height:180px;overflow:auto"></div>
+        </div>
+        <div style="border-top:1px solid #eee;padding-top:12px;margin-top:8px">
+            <div class="field">
+                <label>Type</label>
+                <select id="pm-type" style="width:100%;padding:6px">
+                    <option value="DRIVER">DRIVER (shows Rides)</option>
+                    <option value="ENGINEER">ENGINEER / Hourly</option>
+                    <option value="HANDYMAN">HANDYMAN / Hourly</option>
+                    <option value="OTHER">OTHER / Hourly</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Name (optional display)</label>
+                <input id="pm-name" placeholder="e.g. Main Taxi or Freelance Dev" style="width:100%">
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="btn" onclick="createNewProfile()">Create New</button>
+                <button class="btn" onclick="saveProfileEdit()" id="pm-save-btn" disabled>Save Changes</button>
+                <button class="btn btn-cancel" onclick="closeProfileManager()">Close</button>
+            </div>
+            <div class="err" id="pm-err" style="display:none;margin-top:6px"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Dynamic custom table panes inserted here ── -->
 <div id="custom-tab-panes"></div>
 
@@ -839,6 +978,45 @@
     /* ── Helpers ── */
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const PHONE_E164 = /^\+[1-9]\d{9,14}$/;
+    function isPhoneE164(value) { return PHONE_E164.test((value || '').trim()); }
+    function guidedEmptyState(icon, text, ctaLabel, actionName) {
+        const cta = ctaLabel && actionName
+            ? `<button type="button" class="empty-state-cta" onclick="${actionName}()">${esc(ctaLabel)}</button>` : '';
+        return `<div class="empty-state"><div class="icon">${icon}</div><p>${esc(text)}</p>${cta}</div>`;
+    }
+    function scrollToField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+    }
+    window.focusClientForm = function() { scrollToField('f-firstName'); };
+    window.focusDriverForm = function() { scrollToField('d-firstName'); };
+    window.focusRideForm = function() {
+        showTab('rides');
+        setTimeout(() => scrollToField('r-clientId'), 80);
+    };
+    window.focusJobForm = function() {
+        showTab('jobs');
+        setTimeout(() => scrollToField('j-title'), 80);
+    };
+    window.goToRidesFromInvoiceEmpty = function() { showTab('rides'); focusRideForm(); };
+    function setFieldValidity(inputId, errId, valid) {
+        const input = document.getElementById(inputId);
+        const err = document.getElementById(errId);
+        if (input) input.classList.toggle('invalid', !valid);
+        if (err) err.classList.toggle('show', !valid);
+    }
+    function bindBlurValidation(inputId, errId, validateFn) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        el.addEventListener('blur', () => {
+            const value = el.value.trim();
+            if (!value && validateFn === isPhoneE164) return;
+            setFieldValidity(inputId, errId, validateFn(value));
+        });
+    }
 
     /* Auth check moved to the main block below; early guard removed to avoid any redirect timing or blank issues on mobile. */
 
@@ -979,6 +1157,23 @@
         document.getElementById('main-nav').classList.remove('open');
         document.getElementById('nav-overlay').classList.remove('open');
     }
+    function toggleAccountMenu() {
+        const panel = document.getElementById('account-menu-panel');
+        const btn = document.getElementById('account-menu-btn');
+        if (!panel || !btn) return;
+        const open = !panel.classList.contains('open');
+        panel.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function closeAccountMenu() {
+        const panel = document.getElementById('account-menu-panel');
+        const btn = document.getElementById('account-menu-btn');
+        if (panel) panel.classList.remove('open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.user-menu')) closeAccountMenu();
+    });
 
     /* ── Tab switching ── */
     function showTab(name) {
@@ -995,6 +1190,7 @@
         if (name === 'dashboard') loadDashboard();
         if (name === 'activity') loadActivity();
         closeNav();
+        updateTabVisibility();
     }
 
     /* ── Endpoint body expand/collapse ── */
@@ -1169,8 +1365,8 @@
 
         if (!clients.length) {
             el.innerHTML = hasSearch
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No matches</p></div>`
-                : `<div class="empty-state"><div class="icon">👤</div><p>No clients yet — add the first one!</p></div>`;
+                ? guidedEmptyState('🔍', 'No clients match your search — try a different name or phone.')
+                : guidedEmptyState('👤', 'No clients yet — add your first client to get started.', 'Add client', 'focusClientForm');
             return;
         }
         const sorted = sortedData('clients', clients);
@@ -1254,9 +1450,8 @@
             document.getElementById(`e-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
         }
-        const phoneValid = /^\+[1-9]\d{9,14}$/.test(phone);
-        document.getElementById('f-phone').classList.toggle('invalid', !phoneValid);
-        document.getElementById('e-phone').classList.toggle('show', !phoneValid);
+        const phoneValid = isPhoneE164(phone);
+        setFieldValidity('f-phone', 'e-phone', phoneValid);
         if (!phoneValid) valid = false;
         if (!valid) return;
 
@@ -1293,6 +1488,13 @@
             document.getElementById(id).classList.remove('invalid');
             document.getElementById(`e-${id.replace('f-','')}`).classList.remove('show');
         });
+    });
+    bindBlurValidation('f-firstName', 'e-firstName', v => v.length > 0);
+    bindBlurValidation('f-lastName', 'e-lastName', v => v.length > 0);
+    document.getElementById('f-phone').addEventListener('blur', () => {
+        const value = document.getElementById('f-phone').value.trim();
+        if (!value) { setFieldValidity('f-phone', 'e-phone', true); return; }
+        setFieldValidity('f-phone', 'e-phone', isPhoneE164(value));
     });
 
     /* ── Edit / Delete client ── */
@@ -1401,7 +1603,7 @@
         }
 
         if (!drivers.length) {
-            el.innerHTML = `<div class="empty-state"><div class="icon">🚗</div><p>No drivers yet — add the first one!</p></div>`;
+            el.innerHTML = guidedEmptyState('🚗', 'No drivers yet — add your first driver to assign rides.', 'Add driver', 'focusDriverForm');
             return;
         }
         const sorted = sortedData('drivers', drivers);
@@ -1495,9 +1697,8 @@
             document.getElementById(`de-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
         }
-        const phoneValid = /^\+[1-9]\d{9,14}$/.test(phone);
-        document.getElementById('d-phone').classList.toggle('invalid', !phoneValid);
-        document.getElementById('de-phone').classList.toggle('show', !phoneValid);
+        const phoneValid = isPhoneE164(phone);
+        setFieldValidity('d-phone', 'de-phone', phoneValid);
         if (!phoneValid) valid = false;
 
         const rateValid = payoutRate !== '' && Number(payoutRate) >= 0;
@@ -1542,6 +1743,14 @@
             const errEl = document.getElementById(errId);
             if (errEl) errEl.classList.remove('show');
         });
+    });
+    bindBlurValidation('d-firstName', 'de-firstName', v => v.length > 0);
+    bindBlurValidation('d-lastName', 'de-lastName', v => v.length > 0);
+    bindBlurValidation('d-payoutRate', 'de-payoutRate', v => v !== '' && Number(v) >= 0);
+    document.getElementById('d-phone').addEventListener('blur', () => {
+        const value = document.getElementById('d-phone').value.trim();
+        if (!value) { setFieldValidity('d-phone', 'de-phone', true); return; }
+        setFieldValidity('d-phone', 'de-phone', isPhoneE164(value));
     });
 
     /* ── Edit / Delete driver ── */
@@ -1796,8 +2005,8 @@
         const el = document.getElementById('ride-list');
         if (!rides.length) {
             el.innerHTML = rideStatusFilter !== 'ALL'
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${rideStatusFilter.toLowerCase().replace('_',' ')} rides</p></div>`
-                : `<div class="empty-state"><div class="icon">🚘</div><p>No rides yet — book the first one!</p></div>`;
+                ? guidedEmptyState('🔍', `No ${rideStatusFilter.toLowerCase().replace('_', ' ')} rides — try another filter.`)
+                : guidedEmptyState('🚘', 'No rides yet — book your first ride using the form above.', 'Book a ride', 'focusRideForm');
             return;
         }
         window.sortRides = function(field) { toggleSort('rides', field); applyRideFilter(); };
@@ -1904,10 +2113,128 @@
     window.switchProfile = function(pid) {
         activeProfileId = pid || '';
         localStorage.setItem('activeProfileId', activeProfileId);
+        const sel = document.getElementById('profile-switcher');
+        if (sel) sel.value = activeProfileId || '';
         // reload scoped views
         if (typeof loadRides === 'function') loadRides();
         if (typeof loadJobs === 'function') loadJobs();
+        updateTabVisibility();
     };
+
+    let editingProfileId = null;
+
+    function showProfileManager() {
+        const modal = document.getElementById('profile-manager-modal');
+        if (modal) modal.style.display = 'flex';
+        editingProfileId = null;
+        const saveBtn = document.getElementById('pm-save-btn');
+        if (saveBtn) saveBtn.disabled = true;
+        const err = document.getElementById('pm-err');
+        if (err) err.style.display = 'none';
+        loadProfileListForManager();
+    }
+
+    function closeProfileManager() {
+        const modal = document.getElementById('profile-manager-modal');
+        if (modal) modal.style.display = 'none';
+        loadProfiles();
+        updateTabVisibility();
+    }
+
+    async function loadProfileListForManager() {
+        const container = document.getElementById('profile-list');
+        if (!container) return;
+        container.innerHTML = 'Loading...';
+        try {
+            const r = await fetch('/api/profiles?size=50');
+            const data = await r.json();
+            const list = data.content || data || [];
+            if (!list.length) {
+                container.innerHTML = '<div style="padding:8px;color:#666">No profiles yet. Create one below.</div>';
+                return;
+            }
+            container.innerHTML = list.map(p => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #f0f0f0;cursor:pointer" onclick="startEditProfile('${p.id}', '${p.type}', '${(p.name||'').replace(/'/g,"\\'")}')">
+                    <div>
+                        <strong>${p.name || p.type}</strong> <span style="font-size:0.75rem;color:#666">(${p.type})</span>
+                    </div>
+                    <div style="font-size:0.7rem;color:#888">edit</div>
+                </div>
+            `).join('');
+        } catch(e) {
+            container.innerHTML = 'Failed to load profiles.';
+        }
+    }
+
+    function startEditProfile(id, type, name) {
+        editingProfileId = id;
+        const t = document.getElementById('pm-type');
+        const n = document.getElementById('pm-name');
+        const saveBtn = document.getElementById('pm-save-btn');
+        if (t) t.value = type;
+        if (n) n.value = name || '';
+        if (saveBtn) saveBtn.disabled = false;
+        const err = document.getElementById('pm-err');
+        if (err) err.style.display = 'none';
+    }
+
+    async function saveProfileEdit() {
+        if (!editingProfileId) return;
+        const tEl = document.getElementById('pm-type');
+        const nEl = document.getElementById('pm-name');
+        const type = tEl ? tEl.value : '';
+        const name = nEl ? nEl.value.trim() : '';
+        const err = document.getElementById('pm-err');
+        try {
+            const r = await fetch(`/api/profiles/${editingProfileId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type, name})
+            });
+            if (!r.ok) throw new Error('Update failed');
+            await loadProfileListForManager();
+            await loadProfiles();
+            updateTabVisibility();
+            if (err) { err.textContent = 'Saved.'; err.style.display = 'block'; }
+        } catch(e) {
+            if (err) { err.textContent = e.message || 'Failed to save.'; err.style.display = 'block'; }
+        }
+    }
+
+    async function createNewProfile() {
+        const tEl = document.getElementById('pm-type');
+        const nEl = document.getElementById('pm-name');
+        const type = tEl ? tEl.value : '';
+        const name = nEl ? nEl.value.trim() : '';
+        const err = document.getElementById('pm-err');
+        if (!type) { alert('Type required'); return; }
+        try {
+            const r = await fetch('/api/profiles', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type, name})
+            });
+            if (!r.ok) throw new Error('Create failed');
+            await loadProfileListForManager();
+            await loadProfiles();
+            updateTabVisibility();
+            if (nEl) nEl.value = '';
+            if (err) { err.textContent = 'Profile created.'; err.style.display = 'block'; }
+        } catch(e) {
+            if (err) { err.textContent = e.message || 'Failed to create.'; err.style.display = 'block'; }
+        }
+    }
+
+    function updateTabVisibility() {
+        const current = (profilesCache || []).find(p => p.id === activeProfileId);
+        const isDriver = !current || current.type === 'DRIVER';
+        const ridesBtn = document.getElementById('btn-rides');
+        const ridesPane = document.getElementById('tab-rides');
+        if (ridesBtn) ridesBtn.style.display = isDriver ? '' : 'none';
+        if (!isDriver && ridesPane && ridesPane.classList.contains('active')) {
+            if (typeof showTab === 'function') showTab('jobs');
+        }
+    }
 
     function loadRides() {
         const prof = getProfileParam();
@@ -1975,7 +2302,8 @@
             if (hourlyRate) body.hourlyRate = Number(hourlyRate);
             if (notes) body.notes = notes;
 
-            const url = editingRideId ? `/api/rides/${editingRideId}` : '/api/rides';
+            const profQ = (!editingRideId && activeProfileId) ? `?profileId=${encodeURIComponent(activeProfileId)}` : '';
+            const url = editingRideId ? `/api/rides/${editingRideId}` : `/api/rides${profQ}`;
             const method = editingRideId ? 'PUT' : 'POST';
             const r = await fetch(url, {
                 method,
@@ -1993,6 +2321,7 @@
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
             loadRides();
+            setTimeout(() => { if (typeof applyRideFilter === 'function') applyRideFilter(); }, 50);
         } catch (err) {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ ' + (err.message || 'Save failed — check server logs');
@@ -2097,7 +2426,7 @@
     loadRides();
     setInterval(loadRides, 10000);
     // load profiles for switcher (business owner multi-profile)
-    loadProfiles();
+    loadProfiles().then(updateTabVisibility);
     setInterval(loadClientDropdown, 10000);
     setInterval(loadAvailableDrivers, 10000);
 
@@ -2147,13 +2476,13 @@
         return {est: 4, scope: notes};
     }
 
-    function loadJobs() {
+    function loadJobs(forceRender) {
         const prof = getProfileParam();
         fetch(`/api/rides?page=0&size=100${prof}`)
             .then(r => r.json())
             .then(data => {
                 allJobsCache = data.content || [];
-                if (!isUserEditingTab('tab-jobs')) {
+                if (forceRender || !isUserEditingTab('tab-jobs')) {
                     applyJobFilter();
                 }
                 const ts = document.getElementById('job-ts');
@@ -2186,8 +2515,8 @@
         if (countEl) countEl.textContent = `(${jobs.length})`;
         if (!jobs.length) {
             el.innerHTML = jobStatusFilter !== 'ALL'
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${jobStatusFilter.toLowerCase().replace('_',' ')} jobs</p></div>`
-                : `<div class="empty-state"><div class="icon">💼</div><p>No jobs yet — book the first one!</p></div>`;
+                ? guidedEmptyState('🔍', `No ${jobStatusFilter.toLowerCase().replace('_', ' ')} jobs — try another filter.`)
+                : guidedEmptyState('💼', 'No jobs yet — book your first hourly job using the form above.', 'Book a job', 'focusJobForm');
             return;
         }
         el.innerHTML = jobs.map(r => {
@@ -2367,7 +2696,7 @@
                 cancelJobEdit();
                 fb.className = 'form-feedback ok';
                 fb.textContent = wasEdit ? '✓ Job updated' : '✓ Job booked ($20/hr)';
-                loadJobs();
+                loadJobs(true);
             } catch {
                 fb.className = 'form-feedback fail';
                 fb.textContent = '✗ Save failed — check server logs';
@@ -2464,8 +2793,8 @@
         const el = document.getElementById('invoice-list');
         if (!invoices.length) {
             el.innerHTML = invoiceStatusFilter !== 'ALL'
-                ? `<div class="empty-state"><div class="icon">🔍</div><p>No ${invoiceStatusFilter.toLowerCase()} invoices</p></div>`
-                : `<div class="empty-state"><div class="icon">📄</div><p>No invoices yet — complete a ride and generate one!</p></div>`;
+                ? guidedEmptyState('🔍', `No ${invoiceStatusFilter.toLowerCase()} invoices — try another filter.`)
+                : guidedEmptyState('📄', 'No invoices yet — complete a ride, then generate an invoice from the Rides tab.', 'Go to rides', 'goToRidesFromInvoiceEmpty');
             return;
         }
         window.sortInvoices = function(field) { toggleSort('invoices', field); applyInvoiceFilter(); };
@@ -3013,7 +3342,7 @@
             const el = document.getElementById('username-display');
             if (el) el.textContent = data.username;
             const linkBtn = document.getElementById('link-google-btn');
-            if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = '';
+            if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = 'block';
 
             // Only load data after confirmed auth — prevents extra fetches + partial UI that can look like hang on mobile
             loadCustomTables();
@@ -3144,6 +3473,11 @@
     }
 
     function renderDashboard(s) {
+        var onboarding = document.getElementById('dash-onboarding');
+        if (onboarding) {
+            var isFresh = (s.totalClients || 0) === 0 && (s.totalRides || 0) === 0;
+            onboarding.style.display = isFresh ? 'block' : 'none';
+        }
         var cards = document.getElementById('dash-cards');
         cards.innerHTML = `
             <div class="stat-card accent-blue">
@@ -3196,7 +3530,7 @@
                 '<div class="status-bar-track"><div class="status-bar-fill" style="width:' + (count > 0 ? Math.max(pct, 8) : 0) + '%;background:' + color + '">' + count + '</div></div>' +
                 '</div>';
         }
-        statusBars.innerHTML = html || '<p class="muted">No rides yet</p>';
+        statusBars.innerHTML = html || guidedEmptyState('🚘', 'No rides yet — book one from the Rides tab.', 'Book a ride', 'focusRideForm');
 
         // Revenue summary
         var rev = document.getElementById('dash-revenue');
@@ -3340,5 +3674,10 @@
         }
     };
 </script>
+
+<footer class="status-footer" aria-label="Environment status">
+    <span class="badge badge-poc">POC</span>
+    <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
+</footer>
 </body>
 </html>

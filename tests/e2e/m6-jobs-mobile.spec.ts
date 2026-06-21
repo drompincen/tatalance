@@ -1,13 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { MobilePage } from './pages/mobile.page';
-import { futureDateTimeLocal, seedClient, seedJob, uniq } from './fixtures/mobile-seed';
+import { futureDateTimeLocal, seedClient, seedJob, uniq, useAccountWideProfileScope } from './fixtures/mobile-seed';
 
 test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
   let mobile: MobilePage;
 
   test.beforeEach(async ({ page }) => {
     mobile = new MobilePage(page);
-    await mobile.gotoApp();
+    await useAccountWideProfileScope(page);
+    await expect(page.locator('#hamburger')).toBeVisible();
   });
 
   test('Jobs tab reachable in two taps from dashboard via hamburger', async ({ page }) => {
@@ -54,8 +55,8 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     const listData = await (await request.get('/api/rides?size=50')).json();
     const created = (listData.content || []).find((r: any) => r.pickupLocation === 'Landing page for client' && r.clientId === clientId);
     expect(created).toBeTruthy();
-    // DOM should show it
-    await expect(page.locator('#job-list')).toContainText('Landing page for client', { timeout: 15000 });
+    await expect(page.locator(`[data-job-id="${created.id}"]`))
+      .toContainText('Landing page for client', { timeout: 15000 });
   });
 
   test('Start button on scheduled job transitions to IN_PROGRESS with timer', async ({ page, request }) => {

@@ -41,7 +41,8 @@ public class RideController {
 
     public RideController(RideRepository rideRepository, ClientRepository clientRepository,
                           DriverRepository driverRepository, AuthHelper authHelper,
-                          ActivityLogger activityLog, TimerService timerService, ProfileRepository profileRepository) {
+                          ActivityLogger activityLog, TimerService timerService,
+                          ProfileRepository profileRepository) {
         this.rideRepository = rideRepository;
         this.clientRepository = clientRepository;
         this.driverRepository = driverRepository;
@@ -262,9 +263,6 @@ public class RideController {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Cannot start a ride in status " + ride.getStatus());
         }
-        ride.setStatus(RideStatus.IN_PROGRESS);
-        ride.addStatusEvent(RideStatus.IN_PROGRESS);
-        ride.setActualStart(Instant.now());
         timerService.startTimer(ride);
         return rideRepository.save(ride);
     }
