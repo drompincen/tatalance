@@ -376,7 +376,7 @@
 
 <header>
     <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">&#9776;</button>
-    <h1>Tatalance</h1>
+    <h1>Tatalance <span style="font-size:0.6rem; color: #4ecca3;">(LOCAL WIFI TEST)</span></h1>
     <span class="badge badge-poc">POC</span>
     <span class="badge badge-mongo"><span class="dot"></span><span id="db-badge">MongoDB in-memory</span></span>
     <nav id="main-nav">
@@ -410,15 +410,20 @@
 <!-- ── Dashboard tab ── -->
 <div id="tab-dashboard" class="tab-pane active">
     <div class="page">
-        <div class="dash-grid" id="dash-cards"></div>
+        <p style="text-align: center; padding: 10px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; margin-bottom: 10px; font-size: 0.9rem;">LOCAL WIFI TEST - ?m=1 flag. If you see this banner + header, page loaded. Content loads via API (may be limited without full DB). Tap hamburger for menu.</p>
+        <div class="dash-grid" id="dash-cards">
+            <div class="stat-card accent-blue"><div class="stat-label">Clients</div><div class="stat-value">...</div></div>
+            <div class="stat-card accent-purple"><div class="stat-label">Drivers</div><div class="stat-value">...</div></div>
+            <div class="stat-card accent-orange"><div class="stat-label">Active Jobs</div><div class="stat-value">...</div></div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px" id="dash-detail-row">
             <div class="card">
                 <div class="card-title">Rides by status</div>
-                <div id="dash-status-bars"></div>
+                <div id="dash-status-bars"><p class="muted">Loading status...</p></div>
             </div>
             <div class="card">
                 <div class="card-title">Revenue summary</div>
-                <div id="dash-revenue"></div>
+                <div id="dash-revenue"><p class="muted">Loading revenue...</p></div>
             </div>
         </div>
     </div>
@@ -823,41 +828,7 @@
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-    /* Early auth guard — redirect fast on phone/desktop before painting data or doing other fetches.
-       Prevents "hanging" or flash of empty UI when not authenticated. */
-    (function earlyAuthGuard() {
-        const p = new URLSearchParams(location.search);
-        const hasFlag = p.get('mobile') != null || p.get('m') != null || p.get('forceMobile') != null;
-        if (!hasFlag) {
-            document.documentElement.style.visibility = 'hidden';
-        }
-        fetch('/api/users/me')
-            .then(r => {
-                if (!r.ok) {
-                    window.location.href = '/login.html';
-                    return null;
-                }
-                return r.json();
-            })
-            .then(data => {
-                if (data) {
-                    document.documentElement.style.visibility = '';
-                } else if (!hasFlag) {
-                    document.documentElement.style.visibility = '';
-                }
-            })
-            .catch(() => {
-                if (!location.pathname.includes('login')) {
-                    window.location.href = '/login.html';
-                } else if (!hasFlag) {
-                    document.documentElement.style.visibility = '';
-                }
-            });
-        // If flag present (mobile test), never hide - show UI immediately for flag testing
-        if (hasFlag) {
-            document.documentElement.style.visibility = '';
-        }
-    })();
+    /* Auth check moved to the main block below; early guard removed to avoid any redirect timing or blank issues on mobile. */
 
     /* ── Sort state ── */
     const sortState = {};
@@ -2964,7 +2935,7 @@
         })
         .catch(() => {});
 
-    fetch('/api/users/me')
+    fetch('/api/users/me', { credentials: 'same-origin' })
         .then(r => {
             if (!r.ok) {
                 // Not authenticated - redirect to login instead of showing empty/hanging UI

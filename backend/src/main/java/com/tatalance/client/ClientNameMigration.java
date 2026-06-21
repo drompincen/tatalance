@@ -25,40 +25,44 @@ public class ClientNameMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        var query = new Query(Criteria.where("name").exists(true)
-                .and("firstName").exists(false));
+        try {
+            var query = new Query(Criteria.where("name").exists(true)
+                    .and("firstName").exists(false));
 
-        var docs = mongoTemplate.find(query, Document.class, "clients");
+            var docs = mongoTemplate.find(query, Document.class, "clients");
 
-        if (docs.isEmpty()) {
-            log.info("ClientNameMigration: no documents to migrate");
-            return;
-        }
-
-        int count = 0;
-        for (var doc : docs) {
-            String name = doc.getString("name");
-            String firstName;
-            String lastName;
-
-            int spaceIdx = name != null ? name.indexOf(' ') : -1;
-            if (spaceIdx > 0) {
-                firstName = name.substring(0, spaceIdx);
-                lastName = name.substring(spaceIdx + 1);
-            } else {
-                firstName = name != null ? name : "";
-                lastName = "";
+            if (docs.isEmpty()) {
+                log.info("ClientNameMigration: no documents to migrate");
+                return;
             }
 
-            var updateQuery = new Query(Criteria.where("_id").is(doc.getObjectId("_id")));
-            var update = new Update()
-                    .set("firstName", firstName)
-                    .set("lastName", lastName)
-                    .unset("name");
-            mongoTemplate.updateFirst(updateQuery, update, "clients");
-            count++;
-        }
+            int count = 0;
+            for (var doc : docs) {
+                String name = doc.getString("name");
+                String firstName;
+                String lastName;
 
-        log.info("ClientNameMigration: migrated {} document(s)", count);
+                int spaceIdx = name != null ? name.indexOf(' ') : -1;
+                if (spaceIdx > 0) {
+                    firstName = name.substring(0, spaceIdx);
+                    lastName = name.substring(spaceIdx + 1);
+                } else {
+                    firstName = name != null ? name : "";
+                    lastName = "";
+                }
+
+                var updateQuery = new Query(Criteria.where("_id").is(doc.getObjectId("_id")));
+                var update = new Update()
+                        .set("firstName", firstName)
+                        .set("lastName", lastName)
+                        .unset("name");
+                mongoTemplate.updateFirst(updateQuery, update, "clients");
+                count++;
+            }
+
+            log.info("ClientNameMigration: migrated {} document(s)", count);
+        } catch (Exception e) {
+            log.warn("ClientNameMigration skipped (Mongo not available or error): {}", e.getMessage());
+        }
     }
 }

@@ -19,6 +19,7 @@
             padding: 24px;
             padding-top: calc(24px + env(safe-area-inset-top));
             padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            overflow: auto;
         }
         .login-card {
             background: white;
@@ -107,6 +108,10 @@
         @media (max-height: 500px) {
             body { align-items: flex-start; padding-top: 16px; }
         }
+        @media (max-height: 600px) {
+            body { align-items: flex-start; padding-top: 8px; padding-bottom: 8px; }
+            .login-card { padding: 16px 12px; }
+        }
         .message {
             padding: 10px 12px;
             border-radius: 6px;
@@ -182,42 +187,12 @@
         var btn = form.querySelector('button');
         var msgError = document.getElementById('msg-error');
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+        // Normal form submit (no preventDefault) so Spring Security properly sets the session cookie.
+        // The server handles redirect on success/fail (with ?error or ?logout qs for messages).
+        form.addEventListener('submit', function() {
             btn.disabled = true;
             btn.textContent = 'Signing in\u2026';
             msgError.style.display = 'none';
-
-            var formData = new URLSearchParams();
-            formData.append('username', document.getElementById('username').value);
-            formData.append('password', document.getElementById('password').value);
-
-            var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            var csrf = getCsrfToken();
-            if (csrf) headers['X-XSRF-TOKEN'] = csrf;
-
-            try {
-                var res = await fetch('/login', {
-                    method: 'POST',
-                    headers: headers,
-                    body: formData.toString(),
-                    redirect: 'follow',
-                    credentials: 'same-origin'
-                });
-                if (res.url && res.url.includes('error')) {
-                    msgError.textContent = 'Wrong username or password.';
-                    msgError.style.display = 'block';
-                    btn.disabled = false;
-                    btn.textContent = 'Sign in';
-                    return;
-                }
-                window.location.href = '/index.html';
-            } catch (err) {
-                msgError.textContent = 'Could not reach server. Try again.';
-                msgError.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = 'Sign in';
-            }
         });
     </script>
 </body>
