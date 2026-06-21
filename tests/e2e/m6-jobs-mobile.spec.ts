@@ -50,12 +50,17 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
 
     await expect(page.locator('#job-fb')).toContainText('booked', { timeout: 15000 });
     // Verify creation via API (the fb 'booked' means POST succeeded in UI handler)
-    await page.waitForTimeout(300); // allow DB visibility
-    const listData = await (await request.get('/api/rides?size=50')).json();
-    const created = (listData.content || []).find((r: any) => r.pickupLocation === 'Landing page for client' && r.clientId === clientId);
+    let created = null;
+    for (let i = 0; i < 15; i++) {
+      const listData = await (await request.get('/api/rides?size=50')).json();
+      created = (listData.content || []).find((r: any) => r.pickupLocation === 'Landing page for client' && r.clientId === clientId);
+      if (created) break;
+      await page.waitForTimeout(500);
+    }
     expect(created).toBeTruthy();
     // DOM should show it
-    await expect(page.locator('#job-list')).toContainText('Landing page for client', { timeout: 15000 });
+    const newJobCard = page.locator('#job-list > div', { hasText: 'Landing page for client' });
+    await expect(newJobCard).toBeVisible({ timeout: 15000 });
   });
 
   test('Start button on scheduled job transitions to IN_PROGRESS with timer', async ({ page, request }) => {

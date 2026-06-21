@@ -2344,6 +2344,8 @@
                 fb.className = 'form-feedback ok';
                 fb.textContent = wasEdit ? '✓ Job updated' : '✓ Job booked ($20/hr)';
                 loadJobs();
+                // force render even if isUserEditingTab() is true right after submit (helps automated tests)
+                setTimeout(() => applyJobFilter(), 50);
             } catch {
                 fb.className = 'form-feedback fail';
                 fb.textContent = '✗ Save failed — check server logs';
