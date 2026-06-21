@@ -367,6 +367,11 @@
         .account-menu-panel select {
             display: block; width: calc(100% - 28px); margin: 0 14px 8px;
             padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.82rem;
+            background: #fff; color: #1a1a2e;
+        }
+        .account-menu-panel select option {
+            background: #fff;
+            color: #1a1a2e;
         }
         .account-menu-panel a,
         .account-menu-panel button.menu-item {
@@ -2316,6 +2321,7 @@
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
             loadRides();
+            setTimeout(() => { if (typeof applyRideFilter === 'function') applyRideFilter(); }, 50);
         } catch (err) {
             fb.className = 'form-feedback fail';
             fb.textContent = '✗ ' + (err.message || 'Save failed — check server logs');
