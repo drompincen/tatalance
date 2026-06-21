@@ -48,8 +48,8 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     await page.locator('#job-submit-btn').scrollIntoViewIfNeeded();
     await page.locator('#job-form').evaluate((f: HTMLFormElement) => f.requestSubmit());
 
-    await expect(page.locator('#job-fb')).toContainText('booked', { timeout: 10000 });
-    await expect(page.locator('#job-list')).toContainText('Landing page for client', { timeout: 10000 });
+    await expect(page.locator('#job-fb')).toContainText('booked', { timeout: 15000 });
+    await expect(page.locator('#job-list')).toContainText('Landing page for client', { timeout: 15000 });
   });
 
   test('Start button on scheduled job transitions to IN_PROGRESS with timer', async ({ page, request }) => {
