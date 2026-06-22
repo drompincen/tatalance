@@ -447,4 +447,23 @@ class CustomTableControllerTest {
                                 """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void should_getTable() throws Exception {
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(sampleTable()));
+        mockMvc.perform(get("/api/tables/tbl001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Contacts"));
+    }
+
+    @Test
+    void should_updateColumn() throws Exception {
+        var table = sampleTable();
+        when(tableRepository.findByIdAndUserId("tbl001", TEST_USER_ID)).thenReturn(Optional.of(table));
+        when(tableRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(put("/api/tables/tbl001/columns/Name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"FullName\",\"type\":\"STRING\"}"))
+                .andExpect(status().isOk());
+    }
 }
