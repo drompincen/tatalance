@@ -12,7 +12,7 @@ test.describe('M3 — Driver queue on iPhone', () => {
   test('empty state when the driver has no rides', async ({ page }) => {
     await page.goto(`/driver-queue.html?id=drv-empty-${uniq()}`);
     await expect(page.locator('[data-test="empty-state"]')).toBeVisible();
-    await expect(page.locator('[data-test="empty-state"]')).toContainText(/pull down to refresh/i);
+    await expect(page.locator('[data-test="empty-state"]')).toContainText(/refreshes automatically/i);
   });
 
   test('renders the driver-scoped queue with no global nav', async ({ page, request }) => {
@@ -74,6 +74,13 @@ test.describe('M3 — Driver queue on iPhone', () => {
     const form = card.locator('[data-test="complete-form"]');
     await expect(form).toHaveClass(/open/);
     await expect(form).toBeVisible();
+  });
+
+  test('shows back link to dashboard and refresh status', async ({ page }) => {
+    await page.goto(`/driver-queue.html?id=drv-${uniq()}`);
+    await expect(page.locator('[data-test="back-link"]')).toHaveAttribute('href', '/index.html');
+    await expect(page.locator('[data-test="refresh-status"]')).toContainText(/last updated/i);
+    await expect(page.locator('[data-test="refresh-btn"]')).toBeVisible();
   });
 
   test('no horizontal scroll on iPhone SE', async ({ page }) => {

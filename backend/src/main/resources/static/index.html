@@ -150,11 +150,19 @@
         /* ── Client list ── */
         .list-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
         .count { font-size: 0.8rem; color: #6b7280; font-weight: 400; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         th { text-align: left; padding: 8px 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #6b7280; border-bottom: 2px solid #f0f0f0; }
-        td { padding: 11px 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        td { padding: 10px 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: #fafafa; }
+        @media (hover: hover) {
+            table tbody tr .row-actions { opacity: 0; transition: opacity .15s; }
+            table tbody tr:hover .row-actions { opacity: 1; }
+        }
+        .row-actions .btn-sm,
+        .row-actions button { margin-left: 4px; }
+        .row-actions .btn-sm:first-child,
+        .row-actions button:first-child { margin-left: 0; }
         .muted { color: #6b7280; }
         .empty-state { text-align: center; padding: 48px 24px; color: #6b7280; }
         .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
@@ -678,14 +686,16 @@
                         <input type="search" id="r-clientSearch" placeholder="Search by name…"
                                autocomplete="off" autocapitalize="off" spellcheck="false"
                                style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;margin-bottom:6px">
-                        <select id="r-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px;line-height:normal;">
+                        <select id="r-clientId" size="1" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;min-height:44px;line-height:normal;">
                             <option value="">Select a client…</option>
                         </select>
+                        <div class="field-hint" id="r-clientHint"></div>
                         <div class="err" id="re-clientId">Client is required</div>
                     </div>
                     <div class="field">
                         <label>Pickup Date/Time <span class="req">*</span></label>
                         <input type="datetime-local" id="r-pickupDateTime" autocomplete="off">
+                        <div class="field-hint">Defaults to the next full hour</div>
                         <div class="err" id="re-pickupDateTime">Pickup date/time is required</div>
                     </div>
                     <div class="field">
@@ -1381,7 +1391,7 @@
                 <td data-label="Email">${esc2(c.email)}</td>
                 <td data-label="Notes" class="muted" style="font-size:.8rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.notes)||''}">${esc2(c.notes)}</td>
                 <td data-label="Added" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
-                <td style="white-space:nowrap">
+                <td class="row-actions" style="white-space:nowrap">
                     <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}','${esc(c.notes)||''}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
                 </td>
@@ -1624,7 +1634,7 @@
                         ).join('')}
                     </select>
                 </td>
-                <td style="white-space:nowrap">
+                <td class="row-actions" style="white-space:nowrap">
                     <button class="btn-sm" onclick="event.stopPropagation();editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
                     <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
                 </td>
@@ -1835,21 +1845,41 @@
         }).catch(() => {});
     }
 
-    // Searchable client picker — filter the <option>s as you type (mobile journey #32).
+    // Searchable client picker — filter options, auto-select single match, Enter picks first.
+    function visibleClientOptions(sel) {
+        return Array.from(sel.options).filter(opt => opt.value && !opt.hidden);
+    }
+
     function applyClientSearchFilter() {
         const q = (document.getElementById('r-clientSearch')?.value || '').trim().toLowerCase();
         const sel = document.getElementById('r-clientId');
+        const hint = document.getElementById('r-clientHint');
         if (!sel) return;
         Array.from(sel.options).forEach(opt => {
-            if (!opt.value) return; // keep the placeholder
+            if (!opt.value) return;
             const match = !q || opt.textContent.toLowerCase().includes(q);
             opt.hidden = !match;
             opt.style.display = match ? '' : 'none';
         });
+        const visible = visibleClientOptions(sel);
         if (sel.selectedOptions[0]?.hidden) sel.value = '';
+        if (visible.length === 1) sel.value = visible[0].value;
+        if (hint) {
+            if (!q) hint.textContent = visible.length ? `${visible.length} client${visible.length === 1 ? '' : 's'} — type to filter` : '';
+            else if (!visible.length) hint.textContent = 'No clients match — try another name';
+            else hint.textContent = `${visible.length} match${visible.length === 1 ? '' : 'es'}${visible.length === 1 ? ' — selected' : ''}`;
+        }
     }
 
-    document.getElementById('r-clientSearch')?.addEventListener('input', applyClientSearchFilter);
+    const rClientSearch = document.getElementById('r-clientSearch');
+    rClientSearch?.addEventListener('input', applyClientSearchFilter);
+    rClientSearch?.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const sel = document.getElementById('r-clientId');
+        const first = visibleClientOptions(sel)[0];
+        if (first) { sel.value = first.value; sel.focus(); }
+    });
 
     function loadAvailableDrivers() {
         fetch('/api/drivers/available').then(r => r.json()).then(drivers => {
@@ -2026,8 +2056,8 @@
                         </select>` : '<span class="muted">—</span>')}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
                 <td style="font-size:.8rem">${r.status === 'COMPLETED' && r.driverPayout ? (r.payoutPaid ? `<span style="color:#10b981;font-weight:600">$${Number(r.driverPayout).toFixed(2)} Paid</span>` : `<span style="color:#ef4444;font-weight:600">$${Number(r.driverPayout).toFixed(2)}</span> <button class="btn-sm" onclick="markPayoutPaid('${r.id}')" style="font-size:.7rem">Pay</button>`) : '<span class="muted">—</span>'}</td>
-                <td style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button onclick="completeRide('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #38a169;background:#f0fff4;color:#38a169;cursor:pointer">Complete</button> ` :
-                    (r.status === 'COMPLETED' ? `<button onclick="generateInvoice('${r.id}')" style="font-size:.75rem;padding:3px 8px;border-radius:4px;border:1px solid #3182ce;background:#ebf8ff;color:#3182ce;cursor:pointer">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Rebook</button>` : ''}</td>
+                <td class="row-actions" style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button class="btn-sm" onclick="completeRide('${r.id}')" style="border-color:#38a169;background:#f0fff4;color:#38a169">Complete</button> ` :
+                    (r.status === 'COMPLETED' ? `<button class="btn-sm" onclick="generateInvoice('${r.id}')" style="border-color:#3182ce;background:#ebf8ff;color:#3182ce">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Rebook</button>` : ''}</td>
             </tr>${completingRideId === r.id ? `<tr><td colspan="8" style="padding:0">
                 <div class="complete-panel">
                     <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} flat`}</div>
@@ -2372,13 +2402,17 @@
         document.getElementById('r-notes').value = notes;
         togglePricingFields();
         document.getElementById('ride-fb').className = 'form-feedback ok';
-        document.getElementById('ride-fb').textContent = 'Rebooked — pick a new date/time and submit.';
+        document.getElementById('ride-fb').textContent = 'Rebooked — pickup defaults to next hour. Adjust if needed and submit.';
+        defaultPickupDateTime(true);
         document.getElementById('r-pickupDateTime').focus();
     };
 
     window.cancelRideEdit = function() {
         editingRideId = null;
         ['r-pickupDateTime','r-pickupLocation','r-dropoffLocation','r-basePrice','r-hourlyRate','r-notes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('r-clientSearch').value = '';
+        document.getElementById('r-clientId').value = '';
+        applyClientSearchFilter();
         document.getElementById('r-pricingMode').value = 'FLAT';
         togglePricingFields();
         document.getElementById('ride-submit-btn').textContent = 'Book Ride';
@@ -2386,6 +2420,7 @@
         document.getElementById('cancel-ride-edit-btn').style.display = 'none';
         document.getElementById('ride-fb').className = 'form-feedback';
         document.getElementById('ride-fb').textContent = '';
+        defaultPickupDateTime(true);
     };
 
     window.cancelRide = async function(rideId) {
@@ -2414,13 +2449,17 @@
 
     loadClientDropdown();
     loadAvailableDrivers();
-    function defaultPickupDateTime() {
+    function toDatetimeLocalValue(d) {
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    function defaultPickupDateTime(force) {
         const el = document.getElementById('r-pickupDateTime');
-        if (!el || el.value) return;
+        if (!el || (!force && el.value)) return;
         const d = new Date();
+        d.setMinutes(0, 0, 0);
         d.setHours(d.getHours() + 1);
-        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-        el.value = d.toISOString().slice(0, 16);
+        el.value = toDatetimeLocalValue(d);
     }
     defaultPickupDateTime();
     loadRides();
@@ -2809,7 +2848,7 @@
                 <td data-label="Tax">$${i.tax}</td>
                 <td style="font-weight:700">$${i.total}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${i.status}</span></td>
-                <td>${i.status === 'OUTSTANDING' ?
+                <td class="row-actions">${i.status === 'OUTSTANDING' ?
                     `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">Mark Paid</button>` :
                     `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">Mark Unpaid</button>`}</td>
             </tr>`).join('')}</tbody>
