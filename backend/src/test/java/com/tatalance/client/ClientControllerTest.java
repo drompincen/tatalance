@@ -250,4 +250,18 @@ class ClientControllerTest {
         mockMvc.perform(delete("/api/clients/unknown"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void should_createClient_withEmail() throws Exception {
+        when(repository.save(any(Client.class))).thenAnswer(i -> {
+            Client c = i.getArgument(0);
+            c.setId("cliNew");
+            return c;
+        });
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"E\",\"lastName\":\"Mail\",\"phone\":\"+12125551234\",\"email\":\"e@ex.com\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("e@ex.com"));
+    }
 }
