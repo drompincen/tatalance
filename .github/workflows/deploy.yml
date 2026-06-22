@@ -14,7 +14,9 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Pinned to 22.04: embedded Flapdoodle Mongo 6.0.5 has an ubuntu2204 binary but no ubuntu2404 one,
+    # so on ubuntu-latest (24.04) the download 404s and every @SpringBootTest fails to load its context.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
