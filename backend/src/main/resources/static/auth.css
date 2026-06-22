@@ -22,7 +22,50 @@ body.scrollable { overflow: auto; }
     box-shadow: 0 4px 16px rgba(0,0,0,.08);
     width: 100%;
     max-width: 360px;
+    position: relative;
 }
+.auth-top {
+    display: flex;
+    justify-content: flex-end;
+    margin: -8px 0 12px;
+}
+.lang-toggle {
+    display: flex;
+    align-items: center;
+    background: #f3f4f6;
+    border-radius: 999px;
+    padding: 3px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    border: 1px solid #e5e7eb;
+}
+.lang-toggle:hover { border-color: #cbd5e0; }
+.lang-option {
+    position: relative;
+    z-index: 2;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    border-radius: 999px;
+    line-height: 1;
+}
+.lang-option.active { color: #0f3460; }
+.lang-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    height: calc(100% - 6px);
+    background: white;
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+.lang-toggle.es .lang-slider { transform: translateX(100%); }
 h1 {
     font-size: 1.5rem;
     font-weight: 700;

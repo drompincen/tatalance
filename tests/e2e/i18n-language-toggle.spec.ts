@@ -61,3 +61,43 @@ test.describe('i18n language toggle (#107)', () => {
     await page.locator('.help-close').click();
   });
 });
+
+test.describe('i18n auth pages (#105)', () => {
+  test.use({ extraHTTPHeaders: {} });
+
+  test('login page toggles EN/ES', async ({ page }) => {
+    await page.goto('/login.html');
+    await page.evaluate(() => localStorage.setItem('tatalance-lang', 'en'));
+    await page.reload();
+    await expect(page.locator('h1')).toHaveText('Sign in');
+    await expect(page.locator('button[type=submit]')).toHaveText('Sign in');
+
+    await page.locator('#langToggle .lang-option[data-lang="es"]').click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await expect(page.locator('h1')).toHaveText('Iniciar sesión');
+    await expect(page.locator('button[type=submit]')).toHaveText('Iniciar sesión');
+    await expect(page.locator('a[href="/register.html"]')).toHaveText('Crear una');
+  });
+
+  test('register page toggles EN/ES', async ({ page }) => {
+    await page.goto('/register.html');
+    await page.evaluate(() => localStorage.setItem('tatalance-lang', 'en'));
+    await page.reload();
+    await expect(page.locator('h1')).toHaveText('Create Account');
+
+    await page.locator('#langToggle .lang-option[data-lang="es"]').click();
+    await expect(page.locator('h1')).toHaveText('Crear cuenta');
+    await expect(page.locator('#securityQuestion option').first()).toHaveText('— ninguna —');
+  });
+
+  test('forgot-password page toggles EN/ES', async ({ page }) => {
+    await page.goto('/forgot-password.html');
+    await page.evaluate(() => localStorage.setItem('tatalance-lang', 'en'));
+    await page.reload();
+    await expect(page.locator('h1')).toHaveText('Reset Password');
+
+    await page.locator('#langToggle .lang-option[data-lang="es"]').click();
+    await expect(page.locator('h1')).toHaveText('Restablecer contraseña');
+    await expect(page.locator('#step-username button')).toHaveText('Siguiente');
+  });
+});
