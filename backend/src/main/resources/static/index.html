@@ -846,6 +846,7 @@
                         <div style="flex:2;">
                             <label><span data-i18n="job.form.scheduled">Scheduled Date/Time</span> <span class="req">*</span></label>
                             <input type="datetime-local" id="j-scheduled" autocomplete="off">
+                            <div class="field-hint" data-i18n="ride.form.pickupHint">Defaults to the next full hour</div>
                             <div class="err" id="je-scheduled" data-i18n="job.form.scheduledRequired">Scheduled date/time is required</div>
                         </div>
                     </div>
@@ -1053,6 +1054,30 @@
         const el = document.getElementById(elId);
         if (el) el.textContent = tf('common.autoRefresh', { time: new Date().toLocaleTimeString() });
     }
+    function friendlyApiMessage(raw) {
+        if (!raw) return tf('messages.saveFailed');
+        const exact = {
+            'Pickup date/time cannot be in the past': 'messages.scheduledPast',
+            'Client not found': 'messages.clientNotFound',
+            'Profile not found or does not belong to user': 'messages.profileNotFound',
+            'Ride not found': 'messages.rideNotFound',
+            'Driver not found': 'messages.driverNotFound',
+            'A client with this phone number already exists': 'messages.duplicatePhone',
+            'Invalid request body': 'messages.invalidRequest',
+        };
+        if (exact[raw]) return tf(exact[raw]);
+        if (raw.includes('E.164') || raw.includes('Phone must start with +')) return tf('client.form.phoneE164');
+        return raw;
+    }
+    async function apiErrorFromResponse(r) {
+        const err = await r.json().catch(() => ({}));
+        const raw = err.errors?.[0]?.message || err.message || err.error || '';
+        return friendlyApiMessage(raw);
+    }
+    function formError(msg) {
+        return '✗ ' + (msg || tf('messages.saveFailed'));
+    }
+
     function updateFormLabels() {
         const ct = document.getElementById('client-form-title');
         if (ct) ct.textContent = tf(editingClientId ? 'client.form.editTitle' : 'client.form.addTitle');
@@ -1286,7 +1311,7 @@
         // Refresh the client picker when opening the booking tab so newly
         // added clients appear without waiting for the 10s poll.
         if (name === 'rides') loadClientDropdown();
-        if (name === 'jobs') { loadJobClientDropdown(); loadJobs(); }
+        if (name === 'jobs') { defaultJobScheduledTime(); loadJobClientDropdown(); loadJobs(); }
         if (name === 'dashboard') loadDashboard();
         if (name === 'activity') loadActivity();
         closeNav();
@@ -1567,15 +1592,15 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, phone, email: email || null, notes: notes || null })
             });
-            if (!r.ok) throw new Error();
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             const wasEdit = !!editingClientId;
             cancelEdit();
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? tf('messages.personUpdated', { name: firstName + ' ' + lastName }) : tf('messages.personAdded', { name: firstName + ' ' + lastName });
             load();
-        } catch {
+        } catch (err) {
             fb.className = 'form-feedback fail';
-            fb.textContent = tf('messages.saveFailed');
+            fb.textContent = formError(err.message);
         } finally {
             btn.disabled = false;
             btn.textContent = tf(editingClientId ? 'client.form.updateBtn' : 'client.form.addBtn');
@@ -1821,15 +1846,15 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, phone, email: email || null, vehicle: vehicle || null, payoutType, payoutRate: Number(payoutRate) })
             });
-            if (!r.ok) throw new Error();
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             const wasEdit = !!editingDriverId;
             cancelDriverEdit();
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? tf('messages.personUpdated', { name: firstName + ' ' + lastName }) : tf('messages.personAdded', { name: firstName + ' ' + lastName });
             loadDrivers();
-        } catch {
+        } catch (err) {
             fb.className = 'form-feedback fail';
-            fb.textContent = tf('messages.saveFailed');
+            fb.textContent = formError(err.message);
         } finally {
             btn.disabled = false;
             btn.textContent = tf(editingDriverId ? 'driver.form.updateBtn' : 'driver.form.addBtn');
@@ -2432,11 +2457,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
-            if (!r.ok) {
-                const err = await r.json().catch(() => ({}));
-                const msg = err.errors?.[0]?.message || err.message || err.error || 'Save failed';
-                throw new Error(msg);
-            }
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             const wasEdit = !!editingRideId;
             cancelRideEdit();
             fb.className = 'form-feedback ok';
@@ -2445,7 +2466,7 @@
             setTimeout(() => { if (typeof applyRideFilter === 'function') applyRideFilter(); }, 50);
         } catch (err) {
             fb.className = 'form-feedback fail';
-            fb.textContent = '✗ ' + (err.message || tf('messages.saveFailed'));
+            fb.textContent = formError(err.message);
         } finally {
             btn.disabled = false;
             btn.textContent = tf(editingRideId ? 'ride.form.updateBtn' : 'ride.form.bookBtn');
@@ -2548,6 +2569,14 @@
     }
     function defaultPickupDateTime(force) {
         const el = document.getElementById('r-pickupDateTime');
+        if (!el || (!force && el.value)) return;
+        const d = new Date();
+        d.setMinutes(0, 0, 0);
+        d.setHours(d.getHours() + 1);
+        el.value = toDatetimeLocalValue(d);
+    }
+    function defaultJobScheduledTime(force) {
+        const el = document.getElementById('j-scheduled');
         if (!el || (!force && el.value)) return;
         const d = new Date();
         d.setMinutes(0, 0, 0);
@@ -2806,10 +2835,14 @@
             fb.className = 'form-feedback'; fb.textContent = '';
 
             try {
+                let scheduledInstant = new Date(scheduled);
+                const floor = new Date(Date.now() + 60000);
+                if (scheduledInstant < floor) scheduledInstant = floor;
+
                 const notesVal = `EST:${est}|${scope}`;
                 const body = {
                     clientId,
-                    pickupDateTime: new Date(scheduled).toISOString(),
+                    pickupDateTime: scheduledInstant.toISOString(),
                     pickupLocation: title,
                     dropoffLocation: 'Freelance Job',
                     pricingMode: 'HOURLY',
@@ -2820,15 +2853,15 @@
                 const url = editingJobId ? `/api/rides/${editingJobId}${profQ}` : `/api/rides${profQ}`;
                 const method = editingJobId ? 'PUT' : 'POST';
                 const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                if (!r.ok) throw new Error();
+                if (!r.ok) throw new Error(await apiErrorFromResponse(r));
                 const wasEdit = !!editingJobId;
                 cancelJobEdit();
                 fb.className = 'form-feedback ok';
                 fb.textContent = wasEdit ? tf('messages.jobUpdated') : tf('messages.jobBooked');
                 loadJobs(true);
-            } catch {
+            } catch (err) {
                 fb.className = 'form-feedback fail';
-                fb.textContent = tf('messages.saveFailed');
+                fb.textContent = formError(err.message);
             } finally {
                 btn.disabled = false;
                 btn.textContent = tf(editingJobId ? 'job.form.updateBtn' : 'job.form.bookBtn');
@@ -2847,8 +2880,10 @@
 
     window.cancelJobEdit = function() {
         editingJobId = null;
-        ['j-title','j-scope','j-estHours','j-scheduled'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['j-title','j-scope'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const estEl = document.getElementById('j-estHours'); if (estEl) estEl.value = '4';
         const cs = document.getElementById('j-clientId'); if (cs) cs.value = '';
+        defaultJobScheduledTime(true);
         const sbtn = document.getElementById('job-submit-btn'); if (sbtn) sbtn.textContent = tf('job.form.bookBtn');
         const ct = document.getElementById('job-form-title');
         if (ct) ct.textContent = tf('job.form.bookTitle');
