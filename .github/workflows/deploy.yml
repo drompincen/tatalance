@@ -31,9 +31,14 @@ jobs:
           key: ${{ runner.os }}-embedmongo-${{ hashFiles('**/pom.xml') }}
 
       - name: Run tests with JaCoCo coverage (gate on verify phase)
+        # NOTE: The 'dev' profile (activeByDefault) provides in-mem Flapdoodle MongoDB, required for the
+        # integration tests and to hit the 60% LINE+BRANCH gate. Do NOT pass -P-dev here: the leading '-'
+        # DEACTIVATES the profile, removing Flapdoodle, which makes the integration tests hang waiting for a
+        # Mongo that never starts (the build/deploy jobs use -P-dev on purpose to exclude Flapdoodle from the
+        # prod JAR). Cache for ~/.embedmongo speeds embedded Mongo startup.
         run: |
           set +H
-          cd backend && mvn clean verify -B --no-transfer-progress '-Dmaven.javadoc.skip=true' -P-dev
+          cd backend && mvn clean verify -B --no-transfer-progress '-Dmaven.javadoc.skip=true'
 
       - uses: actions/upload-artifact@v4
         with:
