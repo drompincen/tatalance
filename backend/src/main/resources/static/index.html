@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -36,6 +36,45 @@
         header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.5px; flex-shrink: 0; }
         .header-spacer { flex: 1; min-width: 8px; }
         .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
+
+        /* ── Language toggle ── */
+        .lang-toggle {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,.1);
+            border-radius: 999px;
+            padding: 3px;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            border: 1px solid rgba(255,255,255,.15);
+            flex-shrink: 0;
+        }
+        .lang-toggle:hover { border-color: rgba(255,255,255,.3); }
+        .lang-option {
+            position: relative;
+            z-index: 2;
+            padding: 0.2rem 0.55rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: rgba(255,255,255,.45);
+            border-radius: 999px;
+            line-height: 1;
+        }
+        .lang-option.active { color: #fff; }
+        .lang-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: calc(50% - 3px);
+            height: calc(100% - 6px);
+            background: rgba(255,255,255,.22);
+            border-radius: 999px;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+        .lang-toggle.es .lang-slider { transform: translateX(100%); }
         .status-footer {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
             padding: 5px 16px; background: #12121f; border-top: 1px solid rgba(255,255,255,.06);
@@ -475,12 +514,17 @@
 
 <header>
     <div class="header-top">
-        <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Open menu">&#9776;</button>
+        <button class="hamburger" id="hamburger" onclick="toggleNav()" data-i18n-aria="account.openMenu" aria-label="Open menu">&#9776;</button>
         <h1>Tatalance</h1>
         <div class="header-spacer"></div>
         <div class="header-actions">
+            <div class="lang-toggle" id="langToggle" onclick="toggleLang()" data-i18n-title="lang.switch" title="Switch language / Cambiar idioma">
+                <span class="lang-option active" data-lang="en">EN</span>
+                <span class="lang-option" data-lang="es">ES</span>
+                <span class="lang-slider"></span>
+            </div>
             <div class="search-box" style="position:relative;">
-                <input type="search" id="global-search" placeholder="Search…" autocomplete="off" aria-label="Search clients, drivers, and rides"
+                <input type="search" id="global-search" data-i18n-placeholder="account.searchShort" placeholder="Search…" autocomplete="off" data-i18n-aria="account.search" aria-label="Search clients, drivers, and rides"
                        oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)">
                 <div id="search-results" style="display:none;position:absolute;top:100%;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
             </div>
@@ -489,36 +533,36 @@
                     <span id="username-display">Account</span> ▾
                 </button>
                 <div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
-                    <span class="account-menu-label">Profile</span>
+                    <span class="account-menu-label" data-i18n="account.profile">Profile</span>
                     <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
-                        <option value="">All (account)</option>
+                        <option value="" data-i18n="account.allProfiles">All (account)</option>
                     </select>
                     <div class="account-menu-divider"></div>
-                    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem">Manage profiles</button>
-                    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none">Link Google account</button>
-                    <a href="/freelance.html" class="menu-item nav-external-link" role="menuitem">Freelance mode</a>
-                    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem">Change password</button>
+                    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem" data-i18n="account.manageProfiles">Manage profiles</button>
+                    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
+                    <a href="/freelance.html" class="menu-item nav-external-link" role="menuitem" data-i18n="account.freelanceMode">Freelance mode</a>
+                    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
                     <div class="account-menu-divider"></div>
-                    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem">Logout</button>
+                    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
                 </div>
             </div>
-            <button class="logout-btn mobile-logout-only" onclick="doLogout()" aria-label="Logout">Logout</button>
+            <button class="logout-btn mobile-logout-only" onclick="doLogout()" data-i18n-aria="account.logout" aria-label="Logout" data-i18n="account.logout">Logout</button>
         </div>
     </div>
     <div class="header-nav-row">
         <nav id="main-nav" aria-label="Main navigation">
-            <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')">Dashboard</button>
-            <button class="tab-btn" id="btn-clients" onclick="showTab('clients')">Clients</button>
-            <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')">Drivers</button>
-            <button class="tab-btn" id="btn-rides" onclick="showTab('rides')">Rides</button>
-            <button class="tab-btn" id="btn-jobs" onclick="showTab('jobs')">Jobs</button>
-            <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')">Invoices</button>
-            <button class="tab-btn" id="btn-activity" onclick="showTab('activity')">Activity</button>
-            <button class="tab-btn" id="btn-api" onclick="showTab('api')">API Spec</button>
+            <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')" data-i18n="nav.dashboard">Dashboard</button>
+            <button class="tab-btn" id="btn-clients" onclick="showTab('clients')" data-i18n="nav.clients">Clients</button>
+            <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')" data-i18n="nav.drivers">Drivers</button>
+            <button class="tab-btn" id="btn-rides" onclick="showTab('rides')" data-i18n="nav.rides">Rides</button>
+            <button class="tab-btn" id="btn-jobs" onclick="showTab('jobs')" data-i18n="nav.jobs">Jobs</button>
+            <button class="tab-btn" id="btn-invoices" onclick="showTab('invoices')" data-i18n="nav.invoices">Invoices</button>
+            <button class="tab-btn" id="btn-activity" onclick="showTab('activity')" data-i18n="nav.activity">Activity</button>
+            <button class="tab-btn" id="btn-api" onclick="showTab('api')" data-i18n="nav.api">API Spec</button>
             <span id="custom-tab-buttons"></span>
-            <button class="add-table-btn" onclick="openCreateTableModal()" title="Create custom table" aria-label="Create custom table">+</button>
-            <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile">Freelance</a>
-            <button class="help-btn" onclick="openHelp()" title="Help" aria-label="Help">?</button>
+            <button class="add-table-btn" onclick="openCreateTableModal()" data-i18n-title="common.createCustomTable" data-i18n-aria="common.createCustomTable" title="Create custom table" aria-label="Create custom table">+</button>
+            <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile" data-i18n="nav.freelance">Freelance</a>
+            <button class="help-btn" onclick="openHelp()" data-i18n-title="nav.help" title="Help" data-i18n-aria="nav.help" aria-label="Help">?</button>
         </nav>
     </div>
 </header>
@@ -529,27 +573,27 @@
     <div class="page">
         <p style="text-align: center; padding: 10px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; margin-bottom: 10px; font-size: 0.9rem;">LOCAL WIFI TEST - ?m=1 flag. If you see this banner + header, page loaded. Content loads via API (may be limited without full DB). Tap hamburger for menu.</p>
         <div id="dash-onboarding" class="onboarding-banner" style="display:none" role="region" aria-label="Getting started">
-            <h3>Welcome to Tatalance</h3>
-            <p>Your dashboard is empty. Follow these steps to get your chauffeur business running.</p>
+            <h3 data-i18n="dashboard.welcome">Welcome to Tatalance</h3>
+            <p data-i18n="dashboard.subtitle">Your dashboard is empty. Follow these steps to get your chauffeur business running.</p>
             <div class="onboarding-steps">
-                <button type="button" onclick="showTab('clients');focusClientForm()">1. Add a client</button>
-                <button type="button" onclick="showTab('drivers');focusDriverForm()">2. Add a driver</button>
-                <button type="button" onclick="showTab('rides');focusRideForm()">3. Book a ride</button>
+                <button type="button" onclick="showTab('clients');focusClientForm()" data-i18n="dashboard.step1">1. Add a client</button>
+                <button type="button" onclick="showTab('drivers');focusDriverForm()" data-i18n="dashboard.step2">2. Add a driver</button>
+                <button type="button" onclick="showTab('rides');focusRideForm()" data-i18n="dashboard.step3">3. Book a ride</button>
             </div>
         </div>
         <div class="dash-grid" id="dash-cards">
-            <div class="stat-card accent-blue"><div class="stat-label">Clients</div><div class="stat-value">...</div></div>
-            <div class="stat-card accent-purple"><div class="stat-label">Drivers</div><div class="stat-value">...</div></div>
-            <div class="stat-card accent-orange"><div class="stat-label">Active Jobs</div><div class="stat-value">...</div></div>
+            <div class="stat-card accent-blue"><div class="stat-label" data-i18n="dashboard.clients">Clients</div><div class="stat-value">...</div></div>
+            <div class="stat-card accent-purple"><div class="stat-label" data-i18n="dashboard.drivers">Drivers</div><div class="stat-value">...</div></div>
+            <div class="stat-card accent-orange"><div class="stat-label" data-i18n="dashboard.activeJobs">Active Jobs</div><div class="stat-value">...</div></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px" id="dash-detail-row">
             <div class="card">
-                <div class="card-title">Rides by status</div>
-                <div id="dash-status-bars"><p class="muted">Loading status...</p></div>
+                <div class="card-title" data-i18n="dashboard.ridesByStatus">Rides by status</div>
+                <div id="dash-status-bars"><p class="muted" data-i18n="dashboard.loadingStatus">Loading status…</p></div>
             </div>
             <div class="card">
-                <div class="card-title">Revenue summary</div>
-                <div id="dash-revenue"><p class="muted">Loading revenue...</p></div>
+                <div class="card-title" data-i18n="dashboard.revenueSummary">Revenue summary</div>
+                <div id="dash-revenue"><p class="muted" data-i18n="dashboard.loadingRevenue">Loading revenue…</p></div>
             </div>
         </div>
     </div>
@@ -560,48 +604,48 @@
     <div class="page">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Add Client</div>
+                <div class="card-title" id="client-form-title" data-i18n="client.form.addTitle">Add Client</div>
                 <form id="form" novalidate>
                     <div id="form-fields">
                         <!-- spec-driven fields inserted here; fallback below if spec unavailable -->
                         <div class="field">
-                            <label>First Name <span class="req">*</span><span class="schema-type" id="type-firstName">string</span></label>
-                            <input type="text" id="f-firstName" placeholder="First name" autocomplete="off">
-                            <div class="err" id="e-firstName">First name is required</div>
+                            <label><span data-i18n="client.form.firstName">First Name</span> <span class="req">*</span><span class="schema-type" id="type-firstName">string</span></label>
+                            <input type="text" id="f-firstName" data-i18n-placeholder="client.form.firstNamePlaceholder" placeholder="First name" autocomplete="off">
+                            <div class="err" id="e-firstName" data-i18n="client.form.firstNameRequired">First name is required</div>
                         </div>
                         <div class="field">
-                            <label>Last Name <span class="req">*</span><span class="schema-type" id="type-lastName">string</span></label>
-                            <input type="text" id="f-lastName" placeholder="Last name" autocomplete="off">
-                            <div class="err" id="e-lastName">Last name is required</div>
+                            <label><span data-i18n="client.form.lastName">Last Name</span> <span class="req">*</span><span class="schema-type" id="type-lastName">string</span></label>
+                            <input type="text" id="f-lastName" data-i18n-placeholder="client.form.lastNamePlaceholder" placeholder="Last name" autocomplete="off">
+                            <div class="err" id="e-lastName" data-i18n="client.form.lastNameRequired">Last name is required</div>
                         </div>
                         <div class="field">
-                            <label>Phone <span class="req">*</span><span class="schema-type" id="type-phone">string</span></label>
+                            <label><span data-i18n="client.form.phone">Phone</span> <span class="req">*</span><span class="schema-type" id="type-phone">string</span></label>
                             <input type="tel" id="f-phone" placeholder="+15551234567" autocomplete="tel" inputmode="tel" aria-describedby="e-phone phone-hint-f">
-                            <div class="field-hint" id="phone-hint-f">E.164 format — start with +, then digits only (no spaces)</div>
-                            <div class="err" id="e-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
+                            <div class="field-hint" id="phone-hint-f" data-i18n="client.form.phoneHint">E.164 format — start with +, then digits only (no spaces)</div>
+                            <div class="err" id="e-phone" data-i18n="client.form.phoneE164">Phone must be E.164 format: + followed by 10-15 digits</div>
                         </div>
                         <div class="field">
-                            <label>Email <span class="opt">(optional)</span><span class="schema-type" id="type-email">string · email</span></label>
+                            <label><span data-i18n="client.form.email">Email</span> <span class="opt" data-i18n="common.optional">(optional)</span><span class="schema-type" id="type-email">string · email</span></label>
                             <input type="email" id="f-email" placeholder="name@example.com" autocomplete="off">
                         </div>
                         <div class="field">
-                            <label>Notes <span class="opt">(optional)</span></label>
-                            <input type="text" id="f-notes" placeholder="VIP preferences, special requests…" autocomplete="off">
+                            <label><span data-i18n="client.form.notes">Notes</span> <span class="opt" data-i18n="common.optional">(optional)</span></label>
+                            <input type="text" id="f-notes" data-i18n-placeholder="client.form.notesPlaceholder" placeholder="VIP preferences, special requests…" autocomplete="off">
                         </div>
                     </div>
-                    <button class="btn" type="submit" id="submit-btn">Add Client</button>
-                    <button class="btn btn-cancel" type="button" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">Cancel</button>
+                    <button class="btn" type="submit" id="submit-btn" data-i18n="client.form.addBtn">Add Client</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()" data-i18n="common.cancel">Cancel</button>
                 </form>
                 <div class="form-feedback" id="fb"></div>
             </div>
 
             <div class="card">
                 <div class="list-header">
-                    <div class="card-title" style="margin-bottom:0">Clients</div>
+                    <div class="card-title" style="margin-bottom:0" data-i18n="client.list.title">Clients</div>
                     <span class="count" id="count"></span>
-                    <button class="delete-mode-btn" id="client-delete-mode-btn" onclick="toggleDeleteMode('clients', () => filterClients())" style="margin-left:auto">Select</button>
+                    <button class="delete-mode-btn" id="client-delete-mode-btn" onclick="toggleDeleteMode('clients', () => filterClients())" style="margin-left:auto" data-i18n="client.list.select">Select</button>
                 </div>
-                <input type="text" id="client-search" placeholder="Search by name or phone…" autocomplete="off"
+                <input type="text" id="client-search" data-i18n-placeholder="client.list.searchPlaceholder" placeholder="Search by name or phone…" autocomplete="off"
                     style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.85rem;margin-bottom:10px;box-sizing:border-box;">
                 <div id="client-bulk-bar"></div>
                 <div id="list"></div>
@@ -616,55 +660,55 @@
     <div class="page">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Add Driver</div>
+                <div class="card-title" id="driver-form-title" data-i18n="driver.form.addTitle">Add Driver</div>
                 <form id="driver-form" novalidate>
                     <div class="field">
-                        <label>First Name <span class="req">*</span></label>
-                        <input type="text" id="d-firstName" placeholder="First name" autocomplete="off">
-                        <div class="err" id="de-firstName">First name is required</div>
+                        <label><span data-i18n="driver.form.firstName">First Name</span> <span class="req">*</span></label>
+                        <input type="text" id="d-firstName" data-i18n-placeholder="client.form.firstNamePlaceholder" placeholder="First name" autocomplete="off">
+                        <div class="err" id="de-firstName" data-i18n="driver.form.firstNameRequired">First name is required</div>
                     </div>
                     <div class="field">
-                        <label>Last Name <span class="req">*</span></label>
-                        <input type="text" id="d-lastName" placeholder="Last name" autocomplete="off">
-                        <div class="err" id="de-lastName">Last name is required</div>
+                        <label><span data-i18n="driver.form.lastName">Last Name</span> <span class="req">*</span></label>
+                        <input type="text" id="d-lastName" data-i18n-placeholder="client.form.lastNamePlaceholder" placeholder="Last name" autocomplete="off">
+                        <div class="err" id="de-lastName" data-i18n="driver.form.lastNameRequired">Last name is required</div>
                     </div>
                     <div class="field">
-                        <label>Phone <span class="req">*</span></label>
+                        <label><span data-i18n="driver.form.phone">Phone</span> <span class="req">*</span></label>
                         <input type="tel" id="d-phone" placeholder="+15551234567" autocomplete="tel" inputmode="tel" aria-describedby="de-phone phone-hint-d">
-                        <div class="field-hint" id="phone-hint-d">E.164 format — start with +, then digits only (no spaces)</div>
-                        <div class="err" id="de-phone">Phone must be E.164 format: + followed by 10-15 digits</div>
+                        <div class="field-hint" id="phone-hint-d" data-i18n="client.form.phoneHint">E.164 format — start with +, then digits only (no spaces)</div>
+                        <div class="err" id="de-phone" data-i18n="driver.form.phoneE164">Phone must be E.164 format: + followed by 10-15 digits</div>
                     </div>
                     <div class="field">
-                        <label>Email <span class="opt">(optional)</span></label>
+                        <label><span data-i18n="driver.form.email">Email</span> <span class="opt" data-i18n="common.optional">(optional)</span></label>
                         <input type="email" id="d-email" placeholder="name@example.com" autocomplete="off">
                     </div>
                     <div class="field">
-                        <label>Vehicle <span class="opt">(optional)</span></label>
+                        <label><span data-i18n="driver.form.vehicle">Vehicle</span> <span class="opt" data-i18n="common.optional">(optional)</span></label>
                         <input type="text" id="d-vehicle" placeholder="2024 Mercedes S-Class" autocomplete="off">
                     </div>
                     <div class="field">
-                        <label>Payout Type <span class="req">*</span></label>
+                        <label><span data-i18n="driver.form.payoutType">Payout Type</span> <span class="req">*</span></label>
                         <select id="d-payoutType" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;">
-                            <option value="PERCENTAGE">Percentage</option>
-                            <option value="FLAT">Flat rate</option>
+                            <option value="PERCENTAGE" data-i18n="driver.form.payoutPercentage">Percentage</option>
+                            <option value="FLAT" data-i18n="driver.form.payoutFlat">Flat rate</option>
                         </select>
                     </div>
                     <div class="field">
-                        <label>Payout Rate <span class="req">*</span></label>
+                        <label><span data-i18n="driver.form.payoutRate">Payout Rate</span> <span class="req">*</span></label>
                         <input type="number" id="d-payoutRate" placeholder="70" min="0" autocomplete="off">
-                        <div class="err" id="de-payoutRate">Payout rate is required</div>
+                        <div class="err" id="de-payoutRate" data-i18n="driver.form.payoutRateRequired">Payout rate is required</div>
                     </div>
-                    <button class="btn" type="submit" id="driver-submit-btn">Add Driver</button>
-                    <button class="btn btn-cancel" type="button" id="cancel-driver-edit-btn" style="display:none" onclick="cancelDriverEdit()">Cancel</button>
+                    <button class="btn" type="submit" id="driver-submit-btn" data-i18n="driver.form.addBtn">Add Driver</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-driver-edit-btn" style="display:none" onclick="cancelDriverEdit()" data-i18n="common.cancel">Cancel</button>
                 </form>
                 <div class="form-feedback" id="driver-fb"></div>
             </div>
 
             <div class="card">
                 <div class="list-header">
-                    <div class="card-title" style="margin-bottom:0">Drivers</div>
+                    <div class="card-title" style="margin-bottom:0" data-i18n="driver.list.title">Drivers</div>
                     <span class="count" id="driver-count"></span>
-                    <button class="delete-mode-btn" id="driver-delete-mode-btn" onclick="toggleDeleteMode('drivers', loadDrivers)" style="margin-left:auto">Select</button>
+                    <button class="delete-mode-btn" id="driver-delete-mode-btn" onclick="toggleDeleteMode('drivers', loadDrivers)" style="margin-left:auto" data-i18n="driver.list.select">Select</button>
                 </div>
                 <div id="driver-bulk-bar"></div>
                 <div id="driver-list"></div>
@@ -679,81 +723,81 @@
     <div class="page">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Book a Ride</div>
+                <div class="card-title" id="ride-form-title" data-i18n="ride.form.bookTitle">Book a Ride</div>
                 <form id="ride-form" novalidate>
                     <div class="field">
-                        <label>Client <span class="req">*</span></label>
-                        <input type="search" id="r-clientSearch" placeholder="Search by name…"
+                        <label><span data-i18n="ride.form.client">Client</span> <span class="req">*</span></label>
+                        <input type="search" id="r-clientSearch" data-i18n-placeholder="ride.form.clientSearch" placeholder="Search by name…"
                                autocomplete="off" autocapitalize="off" spellcheck="false"
                                style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;margin-bottom:6px">
                         <select id="r-clientId" size="1" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;min-height:44px;line-height:normal;">
-                            <option value="">Select a client…</option>
+                            <option value="" data-i18n="ride.form.selectClient">Select a client…</option>
                         </select>
                         <div class="field-hint" id="r-clientHint"></div>
-                        <div class="err" id="re-clientId">Client is required</div>
+                        <div class="err" id="re-clientId" data-i18n="ride.form.clientRequired">Client is required</div>
                     </div>
                     <div class="field">
-                        <label>Pickup Date/Time <span class="req">*</span></label>
+                        <label><span data-i18n="ride.form.pickupDateTime">Pickup Date/Time</span> <span class="req">*</span></label>
                         <input type="datetime-local" id="r-pickupDateTime" autocomplete="off">
-                        <div class="field-hint">Defaults to the next full hour</div>
-                        <div class="err" id="re-pickupDateTime">Pickup date/time is required</div>
+                        <div class="field-hint" data-i18n="ride.form.pickupHint">Defaults to the next full hour</div>
+                        <div class="err" id="re-pickupDateTime" data-i18n="ride.form.pickupRequired">Pickup date/time is required</div>
                     </div>
                     <div class="field">
-                        <label>Pickup Location <span class="req">*</span></label>
+                        <label><span data-i18n="ride.form.pickupLocation">Pickup Location</span> <span class="req">*</span></label>
                         <input type="text" id="r-pickupLocation" placeholder="Miami Airport" autocomplete="off">
-                        <div class="err" id="re-pickupLocation">Pickup location is required</div>
+                        <div class="err" id="re-pickupLocation" data-i18n="ride.form.pickupLocationRequired">Pickup location is required</div>
                     </div>
                     <div class="field">
-                        <label>Dropoff Location <span class="req">*</span></label>
+                        <label><span data-i18n="ride.form.dropoffLocation">Dropoff Location</span> <span class="req">*</span></label>
                         <input type="text" id="r-dropoffLocation" placeholder="South Beach Hotel" autocomplete="off">
-                        <div class="err" id="re-dropoffLocation">Dropoff location is required</div>
+                        <div class="err" id="re-dropoffLocation" data-i18n="ride.form.dropoffLocationRequired">Dropoff location is required</div>
                     </div>
                     <div class="field">
-                        <label>Pricing Mode</label>
+                        <label data-i18n="ride.form.pricingMode">Pricing Mode</label>
                         <select id="r-pricingMode" onchange="togglePricingFields()" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa;height:44px">
-                            <option value="FLAT">Flat rate</option>
-                            <option value="HOURLY">Hourly</option>
-                            <option value="FLAT_PLUS_HOURLY">Flat + Hourly</option>
+                            <option value="FLAT" data-i18n="pricing.flat">Flat rate</option>
+                            <option value="HOURLY" data-i18n="pricing.hourly">Hourly</option>
+                            <option value="FLAT_PLUS_HOURLY" data-i18n="pricing.flatPlusHourly">Flat + Hourly</option>
                         </select>
                     </div>
                     <div class="field" id="basePrice-field">
-                        <label>Base Price ($)</label>
+                        <label data-i18n="ride.form.basePrice">Base Price ($)</label>
                         <input type="number" id="r-basePrice" placeholder="85.00" min="0" step="0.01" autocomplete="off">
                     </div>
                     <div class="field" id="hourlyRate-field" style="display:none">
-                        <label>Hourly Rate ($)</label>
+                        <label data-i18n="ride.form.hourlyRate">Hourly Rate ($)</label>
                         <input type="number" id="r-hourlyRate" placeholder="7.50" min="0" step="0.01" autocomplete="off">
                     </div>
                     <div class="field">
-                        <label>Notes <span class="opt">(optional)</span></label>
+                        <label><span data-i18n="ride.form.notes">Notes</span> <span class="opt" data-i18n="common.optional">(optional)</span></label>
                         <input type="text" id="r-notes" placeholder="VIP client, extra luggage" autocomplete="off">
                     </div>
-                    <button class="btn" type="submit" id="ride-submit-btn">Book Ride</button>
-                    <button class="btn btn-cancel" type="button" id="cancel-ride-edit-btn" style="display:none" onclick="cancelRideEdit()">Cancel</button>
+                    <button class="btn" type="submit" id="ride-submit-btn" data-i18n="ride.form.bookBtn">Book Ride</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-ride-edit-btn" style="display:none" onclick="cancelRideEdit()" data-i18n="common.cancel">Cancel</button>
                 </form>
                 <div class="form-feedback" id="ride-fb"></div>
             </div>
 
             <div class="card">
                 <div class="list-header">
-                    <div class="card-title" style="margin-bottom:0">Rides</div>
+                    <div class="card-title" style="margin-bottom:0" data-i18n="ride.list.title">Rides</div>
                     <span class="count" id="ride-count"></span>
                 </div>
                 <div id="ride-status-filter" style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;">
-                    <button class="filter-btn active" onclick="setRideFilter('ALL')">All</button>
-                    <button class="filter-btn" onclick="setRideFilter('SCHEDULED')">Scheduled</button>
-                    <button class="filter-btn" onclick="setRideFilter('ASSIGNED')">Assigned</button>
-                    <button class="filter-btn" onclick="setRideFilter('COMPLETED')">Completed</button>
-                    <button class="filter-btn" onclick="setRideFilter('CANCELLED')">Cancelled</button>
+                    <button class="filter-btn active" data-filter="ALL" onclick="setRideFilter('ALL')" data-i18n="filter.all">All</button>
+                    <button class="filter-btn" data-filter="SCHEDULED" onclick="setRideFilter('SCHEDULED')" data-i18n="filter.scheduled">Scheduled</button>
+                    <button class="filter-btn" data-filter="ASSIGNED" onclick="setRideFilter('ASSIGNED')" data-i18n="filter.assigned">Assigned</button>
+                    <button class="filter-btn" data-filter="COMPLETED" onclick="setRideFilter('COMPLETED')" data-i18n="filter.completed">Completed</button>
+                    <button class="filter-btn" data-filter="CANCELLED" onclick="setRideFilter('CANCELLED')" data-i18n="filter.cancelled">Cancelled</button>
                 </div>
                 <div id="ride-date-filter" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                     <input type="date" id="ride-date-from" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.82rem;" onchange="applyRideFilter()">
-                    <span style="color:#6b7280;font-size:.82rem;">to</span>
+                    <span style="color:#6b7280;font-size:.82rem;" data-i18n="common.to">to</span>
                     <input type="date" id="ride-date-to" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.82rem;" onchange="applyRideFilter()">
-                    <button class="filter-btn" onclick="setRideDatePreset('today')">Today</button>
-                    <button class="filter-btn" onclick="setRideDatePreset('week')">This Week</button>
-                    <button class="filter-btn" onclick="setRideDatePreset('month')">This Month</button>
-                    <button class="filter-btn" onclick="setRideDatePreset('clear')" title="Clear dates">Clear</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('today')" data-i18n="common.today">Today</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('week')" data-i18n="common.thisWeek">This Week</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('month')" data-i18n="common.thisMonth">This Month</button>
+                    <button class="filter-btn" onclick="setRideDatePreset('clear')" data-i18n-title="ride.filter.clearDates" data-i18n="common.clear" title="Clear dates">Clear</button>
                 </div>
                 <div id="ride-list"></div>
                 <div class="refresh-ts" id="ride-ts"></div>
@@ -767,61 +811,61 @@
     <div class="page">
         <div class="grid-2">
             <div class="card">
-                <div class="card-title">Book a Job</div>
+                <div class="card-title" id="job-form-title" data-i18n="job.form.bookTitle">Book a Job</div>
                 <form id="job-form" novalidate>
                     <div class="field">
-                        <label>Client <span class="req">*</span></label>
-                        <input type="search" id="j-clientSearch" placeholder="Search by name…" autocomplete="off"
+                        <label><span data-i18n="job.form.client">Client</span> <span class="req">*</span></label>
+                        <input type="search" id="j-clientSearch" data-i18n-placeholder="job.form.clientSearch" placeholder="Search by name…" autocomplete="off"
                                style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafafa;margin-bottom:6px">
                         <select id="j-clientId" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafafa;height:44px;line-height:normal;">
-                            <option value="">Select a client…</option>
+                            <option value="" data-i18n="job.form.selectClient">Select a client…</option>
                         </select>
-                        <div class="err" id="je-clientId">Client is required</div>
+                        <div class="err" id="je-clientId" data-i18n="job.form.clientRequired">Client is required</div>
                     </div>
                     <div class="field">
-                        <label>Job Title <span class="req">*</span></label>
-                        <input type="text" id="j-title" placeholder="Landing page development" autocomplete="off">
-                        <div class="err" id="je-title">Job title is required</div>
+                        <label><span data-i18n="job.form.title">Job Title</span> <span class="req">*</span></label>
+                        <input type="text" id="j-title" data-i18n-placeholder="job.form.titlePlaceholder" placeholder="Landing page development" autocomplete="off">
+                        <div class="err" id="je-title" data-i18n="job.form.titleRequired">Job title is required</div>
                     </div>
                     <div class="field">
-                        <label>Scope / Description <span class="opt">(optional)</span></label>
-                        <textarea id="j-scope" placeholder="Build responsive landing page..." rows="2" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafafa;resize:vertical;"></textarea>
+                        <label><span data-i18n="job.form.scope">Scope / Description</span> <span class="opt" data-i18n="common.optional">(optional)</span></label>
+                        <textarea id="j-scope" data-i18n-placeholder="job.form.scopePlaceholder" placeholder="Build responsive landing page..." rows="2" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fafafa;resize:vertical;"></textarea>
                     </div>
                     <div class="field">
-                        <label>Hourly Rate</label>
+                        <label data-i18n="job.form.hourlyRate">Hourly Rate</label>
                         <div style="display:flex;align-items:center;gap:8px;">
                             <input type="text" value="20" disabled style="width:80px;background:#f0f0f0;font-weight:600;">
-                            <span style="color:#10b981;font-weight:600;font-size:0.9rem;">$/hr — fixed</span>
+                            <span style="color:#10b981;font-weight:600;font-size:0.9rem;" data-i18n="job.form.rateFixed">$/hr — fixed</span>
                         </div>
                     </div>
                     <div class="field" style="display:flex; gap:12px;">
                         <div style="flex:1;">
-                            <label>Est. Hours <span class="opt">(opt)</span></label>
+                            <label><span data-i18n="job.form.estHours">Est. Hours</span> <span class="opt" data-i18n="common.optional">(optional)</span></label>
                             <input type="number" id="j-estHours" value="4" min="0" step="0.5" style="width:100%;">
                         </div>
                         <div style="flex:2;">
-                            <label>Scheduled Date/Time <span class="req">*</span></label>
+                            <label><span data-i18n="job.form.scheduled">Scheduled Date/Time</span> <span class="req">*</span></label>
                             <input type="datetime-local" id="j-scheduled" autocomplete="off">
-                            <div class="err" id="je-scheduled">Scheduled date/time is required</div>
+                            <div class="err" id="je-scheduled" data-i18n="job.form.scheduledRequired">Scheduled date/time is required</div>
                         </div>
                     </div>
-                    <button class="btn" type="submit" id="job-submit-btn">Book Job</button>
-                    <button class="btn btn-cancel" type="button" id="cancel-job-edit-btn" style="display:none" onclick="cancelJobEdit()">Cancel</button>
+                    <button class="btn" type="submit" id="job-submit-btn" data-i18n="job.form.bookBtn">Book Job</button>
+                    <button class="btn btn-cancel" type="button" id="cancel-job-edit-btn" style="display:none" onclick="cancelJobEdit()" data-i18n="common.cancel">Cancel</button>
                 </form>
                 <div class="form-feedback" id="job-fb"></div>
             </div>
 
             <div class="card">
                 <div class="list-header">
-                    <div class="card-title" style="margin-bottom:0">Jobs</div>
+                    <div class="card-title" style="margin-bottom:0" data-i18n="job.list.title">Jobs</div>
                     <span class="count" id="job-count"></span>
                 </div>
                 <div id="job-status-filter" style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;">
-                    <button class="filter-btn active" onclick="setJobFilter('ALL')">All</button>
-                    <button class="filter-btn" onclick="setJobFilter('SCHEDULED')">Scheduled</button>
-                    <button class="filter-btn" onclick="setJobFilter('IN_PROGRESS')">In Progress</button>
-                    <button class="filter-btn" onclick="setJobFilter('COMPLETED')">Completed</button>
-                    <button class="filter-btn" onclick="setJobFilter('CANCELLED')">Cancelled</button>
+                    <button class="filter-btn active" data-filter="ALL" onclick="setJobFilter('ALL')" data-i18n="filter.all">All</button>
+                    <button class="filter-btn" data-filter="SCHEDULED" onclick="setJobFilter('SCHEDULED')" data-i18n="filter.scheduled">Scheduled</button>
+                    <button class="filter-btn" data-filter="IN_PROGRESS" onclick="setJobFilter('IN_PROGRESS')" data-i18n="filter.inProgress">In Progress</button>
+                    <button class="filter-btn" data-filter="COMPLETED" onclick="setJobFilter('COMPLETED')" data-i18n="filter.completed">Completed</button>
+                    <button class="filter-btn" data-filter="CANCELLED" onclick="setJobFilter('CANCELLED')" data-i18n="filter.cancelled">Cancelled</button>
                 </div>
                 <div id="job-list" style="display:flex;flex-direction:column;gap:10px;"></div>
                 <div class="refresh-ts" id="job-ts"></div>
@@ -835,14 +879,14 @@
     <div class="page">
         <div class="card">
             <div class="list-header">
-                <div class="card-title" style="margin-bottom:0">Invoices</div>
+                <div class="card-title" style="margin-bottom:0" data-i18n="invoice.list.title">Invoices</div>
                 <span class="count" id="invoice-count"></span>
             </div>
             <div id="invoice-status-filter" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                <button class="filter-btn active" onclick="setInvoiceFilter('ALL')">All</button>
-                <button class="filter-btn" onclick="setInvoiceFilter('OUTSTANDING')">Outstanding</button>
-                <button class="filter-btn" onclick="setInvoiceFilter('PAID')">Paid</button>
-                <a href="/api/invoices/export/csv" class="filter-btn" style="text-decoration:none;margin-left:auto">Export CSV</a>
+                <button class="filter-btn active" data-filter="ALL" onclick="setInvoiceFilter('ALL')" data-i18n="filter.all">All</button>
+                <button class="filter-btn" data-filter="OUTSTANDING" onclick="setInvoiceFilter('OUTSTANDING')" data-i18n="filter.outstanding">Outstanding</button>
+                <button class="filter-btn" data-filter="PAID" onclick="setInvoiceFilter('PAID')" data-i18n="filter.paid">Paid</button>
+                <a href="/api/invoices/export/csv" class="filter-btn" style="text-decoration:none;margin-left:auto" data-i18n="common.exportCsv">Export CSV</a>
             </div>
             <div id="invoice-list"></div>
             <div class="refresh-ts" id="invoice-ts"></div>
@@ -855,7 +899,7 @@
     <div class="page">
         <div class="card">
             <div class="list-header">
-                <div class="card-title" style="margin-bottom:0">Activity Log</div>
+                <div class="card-title" style="margin-bottom:0" data-i18n="activity.title">Activity Log</div>
                 <span class="count" id="activity-count"></span>
             </div>
             <div id="activity-list"></div>
@@ -888,9 +932,9 @@
         </div>
         <div class="help-body" id="help-body"></div>
         <div class="help-footer">
-            <button class="help-nav-btn" id="help-prev" onclick="helpNav(-1)">Previous</button>
+            <button class="help-nav-btn" id="help-prev" onclick="helpNav(-1)" data-i18n="common.previous">Previous</button>
             <div class="help-dots" id="help-dots"></div>
-            <button class="help-nav-btn primary" id="help-next" onclick="helpNav(1)">Next</button>
+            <button class="help-nav-btn primary" id="help-next" onclick="helpNav(1)" data-i18n="common.nextBtn">Next</button>
         </div>
     </div>
 </div>
@@ -898,23 +942,23 @@
 <!-- ── Change Password Modal ── -->
 <div class="modal-overlay" id="change-password-modal" onclick="if(event.target===this)closeChangePassword()">
     <div class="modal" style="max-width:380px">
-        <h2>Change Password</h2>
+        <h2 data-i18n="modal.changePassword.title">Change Password</h2>
         <div class="field">
-            <label>Current Password <span class="req">*</span></label>
+            <label><span data-i18n="modal.changePassword.current">Current Password</span> <span class="req">*</span></label>
             <input type="password" id="cp-current" autocomplete="current-password">
         </div>
         <div class="field">
-            <label>New Password <span class="req">*</span></label>
+            <label><span data-i18n="modal.changePassword.new">New Password</span> <span class="req">*</span></label>
             <input type="password" id="cp-new" autocomplete="new-password">
         </div>
         <div class="field">
-            <label>Confirm New Password <span class="req">*</span></label>
+            <label><span data-i18n="modal.changePassword.confirm">Confirm New Password</span> <span class="req">*</span></label>
             <input type="password" id="cp-confirm" autocomplete="new-password">
         </div>
         <div class="err show" id="cp-error" style="display:none"></div>
         <div style="display:flex;gap:8px;margin-top:12px">
-            <button class="btn" style="flex:1" onclick="submitChangePassword()">Change</button>
-            <button class="btn btn-cancel" onclick="closeChangePassword()">Cancel</button>
+            <button class="btn" style="flex:1" onclick="submitChangePassword()" data-i18n="modal.changePassword.changeBtn">Change</button>
+            <button class="btn btn-cancel" onclick="closeChangePassword()" data-i18n="common.cancel">Cancel</button>
         </div>
     </div>
 </div>
@@ -922,28 +966,28 @@
 <!-- ── Profile Manager Modal (create/edit profiles to distinguish hourly jobs from rides) ── -->
 <div class="modal-overlay" id="profile-manager-modal" onclick="if(event.target===this)closeProfileManager()">
     <div class="modal" style="max-width:520px">
-        <h2>Manage Profiles</h2>
+        <h2 data-i18n="modal.profileManager.title">Manage Profiles</h2>
         <div style="margin:8px 0">
             <div id="profile-list" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;max-height:180px;overflow:auto"></div>
         </div>
         <div style="border-top:1px solid #eee;padding-top:12px;margin-top:8px">
             <div class="field">
-                <label>Type</label>
+                <label data-i18n="modal.profileManager.type">Type</label>
                 <select id="pm-type" style="width:100%;padding:6px">
-                    <option value="DRIVER">DRIVER (shows Rides)</option>
-                    <option value="ENGINEER">ENGINEER / Hourly</option>
-                    <option value="HANDYMAN">HANDYMAN / Hourly</option>
-                    <option value="OTHER">OTHER / Hourly</option>
+                    <option value="DRIVER" data-i18n="modal.profileManager.typeDriver">DRIVER (shows Rides)</option>
+                    <option value="ENGINEER" data-i18n="modal.profileManager.typeEngineer">ENGINEER / Hourly</option>
+                    <option value="HANDYMAN" data-i18n="modal.profileManager.typeHandyman">HANDYMAN / Hourly</option>
+                    <option value="OTHER" data-i18n="modal.profileManager.typeOther">OTHER / Hourly</option>
                 </select>
             </div>
             <div class="field">
-                <label>Name (optional display)</label>
-                <input id="pm-name" placeholder="e.g. Main Taxi or Freelance Dev" style="width:100%">
+                <label data-i18n="modal.profileManager.nameOptional">Name (optional display)</label>
+                <input id="pm-name" data-i18n-placeholder="modal.profileManager.namePlaceholder" placeholder="e.g. Main Taxi or Freelance Dev" style="width:100%">
             </div>
             <div style="display:flex;gap:8px">
-                <button class="btn" onclick="createNewProfile()">Create New</button>
-                <button class="btn" onclick="saveProfileEdit()" id="pm-save-btn" disabled>Save Changes</button>
-                <button class="btn btn-cancel" onclick="closeProfileManager()">Close</button>
+                <button class="btn" onclick="createNewProfile()" data-i18n="modal.profileManager.createNew">Create New</button>
+                <button class="btn" onclick="saveProfileEdit()" id="pm-save-btn" disabled data-i18n="modal.profileManager.saveChanges">Save Changes</button>
+                <button class="btn btn-cancel" onclick="closeProfileManager()" data-i18n="common.close">Close</button>
             </div>
             <div class="err" id="pm-err" style="display:none;margin-top:6px"></div>
         </div>
@@ -956,36 +1000,82 @@
 <!-- ── Create Table Modal ── -->
 <div class="modal-overlay" id="create-table-modal">
     <div class="modal">
-        <h2>Create Custom Table</h2>
+        <h2 data-i18n="modal.createTable.title">Create Custom Table</h2>
         <div class="field">
-            <label>Table Name <span class="req">*</span></label>
-            <input type="text" id="ct-name" placeholder="e.g. Vehicles, Expenses…" autocomplete="off">
-            <div class="err" id="ct-err-name">Table name is required</div>
+            <label><span data-i18n="modal.createTable.tableName">Table Name</span> <span class="req">*</span></label>
+            <input type="text" id="ct-name" data-i18n-placeholder="modal.createTable.namePlaceholder" placeholder="e.g. Vehicles, Expenses…" autocomplete="off">
+            <div class="err" id="ct-err-name" data-i18n="modal.createTable.nameRequired">Table name is required</div>
         </div>
-        <label style="margin-bottom:8px">Columns <span class="req">*</span></label>
+        <label style="margin-bottom:8px"><span data-i18n="modal.createTable.columns">Columns</span> <span class="req">*</span></label>
         <div id="ct-columns">
             <div class="col-row">
-                <input type="text" placeholder="Column name" class="ct-col-name">
+                <input type="text" data-i18n-placeholder="modal.createTable.columnName" placeholder="Column name" class="ct-col-name">
                 <select class="ct-col-type">
-                    <option value="STRING">Text</option>
-                    <option value="INT">Number</option>
-                    <option value="BOOLEAN">Yes/No</option>
-                    <option value="DATE">Date</option>
+                    <option value="STRING" data-i18n="modal.createTable.colTypeText">Text</option>
+                    <option value="INT" data-i18n="modal.createTable.colTypeNumber">Number</option>
+                    <option value="BOOLEAN" data-i18n="modal.createTable.colTypeBool">Yes/No</option>
+                    <option value="DATE" data-i18n="modal.createTable.colTypeDate">Date</option>
                 </select>
-                <button class="remove-col" onclick="this.closest('.col-row').remove()" title="Remove">&times;</button>
+                <button class="remove-col" onclick="this.closest('.col-row').remove()" data-i18n-title="common.remove" title="Remove">&times;</button>
             </div>
         </div>
-        <button class="add-col-btn" onclick="addColumnRow()">+ Add column</button>
-        <div class="err" id="ct-err-cols" style="margin-bottom:8px">At least one column is required</div>
+        <button class="add-col-btn" onclick="addColumnRow()" data-i18n="modal.createTable.addColumn">+ Add column</button>
+        <div class="err" id="ct-err-cols" style="margin-bottom:8px" data-i18n="modal.createTable.colsRequired">At least one column is required</div>
         <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeCreateTableModal()">Cancel</button>
-            <button class="btn" onclick="submitCreateTable()">Create Table</button>
+            <button class="btn btn-cancel" onclick="closeCreateTableModal()" data-i18n="common.cancel">Cancel</button>
+            <button class="btn" onclick="submitCreateTable()" data-i18n="modal.createTable.createBtn">Create Table</button>
         </div>
     </div>
 </div>
 
+<script src="/js/i18n.js"></script>
 <script>
     /* ── Helpers ── */
+    function tf(k, vars) { return typeof t === 'function' ? t(k, vars) : k; }
+    function setFilterActive(selector, status) {
+        document.querySelectorAll(selector + ' .filter-btn[data-filter]').forEach(b => {
+            b.classList.toggle('active', b.dataset.filter === status);
+        });
+    }
+    function statusKey(code) {
+        return (code || '').toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    }
+    function statusLabel(code) { return tf('status.' + statusKey(code)); }
+    function availLabel(code) {
+        const map = { AVAILABLE: 'availability.available', ON_TRIP: 'availability.onTrip', OFF_DUTY: 'availability.offDuty' };
+        return tf(map[code] || code);
+    }
+    function filterLabel(code) {
+        const map = { ALL: 'filter.all', SCHEDULED: 'filter.scheduled', ASSIGNED: 'filter.assigned', IN_PROGRESS: 'filter.inProgress', COMPLETED: 'filter.completed', CANCELLED: 'filter.cancelled', OUTSTANDING: 'filter.outstanding', PAID: 'filter.paid' };
+        return tf(map[code] || code);
+    }
+    function refreshTimestamp(elId) {
+        const el = document.getElementById(elId);
+        if (el) el.textContent = tf('common.autoRefresh', { time: new Date().toLocaleTimeString() });
+    }
+    function updateFormLabels() {
+        const ct = document.getElementById('client-form-title');
+        if (ct) ct.textContent = tf(editingClientId ? 'client.form.editTitle' : 'client.form.addTitle');
+        const sb = document.getElementById('submit-btn');
+        if (sb && !sb.disabled) sb.textContent = tf(editingClientId ? 'client.form.updateBtn' : 'client.form.addBtn');
+        const dt = document.getElementById('driver-form-title');
+        if (dt) dt.textContent = tf(editingDriverId ? 'driver.form.editTitle' : 'driver.form.addTitle');
+        const dsb = document.getElementById('driver-submit-btn');
+        if (dsb && !dsb.disabled) dsb.textContent = tf(editingDriverId ? 'driver.form.updateBtn' : 'driver.form.addBtn');
+        const rt = document.getElementById('ride-form-title');
+        if (rt) rt.textContent = tf(editingRideId ? 'ride.form.editTitle' : 'ride.form.bookTitle');
+        const rsb = document.getElementById('ride-submit-btn');
+        if (rsb && !rsb.disabled) rsb.textContent = tf(editingRideId ? 'ride.form.updateBtn' : 'ride.form.bookBtn');
+        const jt = document.getElementById('job-form-title');
+        if (jt) jt.textContent = tf('job.form.bookTitle');
+        const jsb = document.getElementById('job-submit-btn');
+        if (jsb && !jsb.disabled) jsb.textContent = tf(editingJobId ? 'job.form.updateBtn' : 'job.form.bookBtn');
+        const cdm = document.getElementById('client-delete-mode-btn');
+        if (cdm) cdm.textContent = tf(isDeleteMode('clients') ? 'common.cancel' : 'client.list.select');
+        const ddm = document.getElementById('driver-delete-mode-btn');
+        if (ddm) ddm.textContent = tf(isDeleteMode('drivers') ? 'common.cancel' : 'driver.list.select');
+    }
+
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     const PHONE_E164 = /^\+[1-9]\d{9,14}$/;
@@ -1075,9 +1165,9 @@
         const from = page * PAGE_SIZE + 1;
         const to = Math.min((page + 1) * PAGE_SIZE, totalEl);
         return `<div class="pagination-bar">
-            <button ${page === 0 ? 'disabled' : ''} onclick="${onPrev}">← Prev</button>
-            <span>Showing ${from}–${to} of ${totalEl}</span>
-            <button ${page >= total - 1 ? 'disabled' : ''} onclick="${onNext}">Next →</button>
+            <button ${page === 0 ? 'disabled' : ''} onclick="${onPrev}">${tf('common.prev')}</button>
+            <span>${tf('common.showing', { from, to, total: totalEl })}</span>
+            <button ${page >= total - 1 ? 'disabled' : ''} onclick="${onNext}">${tf('common.next')}</button>
         </div>`;
     }
 
@@ -1128,9 +1218,9 @@
         const sel = selectedItems[tableKey];
         if (!sel || !sel.size) return '';
         return `<div class="bulk-bar">
-            <span class="bulk-count">${sel.size} selected</span>
-            <button class="bulk-delete-btn" onclick="${deleteFnName}('${tableKey}')">Delete ${sel.size}</button>
-            <button class="bulk-clear" onclick="clearSelection('${tableKey}', ${renderFn})">Clear</button>
+            <span class="bulk-count">${tf('common.selected', { count: sel.size })}</span>
+            <button class="bulk-delete-btn" onclick="${deleteFnName}('${tableKey}')">${tf('common.deleteCount', { count: sel.size })}</button>
+            <button class="bulk-clear" onclick="clearSelection('${tableKey}', ${renderFn})">${tf('common.clear')}</button>
         </div>`;
     }
 
@@ -1359,41 +1449,41 @@
 
         // Update toggle button state
         const dmBtn = document.getElementById('client-delete-mode-btn');
-        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = dm ? 'Cancel' : 'Select'; }
+        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = tf(dm ? 'common.cancel' : 'client.list.select'); }
 
         // Bulk action bar
         const bulkEl = document.getElementById('client-bulk-bar');
         if (bulkEl) {
             if (dm && sel.size) {
                 bulkEl.innerHTML = `<div class="bulk-bar">
-                    <span class="bulk-count">${sel.size} selected</span>
-                    <button class="bulk-delete-btn" onclick="bulkDeleteClients()">Delete ${sel.size}</button>
-                    <button class="bulk-clear" onclick="clearSelection('clients', () => filterClients())">Clear</button>
+                    <span class="bulk-count">${tf('common.selected', { count: sel.size })}</span>
+                    <button class="bulk-delete-btn" onclick="bulkDeleteClients()">${tf('common.deleteCount', { count: sel.size })}</button>
+                    <button class="bulk-clear" onclick="clearSelection('clients', () => filterClients())">${tf('common.clear')}</button>
                 </div>`;
             } else { bulkEl.innerHTML = ''; }
         }
 
         if (!clients.length) {
             el.innerHTML = hasSearch
-                ? guidedEmptyState('🔍', 'No clients match your search — try a different name or phone.')
-                : guidedEmptyState('👤', 'No clients yet — add your first client to get started.', 'Add client', 'focusClientForm');
+                ? guidedEmptyState('🔍', tf('client.empty.noMatch'))
+                : guidedEmptyState('👤', tf('client.empty.noClients'), tf('client.empty.addClient'), 'focusClientForm');
             return;
         }
         const sorted = sortedData('clients', clients);
         const allIds = sorted.map(c => c.id);
         el.innerHTML = `<table>
-            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">First Name</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">Last Name</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">Phone</th><th>Email</th><th>Notes</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">Added</th><th></th></tr></thead>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('clients','firstName')}" onclick="sortClients('firstName')">${tf('client.table.firstName')}</th><th class="${sortClass('clients','lastName')}" onclick="sortClients('lastName')">${tf('client.table.lastName')}</th><th class="${sortClass('clients','phone')}" onclick="sortClients('phone')">${tf('client.table.phone')}</th><th>${tf('client.table.email')}</th><th>${tf('client.table.notes')}</th><th class="${sortClass('clients','createdAt')}" onclick="sortClients('createdAt')">${tf('client.table.added')}</th><th></th></tr></thead>
             <tbody>${sorted.map((c, idx) => `<tr class="${dm && sel.has(c.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())" style="cursor:pointer"` : ''}>
                 ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('clients','${c.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,()=>filterClients())"></td>` : ''}
-                <td data-label="First Name" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleClientDetail('${c.id}')">${esc(c.firstName)} <span style="font-size:.65rem;color:#6b7280">${expandedClientId === c.id ? '▼' : '▸'}</span></td>
-                <td data-label="Last Name">${esc(c.lastName)}</td>
-                <td data-label="Phone">${esc2(c.phone)}</td>
-                <td data-label="Email">${esc2(c.email)}</td>
-                <td data-label="Notes" class="muted" style="font-size:.8rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.notes)||''}">${esc2(c.notes)}</td>
-                <td data-label="Added" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
+                <td data-label="${esc(tf('client.table.firstName'))}" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleClientDetail('${c.id}')">${esc(c.firstName)} <span style="font-size:.65rem;color:#6b7280">${expandedClientId === c.id ? '▼' : '▸'}</span></td>
+                <td data-label="${esc(tf('client.table.lastName'))}">${esc(c.lastName)}</td>
+                <td data-label="${esc(tf('client.table.phone'))}">${esc2(c.phone)}</td>
+                <td data-label="${esc(tf('client.table.email'))}">${esc2(c.email)}</td>
+                <td data-label="${esc(tf('client.table.notes'))}" class="muted" style="font-size:.8rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.notes)||''}">${esc2(c.notes)}</td>
+                <td data-label="${esc(tf('client.table.added'))}" class="muted" style="font-size:.8rem">${c.createdAt ? new Date(c.createdAt).toLocaleTimeString() : '—'}</td>
                 <td class="row-actions" style="white-space:nowrap">
-                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}','${esc(c.notes)||''}')">Edit</button>
-                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">Del</button>
+                    <button class="btn-sm" onclick="event.stopPropagation();editClient('${c.id}','${esc(c.firstName)}','${esc(c.lastName)}','${esc(c.phone)||''}','${esc(c.email)||''}','${esc(c.notes)||''}')">${tf('common.edit')}</button>
+                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteClient('${c.id}','${esc(c.firstName)} ${esc(c.lastName)}')">${tf('common.del')}</button>
                 </td>
             </tr>${expandedClientId === c.id ? `<tr><td colspan="${dm ? 9 : 8}" style="padding:0;background:#f8fafb">
                 <div style="padding:16px 20px;font-size:.82rem">
@@ -1402,20 +1492,20 @@
                         <div style="display:flex;gap:16px">
                             <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
                                 <div style="font-size:1.4rem;font-weight:700">${s.totalRides}</div>
-                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Rides</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">${tf('client.stats.rides')}</div>
                             </div>
                             <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
                                 <div style="font-size:1.4rem;font-weight:700;color:#10b981">${s.completedRides}</div>
-                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Completed</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">${tf('client.stats.completed')}</div>
                             </div>
                             <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
                                 <div style="font-size:1.4rem;font-weight:700;color:#3b82f6">$${Number(s.totalSpent).toFixed(2)}</div>
-                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Spent</div>
+                                <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">${tf('client.stats.totalSpent')}</div>
                             </div>
                         </div>
-                        ${s.vip ? '<span style="background:#f59e0b;color:white;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.5px">VIP</span>' : ''}
-                        ${s.lastRideDate ? '<div style="color:#6b7280;font-size:.78rem">Last ride: ' + new Date(s.lastRideDate).toLocaleDateString() + '</div>' : ''}
-                    </div>`; })() : '<span class="muted">Loading stats...</span>'}
+                        ${s.vip ? '<span style="background:#f59e0b;color:white;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.5px">' + tf('client.stats.vip') + '</span>' : ''}
+                        ${s.lastRideDate ? '<div style="color:#6b7280;font-size:.78rem">' + tf('client.stats.lastRide', { date: new Date(s.lastRideDate).toLocaleDateString() }) + '</div>' : ''}
+                    </div>`; })() : '<span class="muted">' + tf('client.stats.loadingStats') + '</span>'}
                 </div>
             </td></tr>` : ''}`).join('')}</tbody>
         </table>` + paginationHtml('clients', 'clientPrev()', 'clientNext()');
@@ -1437,12 +1527,11 @@
                 allClientsCache = data.content || [];
                 pageMeta.clients = data;
                 if (!isUserEditingTab('tab-clients')) filterClients();
-                document.getElementById('ts').textContent =
-                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+                refreshTimestamp('ts');
             })
             .catch(() => {
                 document.getElementById('list').innerHTML =
-                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>${tf('common.cannotReachServer')}</p></div>`;
             });
     }
 
@@ -1467,7 +1556,7 @@
 
         const btn = document.getElementById('submit-btn');
         const fb  = document.getElementById('fb');
-        btn.disabled = true; btn.textContent = 'Saving…';
+        btn.disabled = true; btn.textContent = tf('common.saving');
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
@@ -1482,14 +1571,14 @@
             const wasEdit = !!editingClientId;
             cancelEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = wasEdit ? `✓ ${firstName} ${lastName} updated` : `✓ ${firstName} ${lastName} added`;
+            fb.textContent = wasEdit ? tf('messages.personUpdated', { name: firstName + ' ' + lastName }) : tf('messages.personAdded', { name: firstName + ' ' + lastName });
             load();
         } catch {
             fb.className = 'form-feedback fail';
-            fb.textContent = '✗ Save failed — check server logs';
+            fb.textContent = tf('messages.saveFailed');
         } finally {
             btn.disabled = false;
-            btn.textContent = editingClientId ? 'Update Client' : 'Add Client';
+            btn.textContent = tf(editingClientId ? 'client.form.updateBtn' : 'client.form.addBtn');
         }
     });
 
@@ -1517,8 +1606,9 @@
         document.getElementById('f-phone').value = phone;
         document.getElementById('f-email').value = email;
         document.getElementById('f-notes').value = notes || '';
-        document.getElementById('submit-btn').textContent = 'Update Client';
-        document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Edit Client';
+        document.getElementById('submit-btn').textContent = tf('client.form.updateBtn');
+        const ct = document.getElementById('client-form-title');
+        if (ct) ct.textContent = tf('client.form.editTitle');
         const cancelBtn = document.getElementById('cancel-edit-btn');
         if (cancelBtn) cancelBtn.style.display = 'inline-block';
     };
@@ -1530,8 +1620,9 @@
         document.getElementById('f-phone').value = '';
         document.getElementById('f-email').value = '';
         document.getElementById('f-notes').value = '';
-        document.getElementById('submit-btn').textContent = 'Add Client';
-        document.querySelector('#form').closest('.card').querySelector('.card-title').textContent = 'Add Client';
+        document.getElementById('submit-btn').textContent = tf('client.form.addBtn');
+        const ct = document.getElementById('client-form-title');
+        if (ct) ct.textContent = tf('client.form.addTitle');
         const cancelBtn = document.getElementById('cancel-edit-btn');
         if (cancelBtn) cancelBtn.style.display = 'none';
         document.getElementById('fb').className = 'form-feedback';
@@ -1539,25 +1630,25 @@
     };
 
     window.deleteClient = async function(id, name) {
-        if (!confirm(`Delete ${name}?`)) return;
+        if (!confirm(tf('messages.deleteConfirm', { name }))) return;
         try {
             const r = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
             if (r.status === 400) {
                 const data = await r.json();
-                alert(data.message || 'Cannot delete — client has active rides');
+                alert(data.message || tf('messages.cannotDeleteClient'));
                 return;
             }
             if (!r.ok) throw new Error();
             load();
         } catch {
-            alert('Delete failed — check server logs');
+            alert(tf('messages.deleteFailed'));
         }
     };
 
     window.bulkDeleteClients = async function() {
         const sel = selectedItems['clients'];
         if (!sel || !sel.size) return;
-        if (!confirm(`Delete ${sel.size} client(s)?`)) return;
+        if (!confirm(tf('messages.deleteClients', { count: sel.size }))) return;
         const errors = [];
         for (const id of sel) {
             try {
@@ -1571,7 +1662,7 @@
         selectedItems['clients'] = new Set();
         deleteModeState['clients'] = false;
         load();
-        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
+        if (errors.length) alert(tf('messages.someDeletesFailed', { errors: errors.join('\n') }));
     };
 
     load();
@@ -1599,44 +1690,44 @@
         const sel = selectedItems['drivers'] || new Set();
 
         const dmBtn = document.getElementById('driver-delete-mode-btn');
-        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = dm ? 'Cancel' : 'Select'; }
+        if (dmBtn) { dmBtn.classList.toggle('active', dm); dmBtn.textContent = tf(dm ? 'common.cancel' : 'driver.list.select'); }
 
         const bulkEl = document.getElementById('driver-bulk-bar');
         if (bulkEl) {
             if (dm && sel.size) {
                 bulkEl.innerHTML = `<div class="bulk-bar">
-                    <span class="bulk-count">${sel.size} selected</span>
-                    <button class="bulk-delete-btn" onclick="bulkDeleteDrivers()">Delete ${sel.size}</button>
-                    <button class="bulk-clear" onclick="clearSelection('drivers', loadDrivers)">Clear</button>
+                    <span class="bulk-count">${tf('common.selected', { count: sel.size })}</span>
+                    <button class="bulk-delete-btn" onclick="bulkDeleteDrivers()">${tf('common.deleteCount', { count: sel.size })}</button>
+                    <button class="bulk-clear" onclick="clearSelection('drivers', loadDrivers)">${tf('common.clear')}</button>
                 </div>`;
             } else { bulkEl.innerHTML = ''; }
         }
 
         if (!drivers.length) {
-            el.innerHTML = guidedEmptyState('🚗', 'No drivers yet — add your first driver to assign rides.', 'Add driver', 'focusDriverForm');
+            el.innerHTML = guidedEmptyState('🚗', tf('driver.empty.noDrivers'), tf('driver.empty.addDriver'), 'focusDriverForm');
             return;
         }
         const sorted = sortedData('drivers', drivers);
         const allIds = sorted.map(d => d.id);
         el.innerHTML = `<table>
-            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">Name</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">Phone</th><th>Vehicle</th><th>Payout</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">Status</th><th></th></tr></thead>
+            <thead><tr>${dm ? '<th style="width:32px"></th>' : ''}<th class="${sortClass('drivers','firstName')}" onclick="sortDrivers('firstName')">${tf('driver.table.name')}</th><th class="${sortClass('drivers','phone')}" onclick="sortDrivers('phone')">${tf('driver.table.phone')}</th><th>${tf('driver.table.vehicle')}</th><th>${tf('driver.table.payout')}</th><th class="${sortClass('drivers','availability')}" onclick="sortDrivers('availability')">${tf('driver.table.status')}</th><th></th></tr></thead>
             <tbody>${sorted.map((d, idx) => `<tr class="${dm && sel.has(d.id) ? 'selected' : ''}" ${dm ? `onclick="toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)" style="cursor:pointer"` : ''}>
                 ${dm ? `<td><input type="checkbox" class="row-checkbox" ${sel.has(d.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('drivers','${d.id}',${idx},${JSON.stringify(allIds).replace(/"/g,'&quot;')},event,loadDrivers)"></td>` : ''}
-                <td data-label="Name" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleDriverDetail('${d.id}')">${esc(d.firstName)} ${esc(d.lastName)} <span style="font-size:.65rem;color:#6b7280">${expandedDriverId === d.id ? '▼' : '▸'}</span></td>
-                <td data-label="Phone">${esc2(d.phone)}</td>
-                <td data-label="Vehicle">${esc2(d.vehicle)}</td>
-                <td data-label="Payout">${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
+                <td data-label="${esc(tf('driver.table.name'))}" style="font-weight:600;cursor:pointer" onclick="event.stopPropagation();toggleDriverDetail('${d.id}')">${esc(d.firstName)} ${esc(d.lastName)} <span style="font-size:.65rem;color:#6b7280">${expandedDriverId === d.id ? '▼' : '▸'}</span></td>
+                <td data-label="${esc(tf('driver.table.phone'))}">${esc2(d.phone)}</td>
+                <td data-label="${esc(tf('driver.table.vehicle'))}">${esc2(d.vehicle)}</td>
+                <td data-label="${esc(tf('driver.table.payout'))}">${d.payoutType === 'PERCENTAGE' ? d.payoutRate + '%' : '$' + d.payoutRate}</td>
                 <td>
                     <select onclick="event.stopPropagation()" onchange="updateAvailability('${d.id}', this.value)"
                         style="font-size:.8rem;padding:3px 8px;border-radius:4px;border:1px solid #e2e8f0;color:${availColors[d.availability] || '#555'}">
                         ${['AVAILABLE','ON_TRIP','OFF_DUTY'].map(a =>
-                            `<option value="${a}" ${a === d.availability ? 'selected' : ''}>${a.replace('_',' ')}</option>`
+                            `<option value="${a}" ${a === d.availability ? 'selected' : ''}>${availLabel(a)}</option>`
                         ).join('')}
                     </select>
                 </td>
                 <td class="row-actions" style="white-space:nowrap">
-                    <button class="btn-sm" onclick="event.stopPropagation();editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">Edit</button>
-                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">Del</button>
+                    <button class="btn-sm" onclick="event.stopPropagation();editDriver('${d.id}','${esc(d.firstName)}','${esc(d.lastName)}','${esc(d.phone)||''}','${esc(d.email)||''}','${esc(d.vehicle)||''}','${d.payoutType}','${d.payoutRate}')">${tf('common.edit')}</button>
+                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteDriver('${d.id}','${esc(d.firstName)} ${esc(d.lastName)}')">${tf('common.del')}</button>
                 </td>
             </tr>${expandedDriverId === d.id ? `<tr><td colspan="${dm ? 8 : 7}" style="padding:0;background:#f8fafb">
                 <div style="padding:16px 20px;font-size:.82rem">
@@ -1644,21 +1735,21 @@
                     <div style="display:flex;gap:16px;flex-wrap:wrap">
                         <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
                             <div style="font-size:1.4rem;font-weight:700">${s.totalRides}</div>
-                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Rides</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">${tf('driver.stats.totalRides')}</div>
                         </div>
                         <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
                             <div style="font-size:1.4rem;font-weight:700;color:#10b981">${s.completedRides}</div>
-                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Completed</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">${tf('driver.stats.completed')}</div>
                         </div>
                         <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
                             <div style="font-size:1.4rem;font-weight:700;color:#3b82f6">$${Number(s.totalEarned).toFixed(2)}</div>
-                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Total Earned</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">${tf('driver.stats.totalEarned')}</div>
                         </div>
                         <div style="text-align:center;padding:8px 16px;background:white;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
                             <div style="font-size:1.4rem;font-weight:700;color:${Number(s.unpaidAmount) > 0 ? '#ef4444' : '#10b981'}">$${Number(s.unpaidAmount).toFixed(2)}</div>
-                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">Unpaid (${s.unpaidCount})</div>
+                            <div style="font-size:.7rem;color:#6b7280;text-transform:uppercase">${tf('driver.stats.unpaid', { count: s.unpaidCount })}</div>
                         </div>
-                    </div>`; })() : '<span class="muted">Loading stats...</span>'}
+                    </div>`; })() : '<span class="muted">' + tf('driver.stats.loadingStats') + '</span>'}
                 </div>
             </td></tr>` : ''}`).join('')}</tbody>
         </table>` + paginationHtml('drivers', 'driverPrev()', 'driverNext()');
@@ -1673,12 +1764,11 @@
             .then(data => {
                 pageMeta.drivers = data;
                 if (!isUserEditingTab('tab-drivers')) renderDrivers(data.content || []);
-                document.getElementById('driver-ts').textContent =
-                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+                refreshTimestamp('driver-ts');
             })
             .catch(() => {
                 document.getElementById('driver-list').innerHTML =
-                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>${tf('common.cannotReachServer')}</p></div>`;
             });
     }
 
@@ -1720,7 +1810,7 @@
 
         const btn = document.getElementById('driver-submit-btn');
         const fb  = document.getElementById('driver-fb');
-        btn.disabled = true; btn.textContent = 'Saving…';
+        btn.disabled = true; btn.textContent = tf('common.saving');
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
@@ -1735,14 +1825,14 @@
             const wasEdit = !!editingDriverId;
             cancelDriverEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = wasEdit ? `✓ ${firstName} ${lastName} updated` : `✓ ${firstName} ${lastName} added`;
+            fb.textContent = wasEdit ? tf('messages.personUpdated', { name: firstName + ' ' + lastName }) : tf('messages.personAdded', { name: firstName + ' ' + lastName });
             loadDrivers();
         } catch {
             fb.className = 'form-feedback fail';
-            fb.textContent = '✗ Save failed — check server logs';
+            fb.textContent = tf('messages.saveFailed');
         } finally {
             btn.disabled = false;
-            btn.textContent = editingDriverId ? 'Update Driver' : 'Add Driver';
+            btn.textContent = tf(editingDriverId ? 'driver.form.updateBtn' : 'driver.form.addBtn');
         }
     });
 
@@ -1775,41 +1865,43 @@
         document.getElementById('d-vehicle').value = vehicle;
         document.getElementById('d-payoutType').value = payoutType;
         document.getElementById('d-payoutRate').value = payoutRate;
-        document.getElementById('driver-submit-btn').textContent = 'Update Driver';
-        document.querySelector('#driver-form').closest('.card').querySelector('.card-title').textContent = 'Edit Driver';
+        document.getElementById('driver-submit-btn').textContent = tf('driver.form.updateBtn');
+        const dt = document.getElementById('driver-form-title');
+        if (dt) dt.textContent = tf('driver.form.editTitle');
         document.getElementById('cancel-driver-edit-btn').style.display = 'inline-block';
     };
 
     window.cancelDriverEdit = function() {
         editingDriverId = null;
         ['d-firstName','d-lastName','d-phone','d-email','d-vehicle','d-payoutRate'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('driver-submit-btn').textContent = 'Add Driver';
-        document.querySelector('#driver-form').closest('.card').querySelector('.card-title').textContent = 'Add Driver';
+        document.getElementById('driver-submit-btn').textContent = tf('driver.form.addBtn');
+        const dt = document.getElementById('driver-form-title');
+        if (dt) dt.textContent = tf('driver.form.addTitle');
         document.getElementById('cancel-driver-edit-btn').style.display = 'none';
         document.getElementById('driver-fb').className = 'form-feedback';
         document.getElementById('driver-fb').textContent = '';
     };
 
     window.deleteDriver = async function(id, name) {
-        if (!confirm(`Delete ${name}?`)) return;
+        if (!confirm(tf('messages.deleteConfirm', { name }))) return;
         try {
             const r = await fetch(`/api/drivers/${id}`, { method: 'DELETE' });
             if (r.status === 400) {
                 const data = await r.json();
-                alert(data.message || 'Cannot delete — driver has active rides');
+                alert(data.message || tf('messages.cannotDeleteDriver'));
                 return;
             }
             if (!r.ok) throw new Error();
             loadDrivers();
         } catch {
-            alert('Delete failed — check server logs');
+            alert(tf('messages.deleteFailed'));
         }
     };
 
     window.bulkDeleteDrivers = async function() {
         const sel = selectedItems['drivers'];
         if (!sel || !sel.size) return;
-        if (!confirm(`Delete ${sel.size} driver(s)?`)) return;
+        if (!confirm(tf('messages.deleteDrivers', { count: sel.size }))) return;
         const errors = [];
         for (const id of sel) {
             try {
@@ -1823,7 +1915,7 @@
         selectedItems['drivers'] = new Set();
         deleteModeState['drivers'] = false;
         loadDrivers();
-        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
+        if (errors.length) alert(tf('messages.someDeletesFailed', { errors: errors.join('\n') }));
     };
 
     loadDrivers();
@@ -1838,7 +1930,7 @@
             const clients = data.content || [];
             const sel = document.getElementById('r-clientId');
             const current = sel.value;
-            sel.innerHTML = '<option value="">Select a client…</option>' +
+            sel.innerHTML = '<option value="">' + tf('ride.form.selectClient') + '</option>' +
                 clients.map(c => `<option value="${c.id}">${esc(c.firstName)} ${esc(c.lastName)}</option>`).join('');
             if (current) sel.value = current;
             applyClientSearchFilter();
@@ -1865,9 +1957,10 @@
         if (sel.selectedOptions[0]?.hidden) sel.value = '';
         if (visible.length === 1) sel.value = visible[0].value;
         if (hint) {
-            if (!q) hint.textContent = visible.length ? `${visible.length} client${visible.length === 1 ? '' : 's'} — type to filter` : '';
-            else if (!visible.length) hint.textContent = 'No clients match — try another name';
-            else hint.textContent = `${visible.length} match${visible.length === 1 ? '' : 'es'}${visible.length === 1 ? ' — selected' : ''}`;
+            if (!q) hint.textContent = visible.length ? (visible.length === 1 ? tf('ride.clientHint.count', { count: 1 }) : tf('ride.clientHint.countPlural', { count: visible.length })) : '';
+            else if (!visible.length) hint.textContent = tf('ride.clientHint.noMatch');
+            else if (visible.length === 1) hint.textContent = tf('ride.clientHint.oneMatch');
+            else hint.textContent = tf('ride.clientHint.matches', { count: visible.length });
         }
     }
 
@@ -1911,7 +2004,7 @@
     window.toggleExtras = function() {
         document.getElementById('cp-extras').classList.toggle('open');
         const btn = document.getElementById('cp-extras-toggle');
-        btn.textContent = document.getElementById('cp-extras').classList.contains('open') ? '▾ Hide extras' : '▸ More details (tolls, extras)';
+        btn.textContent = document.getElementById('cp-extras').classList.contains('open') ? tf('ride.complete.hideExtras') : tf('ride.complete.moreDetails');
     };
 
     window.updateCompleteTotal = function(pricingMode, basePrice, hourlyRate) {
@@ -1936,7 +2029,7 @@
         if (bd) {
             if (durationText) {
                 const parts = [];
-                if (pricingMode === 'FLAT_PLUS_HOURLY') parts.push(`$${(basePrice||0).toFixed(2)} flat`);
+                if (pricingMode === 'FLAT_PLUS_HOURLY') parts.push(`$${(basePrice||0).toFixed(2)} ${tf('pricing.flatSuffix')}`);
                 parts.push(`${durationText} @ $${hourlyRate.toFixed(2)}/hr = $${timeCost.toFixed(2)}`);
                 bd.textContent = parts.join(' + ');
             } else {
@@ -1948,7 +2041,7 @@
         else if (pricingMode === 'FLAT_PLUS_HOURLY') base = (basePrice || 0) + timeCost;
         else base = timeCost;
         const total = base + tolls + additional;
-        document.getElementById('cp-total').textContent = `Total: $${total.toFixed(2)}`;
+        document.getElementById('cp-total').textContent = tf('ride.complete.total', { amount: total.toFixed(2) });
     };
 
     window.submitComplete = async function(rideId, basePrice) {
@@ -1966,7 +2059,7 @@
         const desc = document.getElementById('cp-desc').value.trim() || null;
 
         const btn = document.getElementById('cp-submit-btn');
-        btn.disabled = true; btn.textContent = 'Completing…';
+        btn.disabled = true; btn.textContent = tf('ride.complete.completing');
         try {
             const r = await fetch(`/api/rides/${rideId}/complete`, {
                 method: 'POST',
@@ -1983,8 +2076,8 @@
             completingRideId = null;
             loadRides(); loadAvailableDrivers(); loadDrivers();
         } catch {
-            btn.disabled = false; btn.textContent = 'Confirm Complete';
-            alert('Complete failed — check server logs');
+            btn.disabled = false; btn.textContent = tf('ride.complete.confirmBtn');
+            alert(tf('messages.completeFailed'));
         }
     };
 
@@ -1996,9 +2089,7 @@
 
     window.setRideFilter = function(status) {
         rideStatusFilter = status;
-        document.querySelectorAll('#ride-status-filter .filter-btn').forEach(b =>
-            b.classList.toggle('active', b.textContent.toUpperCase().replace(' ','') === status || (status === 'ALL' && b.textContent === 'All'))
-        );
+        setFilterActive('#ride-status-filter', status);
         applyRideFilter();
     };
 
@@ -2035,85 +2126,85 @@
         const el = document.getElementById('ride-list');
         if (!rides.length) {
             el.innerHTML = rideStatusFilter !== 'ALL'
-                ? guidedEmptyState('🔍', `No ${rideStatusFilter.toLowerCase().replace('_', ' ')} rides — try another filter.`)
-                : guidedEmptyState('🚘', 'No rides yet — book your first ride using the form above.', 'Book a ride', 'focusRideForm');
+                ? guidedEmptyState('🔍', tf('ride.empty.filter', { status: filterLabel(rideStatusFilter).toLowerCase() }))
+                : guidedEmptyState('🚘', tf('ride.empty.noRides'), tf('ride.empty.bookRide'), 'focusRideForm');
             return;
         }
         window.sortRides = function(field) { toggleSort('rides', field); applyRideFilter(); };
         const sorted = sortedData('rides', rides);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">Client</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">Pickup</th><th>From</th><th>To</th><th>Driver</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">Status</th><th>Payout</th><th></th></tr></thead>
+            <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">${tf('ride.table.client')}</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">${tf('ride.table.pickup')}</th><th>${tf('ride.table.from')}</th><th>${tf('ride.table.to')}</th><th>${tf('ride.table.driver')}</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">${tf('ride.table.status')}</th><th>${tf('ride.table.payout')}</th><th></th></tr></thead>
             <tbody>${sorted.map(r => `<tr>
-                <td data-label="Client" style="font-weight:600;cursor:pointer" onclick="toggleRideDetail('${r.id}')">${esc(r.clientName)} <span style="font-size:.65rem;color:#6b7280">${expandedRideId === r.id ? '▼' : '▸'}</span></td>
-                <td data-label="Pickup" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
-                <td data-label="From">${mapsLink(r.pickupLocation)}</td>
-                <td data-label="To">${mapsLink(r.dropoffLocation)}</td>
+                <td data-label="${esc(tf('ride.table.client'))}" style="font-weight:600;cursor:pointer" onclick="toggleRideDetail('${r.id}')">${esc(r.clientName)} <span style="font-size:.65rem;color:#6b7280">${expandedRideId === r.id ? '▼' : '▸'}</span></td>
+                <td data-label="${esc(tf('ride.table.pickup'))}" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
+                <td data-label="${esc(tf('ride.table.from'))}">${mapsLink(r.pickupLocation)}</td>
+                <td data-label="${esc(tf('ride.table.to'))}">${mapsLink(r.dropoffLocation)}</td>
                 <td>${r.assignedDriverName ? esc(r.assignedDriverName) :
                     (r.status === 'SCHEDULED' && availableDriversCache.length ?
                         `<select onchange="if(this.value)assignDriver('${r.id}',this.value)" style="font-size:.78rem;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">
-                            <option value="">Assign…</option>
+                            <option value="">${tf('ride.assign')}</option>
                             ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
                         </select>` : '<span class="muted">—</span>')}</td>
-                <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${r.status}</span></td>
-                <td style="font-size:.8rem">${r.status === 'COMPLETED' && r.driverPayout ? (r.payoutPaid ? `<span style="color:#10b981;font-weight:600">$${Number(r.driverPayout).toFixed(2)} Paid</span>` : `<span style="color:#ef4444;font-weight:600">$${Number(r.driverPayout).toFixed(2)}</span> <button class="btn-sm" onclick="markPayoutPaid('${r.id}')" style="font-size:.7rem">Pay</button>`) : '<span class="muted">—</span>'}</td>
-                <td class="row-actions" style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Edit</button> ` : ''}${r.status === 'ASSIGNED' ? `<button class="btn-sm" onclick="completeRide('${r.id}')" style="border-color:#38a169;background:#f0fff4;color:#38a169">Complete</button> ` :
-                    (r.status === 'COMPLETED' ? `<button class="btn-sm" onclick="generateInvoice('${r.id}')" style="border-color:#3182ce;background:#ebf8ff;color:#3182ce">Invoice $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">Cancel</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">Rebook</button>` : ''}</td>
+                <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${statusLabel(r.status)}</span></td>
+                <td style="font-size:.8rem">${r.status === 'COMPLETED' && r.driverPayout ? (r.payoutPaid ? `<span style="color:#10b981;font-weight:600">$${Number(r.driverPayout).toFixed(2)} ${tf('common.paid')}</span>` : `<span style="color:#ef4444;font-weight:600">$${Number(r.driverPayout).toFixed(2)}</span> <button class="btn-sm" onclick="markPayoutPaid('${r.id}')" style="font-size:.7rem">${tf('common.pay')}</button>`) : '<span class="muted">—</span>'}</td>
+                <td class="row-actions" style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">${tf('common.edit')}</button> ` : ''}${r.status === 'ASSIGNED' ? `<button class="btn-sm" onclick="completeRide('${r.id}')" style="border-color:#38a169;background:#f0fff4;color:#38a169">${tf('ride.actions.complete')}</button> ` :
+                    (r.status === 'COMPLETED' ? `<button class="btn-sm" onclick="generateInvoice('${r.id}')" style="border-color:#3182ce;background:#ebf8ff;color:#3182ce">${tf('ride.actions.invoice')} $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">${tf('ride.actions.cancel')}</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">${tf('ride.actions.rebook')}</button>` : ''}</td>
             </tr>${completingRideId === r.id ? `<tr><td colspan="8" style="padding:0">
                 <div class="complete-panel">
-                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} flat`}</div>
+                    <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} ${tf('pricing.flatSuffix')}`}</div>
                     <div class="field-row">
                         <div>
-                            <label>Actual Start *</label>
+                            <label>${tf('ride.complete.actualStart')}</label>
                             <input type="datetime-local" id="cp-start" onchange="document.getElementById('cp-err-start').classList.remove('show');updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})">
-                            <div class="err-inline" id="cp-err-start">Required</div>
+                            <div class="err-inline" id="cp-err-start">${tf('ride.complete.required')}</div>
                         </div>
                         <div>
-                            <label>Actual End *</label>
+                            <label>${tf('ride.complete.actualEnd')}</label>
                             <input type="datetime-local" id="cp-end" onchange="document.getElementById('cp-err-end').classList.remove('show');updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})">
-                            <div class="err-inline" id="cp-err-end">Required</div>
+                            <div class="err-inline" id="cp-err-end">${tf('ride.complete.required')}</div>
                         </div>
                     </div>
-                    <button id="cp-extras-toggle" class="extras-toggle" onclick="toggleExtras()">▸ More details (tolls, extras)</button>
+                    <button id="cp-extras-toggle" class="extras-toggle" onclick="toggleExtras()">${tf('ride.complete.moreDetails')}</button>
                     <div class="extras" id="cp-extras">
                         <div class="field-row">
-                            <div><label>Tolls ($)</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
-                            <div><label>Additional ($)</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
+                            <div><label>${tf('ride.complete.tolls')}</label><input type="number" id="cp-tolls" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
+                            <div><label>${tf('ride.complete.additional')}</label><input type="number" id="cp-additional" value="0" min="0" step="0.01" oninput="updateCompleteTotal('${r.pricingMode||'FLAT'}',${r.basePrice||0},${r.hourlyRate||0})"></div>
                         </div>
                         <div class="field-row">
-                            <div><label>Description</label><input type="text" id="cp-desc" placeholder="Extra stop, waiting, etc."></div>
+                            <div><label>${tf('ride.complete.description')}</label><input type="text" id="cp-desc" placeholder="${esc(tf('ride.complete.descriptionPlaceholder'))}"></div>
                         </div>
                     </div>
                     ${(r.pricingMode === 'HOURLY' || r.pricingMode === 'FLAT_PLUS_HOURLY') ? `<div class="total-line" id="cp-time-breakdown" style="font-size:.85rem;color:#4b5563;margin-bottom:4px"></div>` : ''}
-                    <div class="total-line" id="cp-total">Total: $${(r.basePrice || 0).toFixed ? Number(r.basePrice || 0).toFixed(2) : '0.00'}</div>
+                    <div class="total-line" id="cp-total">${tf('ride.complete.total', { amount: (r.basePrice || 0).toFixed ? Number(r.basePrice || 0).toFixed(2) : '0.00' })}</div>
                     <div class="panel-actions">
-                        <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">Confirm Complete</button>
-                        <button class="btn-sm" onclick="cancelComplete()">Cancel</button>
+                        <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">${tf('ride.complete.confirmBtn')}</button>
+                        <button class="btn-sm" onclick="cancelComplete()">${tf('common.cancel')}</button>
                     </div>
                 </div>
             </td></tr>` : ''}${expandedRideId === r.id ? `<tr><td colspan="8" style="padding:0;background:#f8fafb">
                 <div style="padding:16px 20px;font-size:.82rem">
                     <div style="display:flex;gap:32px;flex-wrap:wrap">
                         <div>
-                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Status Timeline</div>
+                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${tf('ride.detail.statusTimeline')}</div>
                             ${(r.statusHistory && r.statusHistory.length) ? r.statusHistory.map((e,i) => '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
                                 + '<div style="width:8px;height:8px;border-radius:50%;background:' + (statusColors[e.status]||'#6b7280') + '"></div>'
-                                + '<span style="font-weight:600;color:' + (statusColors[e.status]||'#555') + '">' + e.status + '</span>'
+                                + '<span style="font-weight:600;color:' + (statusColors[e.status]||'#555') + '">' + statusLabel(e.status) + '</span>'
                                 + '<span style="color:#6b7280"> ' + new Date(e.timestamp).toLocaleString() + '</span>'
-                                + '</div>').join('') : '<span class="muted">No history (created before tracking)</span>'}
+                                + '</div>').join('') : '<span class="muted">' + tf('ride.detail.noHistory') + '</span>'}
                         </div>
                         <div>
-                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pricing</div>
-                            <div>Mode: <strong>${r.pricingMode || 'FLAT'}</strong></div>
-                            ${r.basePrice ? '<div>Base: $' + Number(r.basePrice).toFixed(2) + '</div>' : ''}
-                            ${r.hourlyRate ? '<div>Hourly rate: $' + Number(r.hourlyRate).toFixed(2) + '/hr</div>' : ''}
-                            ${r.durationMinutes ? '<div>Duration: ' + r.durationMinutes + ' min</div>' : ''}
-                            ${r.tolls && Number(r.tolls) > 0 ? '<div>Tolls: $' + Number(r.tolls).toFixed(2) + '</div>' : ''}
-                            ${r.additionalCharges && Number(r.additionalCharges) > 0 ? '<div>Extras: $' + Number(r.additionalCharges).toFixed(2) + '</div>' : ''}
-                            ${r.totalAmount ? '<div style="font-weight:600;margin-top:4px">Total: $' + Number(r.totalAmount).toFixed(2) + '</div>' : ''}
-                            ${r.billableAmount ? '<div style="font-weight:600">Billable: $' + Number(r.billableAmount).toFixed(2) + '</div>' : ''}
+                            <div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${tf('ride.detail.pricing')}</div>
+                            <div>${tf('pricing.mode')}: <strong>${r.pricingMode || 'FLAT'}</strong></div>
+                            ${r.basePrice ? '<div>' + tf('pricing.base') + ': $' + Number(r.basePrice).toFixed(2) + '</div>' : ''}
+                            ${r.hourlyRate ? '<div>' + tf('pricing.hourlyRate') + ': $' + Number(r.hourlyRate).toFixed(2) + '/hr</div>' : ''}
+                            ${r.durationMinutes ? '<div>' + tf('pricing.duration') + ': ' + r.durationMinutes + ' min</div>' : ''}
+                            ${r.tolls && Number(r.tolls) > 0 ? '<div>' + tf('pricing.tolls') + ': $' + Number(r.tolls).toFixed(2) + '</div>' : ''}
+                            ${r.additionalCharges && Number(r.additionalCharges) > 0 ? '<div>' + tf('pricing.extras') + ': $' + Number(r.additionalCharges).toFixed(2) + '</div>' : ''}
+                            ${r.totalAmount ? '<div style="font-weight:600;margin-top:4px">' + tf('pricing.total') + ': $' + Number(r.totalAmount).toFixed(2) + '</div>' : ''}
+                            ${r.billableAmount ? '<div style="font-weight:600">' + tf('pricing.billable') + ': $' + Number(r.billableAmount).toFixed(2) + '</div>' : ''}
                         </div>
-                        ${r.driverPayout ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Driver Payout</div><div style="font-size:1.1rem;font-weight:700;color:' + (r.payoutPaid ? '#10b981' : '#ef4444') + '">$' + Number(r.driverPayout).toFixed(2) + ' ' + (r.payoutPaid ? 'PAID' : 'OWED') + '</div>' + (r.assignedDriverName ? '<div class="muted">' + esc(r.assignedDriverName) + '</div>' : '') + '</div>' : ''}
-                        ${r.notes ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Notes</div><div>' + esc(r.notes) + '</div></div>' : ''}
+                        ${r.driverPayout ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">' + tf('ride.detail.driverPayout') + '</div><div style="font-size:1.1rem;font-weight:700;color:' + (r.payoutPaid ? '#10b981' : '#ef4444') + '">$' + Number(r.driverPayout).toFixed(2) + ' ' + (r.payoutPaid ? tf('common.paid').toUpperCase() : tf('common.owed')) + '</div>' + (r.assignedDriverName ? '<div class="muted">' + esc(r.assignedDriverName) + '</div>' : '') + '</div>' : ''}
+                        ${r.notes ? '<div><div style="font-weight:700;color:#6b7280;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">' + tf('ride.detail.notes') + '</div><div>' + esc(r.notes) + '</div></div>' : ''}
                     </div>
                 </div>
             </td></tr>` : ''}`).join('')}</tbody>
@@ -2135,8 +2226,9 @@
             profilesCache = data.content || data || [];
             const sel = document.getElementById('profile-switcher');
             if (!sel) return;
-            sel.innerHTML = '<option value="">All (account)</option>' +
-                profilesCache.map(p => `<option value="${p.id}">${(p.name || p.type || 'Profile')}</option>`).join('');
+            const allLabel = typeof t === 'function' ? t('account.allProfiles') : 'All (account)';
+            sel.innerHTML = '<option value="">' + esc(allLabel) + '</option>' +
+                profilesCache.map(p => `<option value="${p.id}">${esc(p.name || p.type || 'Profile')}</option>`).join('');
             if (activeProfileId) sel.value = activeProfileId;
         } catch (e) { /* non-fatal */ }
     }
@@ -2174,13 +2266,13 @@
     async function loadProfileListForManager() {
         const container = document.getElementById('profile-list');
         if (!container) return;
-        container.innerHTML = 'Loading...';
+        container.innerHTML = tf('modal.profileManager.loading');
         try {
             const r = await fetch('/api/profiles?size=50');
             const data = await r.json();
             const list = data.content || data || [];
             if (!list.length) {
-                container.innerHTML = '<div style="padding:8px;color:#666">No profiles yet. Create one below.</div>';
+                container.innerHTML = '<div style="padding:8px;color:#666">' + tf('modal.profileManager.noProfiles') + '</div>';
                 return;
             }
             container.innerHTML = list.map(p => `
@@ -2188,11 +2280,11 @@
                     <div>
                         <strong>${p.name || p.type}</strong> <span style="font-size:0.75rem;color:#666">(${p.type})</span>
                     </div>
-                    <div style="font-size:0.7rem;color:#888">edit</div>
+                    <div style="font-size:0.7rem;color:#888">${tf('modal.profileManager.edit')}</div>
                 </div>
             `).join('');
         } catch(e) {
-            container.innerHTML = 'Failed to load profiles.';
+            container.innerHTML = tf('messages.failedLoadProfiles');
         }
     }
 
@@ -2225,9 +2317,9 @@
             await loadProfileListForManager();
             await loadProfiles();
             updateTabVisibility();
-            if (err) { err.textContent = 'Saved.'; err.style.display = 'block'; }
+            if (err) { err.textContent = tf('modal.profileManager.saved'); err.style.display = 'block'; }
         } catch(e) {
-            if (err) { err.textContent = e.message || 'Failed to save.'; err.style.display = 'block'; }
+            if (err) { err.textContent = e.message || tf('messages.failedSave'); err.style.display = 'block'; }
         }
     }
 
@@ -2237,7 +2329,7 @@
         const type = tEl ? tEl.value : '';
         const name = nEl ? nEl.value.trim() : '';
         const err = document.getElementById('pm-err');
-        if (!type) { alert('Type required'); return; }
+        if (!type) { alert(tf('messages.typeRequired')); return; }
         try {
             const r = await fetch('/api/profiles', {
                 method: 'POST',
@@ -2249,9 +2341,9 @@
             await loadProfiles();
             updateTabVisibility();
             if (nEl) nEl.value = '';
-            if (err) { err.textContent = 'Profile created.'; err.style.display = 'block'; }
+            if (err) { err.textContent = tf('modal.profileManager.created'); err.style.display = 'block'; }
         } catch(e) {
-            if (err) { err.textContent = e.message || 'Failed to create.'; err.style.display = 'block'; }
+            if (err) { err.textContent = e.message || tf('messages.failedCreate'); err.style.display = 'block'; }
         }
     }
 
@@ -2276,12 +2368,11 @@
                 if (!isUserEditingTab('tab-rides')) {
                     applyRideFilter();
                 }
-                document.getElementById('ride-ts').textContent =
-                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+                refreshTimestamp('ride-ts');
             })
             .catch(() => {
                 document.getElementById('ride-list').innerHTML =
-                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>${tf('common.cannotReachServer')}</p></div>`;
             });
     }
 
@@ -2313,7 +2404,7 @@
 
         const btn = document.getElementById('ride-submit-btn');
         const fb  = document.getElementById('ride-fb');
-        btn.disabled = true; btn.textContent = 'Booking…';
+        btn.disabled = true; btn.textContent = tf('ride.form.booking');
         fb.className = 'form-feedback'; fb.textContent = '';
 
         try {
@@ -2349,15 +2440,15 @@
             const wasEdit = !!editingRideId;
             cancelRideEdit();
             fb.className = 'form-feedback ok';
-            fb.textContent = wasEdit ? '✓ Ride updated' : '✓ Ride booked';
+            fb.textContent = wasEdit ? tf('messages.rideUpdated') : tf('messages.rideBooked');
             loadRides();
             setTimeout(() => { if (typeof applyRideFilter === 'function') applyRideFilter(); }, 50);
         } catch (err) {
             fb.className = 'form-feedback fail';
-            fb.textContent = '✗ ' + (err.message || 'Save failed — check server logs');
+            fb.textContent = '✗ ' + (err.message || tf('messages.saveFailed'));
         } finally {
             btn.disabled = false;
-            btn.textContent = editingRideId ? 'Update Ride' : 'Book Ride';
+            btn.textContent = tf(editingRideId ? 'ride.form.updateBtn' : 'ride.form.bookBtn');
         }
     });
 
@@ -2385,8 +2476,9 @@
         document.getElementById('r-hourlyRate').value = hourlyRate;
         document.getElementById('r-notes').value = notes;
         togglePricingFields();
-        document.getElementById('ride-submit-btn').textContent = 'Update Ride';
-        document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Edit Ride';
+        document.getElementById('ride-submit-btn').textContent = tf('ride.form.updateBtn');
+        const rt = document.getElementById('ride-form-title');
+        if (rt) rt.textContent = tf('ride.form.editTitle');
         document.getElementById('cancel-ride-edit-btn').style.display = 'inline-block';
     };
 
@@ -2402,7 +2494,7 @@
         document.getElementById('r-notes').value = notes;
         togglePricingFields();
         document.getElementById('ride-fb').className = 'form-feedback ok';
-        document.getElementById('ride-fb').textContent = 'Rebooked — pickup defaults to next hour. Adjust if needed and submit.';
+        document.getElementById('ride-fb').textContent = tf('ride.form.rebooked');
         defaultPickupDateTime(true);
         document.getElementById('r-pickupDateTime').focus();
     };
@@ -2415,8 +2507,9 @@
         applyClientSearchFilter();
         document.getElementById('r-pricingMode').value = 'FLAT';
         togglePricingFields();
-        document.getElementById('ride-submit-btn').textContent = 'Book Ride';
-        document.querySelector('#ride-form').closest('.card').querySelector('.card-title').textContent = 'Book a Ride';
+        document.getElementById('ride-submit-btn').textContent = tf('ride.form.bookBtn');
+        const rt = document.getElementById('ride-form-title');
+        if (rt) rt.textContent = tf('ride.form.bookTitle');
         document.getElementById('cancel-ride-edit-btn').style.display = 'none';
         document.getElementById('ride-fb').className = 'form-feedback';
         document.getElementById('ride-fb').textContent = '';
@@ -2424,27 +2517,27 @@
     };
 
     window.cancelRide = async function(rideId) {
-        if (!confirm('Cancel this ride?')) return;
+        if (!confirm(tf('messages.cancelRide'))) return;
         try {
             const r = await fetch(`/api/rides/${rideId}/cancel`, { method: 'POST' });
             if (!r.ok) {
                 const data = await r.json();
-                alert(data.message || 'Cannot cancel this ride');
+                alert(data.message || tf('messages.cannotCancelRide'));
                 return;
             }
             loadRides(); loadAvailableDrivers(); loadDrivers();
         } catch {
-            alert('Cancel failed — check server logs');
+            alert(tf('messages.cancelFailed'));
         }
     };
 
     window.markPayoutPaid = async function(rideId) {
-        if (!confirm('Mark this driver payout as paid?')) return;
+        if (!confirm(tf('messages.markPayoutPaid'))) return;
         try {
             const r = await fetch(`/api/rides/${rideId}/mark-payout-paid`, { method: 'POST' });
-            if (!r.ok) { alert('Failed to mark payout'); return; }
+            if (!r.ok) { alert(tf('messages.markPayoutFailed')); return; }
             loadRides(); loadDashboard();
-        } catch { alert('Failed — check server logs'); }
+        } catch { alert(tf('messages.failed', { message: '' })); }
     };
 
     loadClientDropdown();
@@ -2480,7 +2573,7 @@
             const sel = document.getElementById('j-clientId');
             if (!sel) return;
             const current = sel.value;
-            sel.innerHTML = '<option value="">Select a client…</option>' +
+            sel.innerHTML = '<option value="">' + tf('job.form.selectClient') + '</option>' +
                 clients.map(c => `<option value="${c.id}">${esc(c.firstName)} ${esc(c.lastName)}</option>`).join('');
             if (current) sel.value = current;
             applyJobClientSearchFilter();
@@ -2525,20 +2618,17 @@
                     applyJobFilter();
                 }
                 const ts = document.getElementById('job-ts');
-                if (ts) ts.textContent = `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+                if (ts) refreshTimestamp('job-ts');
             })
             .catch(() => {
                 const el = document.getElementById('job-list');
-                if (el) el.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+                if (el) el.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${tf('common.cannotReachServer')}</p></div>`;
             });
     }
 
     window.setJobFilter = function(status) {
         jobStatusFilter = status;
-        document.querySelectorAll('#job-status-filter .filter-btn').forEach(b => {
-            const txt = b.textContent.toUpperCase().replace(' ', '');
-            b.classList.toggle('active', (status === 'ALL' && b.textContent === 'All') || txt === status || (status === 'IN_PROGRESS' && txt === 'INPROGRESS'));
-        });
+        setFilterActive('#job-status-filter', status);
         applyJobFilter();
     };
 
@@ -2554,13 +2644,13 @@
         if (countEl) countEl.textContent = `(${jobs.length})`;
         if (!jobs.length) {
             el.innerHTML = jobStatusFilter !== 'ALL'
-                ? guidedEmptyState('🔍', `No ${jobStatusFilter.toLowerCase().replace('_', ' ')} jobs — try another filter.`)
-                : guidedEmptyState('💼', 'No jobs yet — book your first hourly job using the form above.', 'Book a job', 'focusJobForm');
+                ? guidedEmptyState('🔍', tf('job.empty.filter', { status: filterLabel(jobStatusFilter).toLowerCase() }))
+                : guidedEmptyState('💼', tf('job.empty.noJobs'), tf('job.empty.bookJob'), 'focusJobForm');
             return;
         }
         el.innerHTML = jobs.map(r => {
             const {est, scope} = parseJobNotes(r.notes);
-            const title = r.pickupLocation || 'Untitled job';
+            const title = r.pickupLocation || tf('job.card.untitled');
             const client = r.clientName || '—';
             const rate = Number(r.hourlyRate || 20);
             let loggedH = r.durationMinutes ? (r.durationMinutes / 60) : 0;
@@ -2575,16 +2665,16 @@
             const billable = (r.billableAmount != null) ? Number(r.billableAmount).toFixed(2) : (loggedH * rate).toFixed(2);
             let actions = '';
             if (r.status === 'SCHEDULED' || r.status === 'ASSIGNED') {
-                actions = `<button class="btn-sm" data-test="start-btn" onclick="startJob('${r.id}')" style="background:#0f3460;color:white;border:1px solid #0f3460;padding:3px 8px;border-radius:4px;">Start</button>`;
+                actions = `<button class="btn-sm" data-test="start-btn" onclick="startJob('${r.id}')" style="background:#0f3460;color:white;border:1px solid #0f3460;padding:3px 8px;border-radius:4px;">${tf('job.actions.start')}</button>`;
             } else if (isInProg) {
-                actions = `<button class="btn-sm" data-test="complete-btn" onclick="completeJob('${r.id}')" style="background:#38a169;color:white;border:1px solid #38a169;padding:3px 8px;border-radius:4px;">Complete</button>`;
+                actions = `<button class="btn-sm" data-test="complete-btn" onclick="completeJob('${r.id}')" style="background:#38a169;color:white;border:1px solid #38a169;padding:3px 8px;border-radius:4px;">${tf('job.actions.complete')}</button>`;
             } else if (r.status === 'COMPLETED') {
-                actions = `<button class="btn-sm" data-test="invoice-btn" onclick="generateInvoice('${r.id}')" style="border:1px solid #3182ce;color:#3182ce;padding:3px 8px;border-radius:4px;">Invoice $${(r.totalAmount||billable)}</button>`;
+                actions = `<button class="btn-sm" data-test="invoice-btn" onclick="generateInvoice('${r.id}')" style="border:1px solid #3182ce;color:#3182ce;padding:3px 8px;border-radius:4px;">${tf('job.actions.invoice')} $${(r.totalAmount||billable)}</button>`;
             }
             const timerHtml = (isInProg && hasStart)
-                ? `<div style="font-family:ui-monospace,monospace;font-size:0.92rem;color:#d97706;font-weight:600;margin-top:2px;"><span class="job-timer" data-start="${r.actualStart}" data-rate="${rate}" data-billable-id="bill-${r.id}">00:00:00</span> <span style="font-size:0.6rem">LIVE</span></div>`
+                ? `<div style="font-family:ui-monospace,monospace;font-size:0.92rem;color:#d97706;font-weight:600;margin-top:2px;"><span class="job-timer" data-start="${r.actualStart}" data-rate="${rate}" data-billable-id="bill-${r.id}">00:00:00</span> <span style="font-size:0.6rem">${tf('common.live')}</span></div>`
                 : '';
-            const loggedDisplay = isInProg ? `${loggedH.toFixed(1)}h live` : `${loggedH.toFixed(1)}h / ${est}h`;
+            const loggedDisplay = isInProg ? tf('job.card.live', { hours: loggedH.toFixed(1) }) : tf('job.card.loggedEst', { logged: loggedH.toFixed(1), est });
             const billId = `bill-${r.id}`;
             return `
                 <div data-job-id="${r.id}" style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:white;">
@@ -2600,8 +2690,8 @@
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:0.78rem;">
-                        <div><span style="color:#64748b;font-size:0.68rem;">LOGGED</span><br><span style="font-weight:600;">${loggedDisplay}</span></div>
-                        <div style="flex:1;"><span style="color:#64748b;font-size:0.68rem;">STATUS</span><br><span style="font-weight:700;color:${statusColors[r.status]||'#555'};font-size:0.78rem;" data-test="status-badge">${r.status}</span>${timerHtml}</div>
+                        <div><span style="color:#64748b;font-size:0.68rem;">${tf('job.card.logged')}</span><br><span style="font-weight:600;">${loggedDisplay}</span></div>
+                        <div style="flex:1;"><span style="color:#64748b;font-size:0.68rem;">${tf('job.card.status')}</span><br><span style="font-weight:700;color:${statusColors[r.status]||'#555'};font-size:0.78rem;" data-test="status-badge">${statusLabel(r.status)}</span>${timerHtml}</div>
                         <div style="display:flex;gap:4px;">${actions}</div>
                     </div>
                 </div>`;
@@ -2641,19 +2731,19 @@
             const card = document.querySelector(`[data-job-id="${jobId}"]`);
             if (card) {
                 const badge = card.querySelector('[data-test="status-badge"]');
-                if (badge) { badge.textContent = 'IN_PROGRESS'; badge.style.color = (statusColors && statusColors.IN_PROGRESS) || '#f59e0b'; }
+                if (badge) { badge.textContent = statusLabel('IN_PROGRESS'); badge.style.color = (statusColors && statusColors.IN_PROGRESS) || '#f59e0b'; }
                 const actions = card.querySelector('div[style*="gap:4px"]') || card.lastElementChild;
-                if (actions) actions.innerHTML = `<button class="btn-sm" data-test="complete-btn" onclick="completeJob('${jobId}')" style="background:#38a169;color:white;border:1px solid #38a169;padding:3px 8px;border-radius:4px;">Complete</button>`;
+                if (actions) actions.innerHTML = `<button class="btn-sm" data-test="complete-btn" onclick="completeJob('${jobId}')" style="background:#38a169;color:white;border:1px solid #38a169;padding:3px 8px;border-radius:4px;">${tf('job.actions.complete')}</button>`;
                 // trigger timer render on next tick
                 setTimeout(tickJobTimers, 10);
             }
             loadJobs();
             if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
-        } catch(e) { alert('Could not start job (check server status/logs)'); }
+        } catch(e) { alert(tf('messages.startJobFailed')); }
     };
 
     window.completeJob = async function(jobId) {
-        if (!confirm('Mark job complete now? (uses live elapsed since start × $20)')) return;
+        if (!confirm(tf('messages.completeJobConfirm'))) return;
         const btns = document.querySelectorAll(`button[onclick*="completeJob('${jobId}')"]`);
         if (btns[0]) { btns[0].disabled = true; btns[0].textContent = '…'; }
         try {
@@ -2670,9 +2760,9 @@
             const card = document.querySelector(`[data-job-id="${jobId}"]`);
             if (card) {
                 const badge = card.querySelector('[data-test="status-badge"]');
-                if (badge) { badge.textContent = 'COMPLETED'; badge.style.color = (statusColors && statusColors.COMPLETED) || '#10b981'; }
+                if (badge) { badge.textContent = statusLabel('COMPLETED'); badge.style.color = (statusColors && statusColors.COMPLETED) || '#10b981'; }
                 const actions = card.querySelector('div[style*="gap:4px"]') || card.lastElementChild;
-                if (actions) actions.innerHTML = `<button class="btn-sm" data-test="invoice-btn" onclick="generateInvoice('${jobId}')" style="border:1px solid #3182ce;color:#3182ce;padding:3px 8px;border-radius:4px;">Invoice</button>`;
+                if (actions) actions.innerHTML = `<button class="btn-sm" data-test="invoice-btn" onclick="generateInvoice('${jobId}')" style="border:1px solid #3182ce;color:#3182ce;padding:3px 8px;border-radius:4px;">${tf('job.actions.invoice')}</button>`;
                 const timer = card.querySelector('.job-timer');
                 if (timer) timer.style.display = 'none';
             }
@@ -2680,10 +2770,10 @@
             if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
             loadDashboard();
             const fb = document.getElementById('job-fb');
-            if (fb) { fb.className = 'form-feedback ok'; fb.textContent = '✓ Job completed. Total hours × rate calculated.'; setTimeout(()=>{if(fb)fb.textContent='';}, 2400); }
+            if (fb) { fb.className = 'form-feedback ok'; fb.textContent = tf('messages.jobCompleted'); setTimeout(()=>{if(fb)fb.textContent='';}, 2400); }
         } catch(e) {
-            alert('Complete failed: ' + e.message);
-            if (btns[0]) { btns[0].disabled = false; btns[0].textContent = 'Complete'; }
+            alert(tf('messages.failed', { message: e.message }));
+            if (btns[0]) { btns[0].disabled = false; btns[0].textContent = tf('job.actions.complete'); }
         }
     };
 
@@ -2712,7 +2802,7 @@
 
             const btn = document.getElementById('job-submit-btn');
             const fb = document.getElementById('job-fb');
-            btn.disabled = true; btn.textContent = 'Booking…';
+            btn.disabled = true; btn.textContent = tf('job.form.booking');
             fb.className = 'form-feedback'; fb.textContent = '';
 
             try {
@@ -2734,14 +2824,14 @@
                 const wasEdit = !!editingJobId;
                 cancelJobEdit();
                 fb.className = 'form-feedback ok';
-                fb.textContent = wasEdit ? '✓ Job updated' : '✓ Job booked ($20/hr)';
+                fb.textContent = wasEdit ? tf('messages.jobUpdated') : tf('messages.jobBooked');
                 loadJobs(true);
             } catch {
                 fb.className = 'form-feedback fail';
-                fb.textContent = '✗ Save failed — check server logs';
+                fb.textContent = tf('messages.saveFailed');
             } finally {
                 btn.disabled = false;
-                btn.textContent = editingJobId ? 'Update Job' : 'Book Job';
+                btn.textContent = tf(editingJobId ? 'job.form.updateBtn' : 'job.form.bookBtn');
             }
         });
     }
@@ -2759,9 +2849,9 @@
         editingJobId = null;
         ['j-title','j-scope','j-estHours','j-scheduled'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const cs = document.getElementById('j-clientId'); if (cs) cs.value = '';
-        const sbtn = document.getElementById('job-submit-btn'); if (sbtn) sbtn.textContent = 'Book Job';
-        const ct = document.querySelector('#job-form') ? document.querySelector('#job-form').closest('.card').querySelector('.card-title') : null;
-        if (ct) ct.textContent = 'Book a Job';
+        const sbtn = document.getElementById('job-submit-btn'); if (sbtn) sbtn.textContent = tf('job.form.bookBtn');
+        const ct = document.getElementById('job-form-title');
+        if (ct) ct.textContent = tf('job.form.bookTitle');
         const cb = document.getElementById('cancel-job-edit-btn'); if (cb) cb.style.display = 'none';
         const fbb = document.getElementById('job-fb'); if (fbb) { fbb.className = 'form-feedback'; fbb.textContent = ''; }
     };
@@ -2786,7 +2876,7 @@
         }).then(inv => {
             loadInvoices();
             showTab('invoices');
-        }).catch(e => alert('Invoice failed: ' + e.message));
+        }).catch(e => alert(tf('messages.invoiceFailed', { message: e.message })));
     }
 
     const invStatusColors = { OUTSTANDING: '#d97706', PAID: '#38a169' };
@@ -2795,9 +2885,7 @@
 
     window.setInvoiceFilter = function(status) {
         invoiceStatusFilter = status;
-        document.querySelectorAll('#invoice-status-filter .filter-btn').forEach(b =>
-            b.classList.toggle('active', b.textContent.toUpperCase() === status || (status === 'ALL' && b.textContent === 'All'))
-        );
+        setFilterActive('#invoice-status-filter', status);
         applyInvoiceFilter();
     };
 
@@ -2812,7 +2900,7 @@
         }).then(r => {
             if (!r.ok) return r.json().then(e => { throw new Error(e.message || 'Failed'); });
             loadInvoices();
-        }).catch(e => alert('Failed: ' + e.message));
+        }).catch(e => alert(tf('messages.failed', { message: e.message })));
     }
 
     function invoiceChargeLabel(i) {
@@ -2832,25 +2920,25 @@
         const el = document.getElementById('invoice-list');
         if (!invoices.length) {
             el.innerHTML = invoiceStatusFilter !== 'ALL'
-                ? guidedEmptyState('🔍', `No ${invoiceStatusFilter.toLowerCase()} invoices — try another filter.`)
-                : guidedEmptyState('📄', 'No invoices yet — complete a ride, then generate an invoice from the Rides tab.', 'Go to rides', 'goToRidesFromInvoiceEmpty');
+                ? guidedEmptyState('🔍', tf('invoice.empty.filter', { status: filterLabel(invoiceStatusFilter).toLowerCase() }))
+                : guidedEmptyState('📄', tf('invoice.empty.noInvoices'), tf('invoice.empty.goToRides'), 'goToRidesFromInvoiceEmpty');
             return;
         }
         window.sortInvoices = function(field) { toggleSort('invoices', field); applyInvoiceFilter(); };
         const sorted = sortedData('invoices', invoices);
         el.innerHTML = `<table>
-            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">Invoice #</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">Client</th><th>Charge</th><th>Extras</th><th>Tax</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">Total</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">Status</th><th></th></tr></thead>
+            <thead><tr><th class="${sortClass('invoices','invoiceNumber')}" onclick="sortInvoices('invoiceNumber')">${tf('invoice.table.number')}</th><th class="${sortClass('invoices','clientName')}" onclick="sortInvoices('clientName')">${tf('invoice.table.client')}</th><th>${tf('invoice.table.charge')}</th><th>${tf('invoice.table.extras')}</th><th>${tf('invoice.table.tax')}</th><th class="${sortClass('invoices','total')}" onclick="sortInvoices('total')">${tf('invoice.table.total')}</th><th class="${sortClass('invoices','status')}" onclick="sortInvoices('status')">${tf('invoice.table.status')}</th><th></th></tr></thead>
             <tbody>${sorted.map(i => `<tr>
-                <td data-label="Invoice #" style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
-                <td data-label="Client">${esc(i.clientName)}</td>
-                <td data-label="Charge" style="font-size:.8rem">${invoiceChargeLabel(i)}</td>
-                <td data-label="Extras">$${i.additionalCharges}</td>
-                <td data-label="Tax">$${i.tax}</td>
+                <td data-label="${esc(tf('invoice.table.number'))}" style="font-weight:600;font-family:monospace">${esc(i.invoiceNumber)}</td>
+                <td data-label="${esc(tf('invoice.table.client'))}">${esc(i.clientName)}</td>
+                <td data-label="${esc(tf('invoice.table.charge'))}" style="font-size:.8rem">${invoiceChargeLabel(i)}</td>
+                <td data-label="${esc(tf('invoice.table.extras'))}">$${i.additionalCharges}</td>
+                <td data-label="${esc(tf('invoice.table.tax'))}">$${i.tax}</td>
                 <td style="font-weight:700">$${i.total}</td>
-                <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${i.status}</span></td>
+                <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${statusLabel(i.status)}</span></td>
                 <td class="row-actions">${i.status === 'OUTSTANDING' ?
-                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">Mark Paid</button>` :
-                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">Mark Unpaid</button>`}</td>
+                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">${tf('invoice.actions.markPaid')}</button>` :
+                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">${tf('invoice.actions.markUnpaid')}</button>`}</td>
             </tr>`).join('')}</tbody>
         </table>` + paginationHtml('invoices', 'invoicePrev()', 'invoiceNext()');
     }
@@ -2865,12 +2953,11 @@
                 allInvoicesCache = data.content || [];
                 pageMeta.invoices = data;
                 if (!isUserEditingTab('tab-invoices')) applyInvoiceFilter();
-                document.getElementById('invoice-ts').textContent =
-                    `Auto-refresh every 10s · last: ${new Date().toLocaleTimeString()}`;
+                refreshTimestamp('invoice-ts');
             })
             .catch(() => {
                 document.getElementById('invoice-list').innerHTML =
-                    `<div class="empty-state"><div class="icon">⚠️</div><p>Cannot reach server</p></div>`;
+                    `<div class="empty-state"><div class="icon">⚠️</div><p>${tf('common.cannotReachServer')}</p></div>`;
             });
     }
 
@@ -2961,7 +3048,7 @@
             closeCreateTableModal();
             loadCustomTables(true);
         } catch {
-            alert('Failed to create table');
+            alert(tf('messages.failedCreateTable'));
         }
     }
 
@@ -2989,7 +3076,7 @@
         const id = `cr-${col.name.replace(/\s+/g, '_')}`;
         switch (col.type) {
             case 'INT': return `<input type="number" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
-            case 'BOOLEAN': return `<label style="display:flex;align-items:center;gap:8px;font-weight:400;color:#555"><input type="checkbox" id="${id}" ${value ? 'checked' : ''} style="width:18px;height:18px"><span style="font-size:.83rem">${esc(col.trueLabel || 'Yes')} / ${esc(col.falseLabel || 'No')}</span></label>`;
+            case 'BOOLEAN': return `<label style="display:flex;align-items:center;gap:8px;font-weight:400;color:#555"><input type="checkbox" id="${id}" ${value ? 'checked' : ''} style="width:18px;height:18px"><span style="font-size:.83rem">${esc(col.trueLabel || tf('common.yes'))} / ${esc(col.falseLabel || tf('common.no'))}</span></label>`;
             case 'DATE': return `<input type="date" id="${id}" value="${value ?? ''}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
             case 'LINK': {
                 const rows = customTableRows[col.linkedTableId] || [];
@@ -2999,7 +3086,7 @@
                     const label = textCol ? (r.data?.[textCol.name] || r.id) : r.id;
                     return `<option value="${r.id}" ${r.id === value ? 'selected' : ''}>${esc(String(label))}</option>`;
                 }).join('');
-                return `<select id="${id}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa"><option value="">Select…</option>${opts}</select>`;
+                return `<select id="${id}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa"><option value="">${tf('common.selectDots')}</option>${opts}</select>`;
             }
             default: return `<input type="text" id="${id}" value="${esc(value ?? '')}" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.88rem;background:#fafafa">`;
         }
@@ -3019,8 +3106,8 @@
     }
 
     function boolDisplay(col, val) {
-        if (val) return esc(col.trueLabel || 'Yes');
-        return esc(col.falseLabel || 'No');
+        if (val) return esc(col.trueLabel || tf('common.yes'));
+        return esc(col.falseLabel || tf('common.no'));
     }
 
     function renderCustomTablePane(table) {
@@ -3031,9 +3118,9 @@
         const linkableTableOpts = customTables.filter(t => t.id !== table.id).map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
         const colEditForm = editingCol ? `
             <div class="col-edit-inline">
-                <div style="font-size:.82rem;font-weight:600;margin-bottom:8px">${editingCol.mode === 'add' ? 'Add Column' : 'Edit Column'}</div>
+                <div style="font-size:.82rem;font-weight:600;margin-bottom:8px">${editingCol.mode === 'add' ? tf('customTable.addColumn') : tf('customTable.editColumn')}</div>
                 <div class="field-row">
-                    <div><label>Name</label><input type="text" id="ce-name-${table.id}" value="${editingCol.mode === 'edit' ? esc(editingCol.name) : ''}" placeholder="Column name"></div>
+                    <div><label>${tf('common.name')}</label><input type="text" id="ce-name-${table.id}" value="${editingCol.mode === 'edit' ? esc(editingCol.name) : ''}" placeholder="${esc(tf('modal.createTable.columnName'))}"></div>
                     ${editingCol.mode === 'add' ? `<div><label>Type</label><select id="ce-type-${table.id}">
                         <option value="STRING">Text</option><option value="INT">Number</option>
                         <option value="BOOLEAN">Yes/No</option><option value="DATE">Date</option>
@@ -3062,7 +3149,7 @@
             <div class="page">
                 <div class="grid-2">
                     <div class="card">
-                        <div class="card-title">${editingRowId ? 'Edit Row' : 'Add Row'}</div>
+                        <div class="card-title">${editingRowId ? tf('customTable.editRow') : tf('customTable.addRow')}</div>
                         <form onsubmit="event.preventDefault();submitCustomRow('${table.id}')" novalidate>
                             ${table.columns.map(col => `
                                 <div class="field">
@@ -3070,8 +3157,8 @@
                                     ${inputForType(col, editingRowId ? (rows.find(r => r.id === editingRowId)?.data?.[col.name]) : null)}
                                 </div>
                             `).join('')}
-                            <button class="btn" type="submit">${editingRowId ? 'Update Row' : 'Add Row'}</button>
-                            ${editingRowId ? `<button class="btn btn-cancel" type="button" onclick="cancelCustomRowEdit('${table.id}')">Cancel</button>` : ''}
+                            <button class="btn" type="submit">${editingRowId ? tf('customTable.updateRow') : tf('customTable.addRow')}</button>
+                            ${editingRowId ? `<button class="btn btn-cancel" type="button" onclick="cancelCustomRowEdit('${table.id}')">${tf('common.cancel')}</button>` : ''}
                         </form>
                         <div class="form-feedback" id="ct-fb-${table.id}"></div>
                     </div>
@@ -3079,7 +3166,7 @@
                         <div class="list-header">
                             <div class="card-title" style="margin-bottom:0">${esc(table.name)}</div>
                             <span class="count">(${rows.length})</span>
-                            <button class="delete-mode-btn ${isDeleteMode('custom-'+table.id) ? 'active' : ''}" onclick="toggleDeleteMode('custom-${table.id}', () => { renderAllCustomPanes(); showTab('custom-${table.id}'); })" style="margin-left:auto">${isDeleteMode('custom-'+table.id) ? 'Cancel' : 'Select'}</button>
+                            <button class="delete-mode-btn ${isDeleteMode('custom-'+table.id) ? 'active' : ''}" onclick="toggleDeleteMode('custom-${table.id}', () => { renderAllCustomPanes(); showTab('custom-${table.id}'); })" style="margin-left:auto">${isDeleteMode('custom-'+table.id) ? tf('common.cancel') : tf('common.selectMode')}</button>
                         </div>
                         ${(() => { const ctSel = selectedItems['custom-'+table.id]; const ctDm = isDeleteMode('custom-'+table.id);
                             return ctDm && ctSel && ctSel.size ? `<div class="bulk-bar">
@@ -3098,7 +3185,7 @@
                                 </div>
                             </th>`).join('')}<th class="add-col-header" onclick="startAddColumn('${table.id}')" title="Add column">+</th></tr></thead>
                             ${(() => { const ctDm = isDeleteMode('custom-'+table.id); const ctSel = selectedItems['custom-'+table.id] || new Set(); const ctAllIds = rows.map(r => r.id);
-                            return !rows.length ? `<tbody><tr><td colspan="${table.columns.length + (ctDm ? 2 : 1)}" style="text-align:center;padding:32px;color:#6b7280">No rows yet</td></tr></tbody>` :
+                            return !rows.length ? `<tbody><tr><td colspan="${table.columns.length + (ctDm ? 2 : 1)}" style="text-align:center;padding:32px;color:#6b7280">${tf('customTable.noRows')}</td></tr></tbody>` :
                             `<tbody>${rows.map((r, idx) => `<tr class="${ctDm && ctSel.has(r.id) ? 'selected' : ''}" ${ctDm ? `onclick="toggleSelectItem('custom-${table.id}','${r.id}',${idx},${JSON.stringify(ctAllIds).replace(/"/g,'&quot;')},event,()=>{renderAllCustomPanes();showTab('custom-${table.id}')})" style="cursor:pointer"` : ''}>
                                 ${ctDm ? `<td><input type="checkbox" class="row-checkbox" ${ctSel.has(r.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleSelectItem('custom-${table.id}','${r.id}',${idx},${JSON.stringify(ctAllIds).replace(/"/g,'&quot;')},event,()=>{renderAllCustomPanes();showTab('custom-${table.id}')})"></td>` : ''}
                                 ${table.columns.map(c => {
@@ -3111,8 +3198,8 @@
                                     return `<td>${v != null ? esc(String(v)) : '<span class="muted">—</span>'}</td>`;
                                 }).join('')}
                                 <td style="white-space:nowrap">
-                                    <button class="btn-sm" onclick="event.stopPropagation();editCustomRow('${table.id}','${r.id}')">Edit</button>
-                                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteCustomRow('${table.id}','${r.id}')">Del</button>
+                                    <button class="btn-sm" onclick="event.stopPropagation();editCustomRow('${table.id}','${r.id}')">${tf('common.edit')}</button>
+                                    <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteCustomRow('${table.id}','${r.id}')">${tf('common.del')}</button>
                                 </td>
                             </tr>`).join('')}</tbody>`; })()}
                         </table>
@@ -3179,7 +3266,7 @@
         const state = editingColumnState[tableId];
         if (!state) return;
         const name = document.getElementById(`ce-name-${tableId}`)?.value.trim();
-        if (!name) { alert('Column name is required'); return; }
+        if (!name) { alert(tf('messages.columnNameRequired')); return; }
 
         try {
             if (state.mode === 'add') {
@@ -3193,7 +3280,7 @@
                 }
                 if (type === 'LINK') {
                     const ltid = document.getElementById(`ce-linked-table-${tableId}`)?.value;
-                    if (!ltid) { alert('Please select a table to link to'); return; }
+                    if (!ltid) { alert(tf('messages.selectLinkTable')); return; }
                     body.linkedTableId = ltid;
                 }
                 const r = await fetch(`/api/tables/${tableId}/columns`, {
@@ -3215,18 +3302,18 @@
             editingColumnState[tableId] = null;
             await loadCustomTables(true);
             showTab(`custom-${tableId}`);
-        } catch (e) { alert('Failed: ' + e.message); }
+        } catch (e) { alert(tf('messages.failed', { message: e.message })); }
     };
 
     window.deleteColumn = async function(tableId, colName) {
-        if (!confirm(`Delete column "${colName}"?`)) return;
+        if (!confirm(tf('messages.deleteColumn', { name: colName }))) return;
         try {
             const r = await fetch(`/api/tables/${tableId}/columns/${encodeURIComponent(colName)}`, { method: 'DELETE' });
             if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Failed'); }
             editingColumnState[tableId] = null;
             await loadCustomTables(true);
             showTab(`custom-${tableId}`);
-        } catch (e) { alert('Failed: ' + e.message); }
+        } catch (e) { alert(tf('messages.failed', { message: e.message })); }
     };
 
     function isUserEditingCustomTable() {
@@ -3289,7 +3376,7 @@
             const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
             if (!r.ok) throw new Error();
             editingRowState[tableId] = null;
-            if (fb) { fb.className = 'form-feedback ok'; fb.textContent = editingRowId ? '✓ Row updated' : '✓ Row added'; }
+            if (fb) { fb.className = 'form-feedback ok'; fb.textContent = editingRowId ? tf('messages.rowUpdated') : tf('messages.rowAdded'); }
             // Reload rows for this table
             const rr = await fetch(`/api/tables/${tableId}/rows`);
             customTableRows[tableId] = await rr.json();
@@ -3297,7 +3384,7 @@
             // Keep this tab active
             showTab(`custom-${tableId}`);
         } catch {
-            if (fb) { fb.className = 'form-feedback fail'; fb.textContent = '✗ Save failed'; }
+            if (fb) { fb.className = 'form-feedback fail'; fb.textContent = tf('messages.saveFailedShort'); }
         }
     }
 
@@ -3314,21 +3401,21 @@
     };
 
     window.deleteCustomRow = async function(tableId, rowId) {
-        if (!confirm('Delete this row?')) return;
+        if (!confirm(tf('messages.deleteRow'))) return;
         try {
             await fetch(`/api/tables/${tableId}/rows/${rowId}`, { method: 'DELETE' });
             const rr = await fetch(`/api/tables/${tableId}/rows`);
             customTableRows[tableId] = await rr.json();
             renderAllCustomPanes();
             showTab(`custom-${tableId}`);
-        } catch { alert('Delete failed'); }
+        } catch { alert(tf('messages.deleteFailed')); }
     };
 
     window.bulkDeleteCustomRows = async function(tableId) {
         const key = 'custom-' + tableId;
         const sel = selectedItems[key];
         if (!sel || !sel.size) return;
-        if (!confirm(`Delete ${sel.size} row(s)?`)) return;
+        if (!confirm(tf('messages.deleteRows', { count: sel.size }))) return;
         const errors = [];
         for (const rowId of sel) {
             try {
@@ -3342,18 +3429,18 @@
         customTableRows[tableId] = await rr.json();
         renderAllCustomPanes();
         showTab(`custom-${tableId}`);
-        if (errors.length) alert('Some deletes failed:\n' + errors.join('\n'));
+        if (errors.length) alert(tf('messages.someDeletesFailed', { errors: errors.join('\n') }));
     };
 
     window.deleteCustomTable = async function(tableId, name) {
-        if (!confirm(`Delete table "${name}" and all its rows?`)) return;
+        if (!confirm(tf('messages.deleteTable', { name }))) return;
         try {
             await fetch(`/api/tables/${tableId}`, { method: 'DELETE' });
             delete customTableRows[tableId];
             delete editingRowState[tableId];
             loadCustomTables();
             showTab('clients');
-        } catch { alert('Delete failed'); }
+        } catch { alert(tf('messages.deleteFailed')); }
     };
 
     /* bootstrap loads moved inside successful /api/users/me to avoid partial renders or extra work on unauth (helps mobile) */
@@ -3396,77 +3483,20 @@
         });
 
     /* ── Help Overlay ── */
-    const helpPanels = [
-        {
-            title: 'Welcome to Tatalance',
-            content: `
-                <h3>Your chauffeur client management tool</h3>
-                <p>Tatalance helps you manage clients, drivers, rides, invoices, and any custom data you need — all in one place.</p>
-                <div class="help-tip"><span class="tip-icon">📋</span><div class="tip-text"><strong>Tabs at the top</strong> — switch between Clients, Drivers, Rides, Invoices, and any custom tables you create.</div></div>
-                <div class="help-tip"><span class="tip-icon">➕</span><div class="tip-text"><strong>The + button</strong> — create your own custom tables for anything (vehicles, expenses, notes, etc).</div></div>
-                <div class="help-tip"><span class="tip-icon">❓</span><div class="tip-text"><strong>The ? button</strong> — you're here! Come back anytime for a refresher.</div></div>
-            `
-        },
-        {
-            title: 'Clients',
-            content: `
-                <h3>Add and manage your clients</h3>
-                <div class="help-tip"><span class="tip-icon">👤</span><div class="tip-text"><strong>Add a client</strong> — fill in first name, last name, and phone (international format: +1 then digits). Email is optional.</div></div>
-                <div class="help-tip"><span class="tip-icon">✏️</span><div class="tip-text"><strong>Edit</strong> — click the Edit button on any row to update their info. The form switches to edit mode.</div></div>
-                <div class="help-tip"><span class="tip-icon">🗑️</span><div class="tip-text"><strong>Delete</strong> — click Del to remove a client. You can't delete a client who has active rides.</div></div>
-                <p>The list auto-refreshes every 10 seconds so you always see the latest data.</p>
-            `
-        },
-        {
-            title: 'Drivers',
-            content: `
-                <h3>Manage your driver roster</h3>
-                <div class="help-tip"><span class="tip-icon">🚗</span><div class="tip-text"><strong>Add a driver</strong> — name, phone, optional vehicle, and payout info (percentage or flat rate).</div></div>
-                <div class="help-tip"><span class="tip-icon">🟢</span><div class="tip-text"><strong>Availability</strong> — change a driver's status using the dropdown: Available, On Trip, or Off Duty.</div></div>
-                <div class="help-tip"><span class="tip-icon">💰</span><div class="tip-text"><strong>Payout</strong> — set to Percentage (e.g. 70%) or Flat (e.g. $50 per ride). This shows on invoices.</div></div>
-            `
-        },
-        {
-            title: 'Rides',
-            content: `
-                <h3>Book and manage rides</h3>
-                <div class="help-tip"><span class="tip-icon">📅</span><div class="tip-text"><strong>Book a ride</strong> — pick a client, set pickup date/time, locations, and optional base price.</div></div>
-                <div class="help-tip"><span class="tip-icon">🔗</span><div class="tip-text"><strong>Assign a driver</strong> — once booked, use the dropdown in the Driver column to assign an available driver.</div></div>
-                <div class="help-tip"><span class="tip-icon">✅</span><div class="tip-text"><strong>Complete</strong> — after assignment, click Complete. Fill in actual start/end times, tolls, and extras.</div></div>
-                <div class="help-tip"><span class="tip-icon">❌</span><div class="tip-text"><strong>Cancel</strong> — cancel a ride at any time before completion. The driver becomes available again.</div></div>
-            `
-        },
-        {
-            title: 'Invoices',
-            content: `
-                <h3>Generate and track invoices</h3>
-                <div class="help-tip"><span class="tip-icon">📄</span><div class="tip-text"><strong>Generate</strong> — after completing a ride, click the Invoice button on that ride. It calculates base + extras + tax.</div></div>
-                <div class="help-tip"><span class="tip-icon">💵</span><div class="tip-text"><strong>Mark Paid / Unpaid</strong> — toggle an invoice's status with one click. No complex payment processing needed.</div></div>
-                <p>Invoices show the breakdown: base charge, additional charges, tax, and total.</p>
-            `
-        },
-        {
-            title: 'Custom Tables',
-            content: `
-                <h3>Create your own data tables</h3>
-                <div class="help-tip"><span class="tip-icon">➕</span><div class="tip-text"><strong>Create a table</strong> — click the + button in the nav bar. Name your table and add columns with types: Text, Number, Yes/No, or Date.</div></div>
-                <div class="help-tip"><span class="tip-icon">📋</span><div class="tip-text"><strong>Use it</strong> — your table appears as a new tab. Add rows, edit them, delete them — just like Clients or Drivers.</div></div>
-                <div class="help-tip"><span class="tip-icon">🗑️</span><div class="tip-text"><strong>Delete a table</strong> — hover over the tab name and click the x. This removes the table and all its rows.</div></div>
-                <p>Ideas: Vehicles, Expenses, Fuel Logs, Client Notes, anything you need to track.</p>
-            `
-        }
-    ];
+    const helpPanelKeys = ['welcome', 'clients', 'drivers', 'rides', 'invoices', 'customTables'];
 
     let helpIndex = 0;
 
     function renderHelpPanel() {
-        const panel = helpPanels[helpIndex];
-        document.getElementById('help-title').textContent = panel.title;
-        document.getElementById('help-body').innerHTML = panel.content;
+        const key = helpPanelKeys[helpIndex];
+        document.getElementById('help-title').textContent = tf('help.' + key + '.title');
+        document.getElementById('help-body').innerHTML = tf('help.' + key + '.content');
         document.getElementById('help-prev').disabled = helpIndex === 0;
         const nextBtn = document.getElementById('help-next');
-        nextBtn.textContent = helpIndex === helpPanels.length - 1 ? 'Done' : 'Next';
-        document.getElementById('help-dots').innerHTML = helpPanels.map((_, i) =>
+        nextBtn.textContent = helpIndex === helpPanelKeys.length - 1 ? tf('common.done') : tf('common.nextBtn');
+        const prevBtn = document.getElementById('help-prev');
+        if (prevBtn) prevBtn.textContent = tf('common.previous');
+        document.getElementById('help-dots').innerHTML = helpPanelKeys.map((_, i) =>
             `<button class="help-dot ${i === helpIndex ? 'active' : ''}" onclick="helpGoTo(${i})"></button>`
         ).join('');
     }
@@ -3482,8 +3512,8 @@
     }
 
     function helpNav(dir) {
-        if (dir === 1 && helpIndex === helpPanels.length - 1) { closeHelp(); return; }
-        helpIndex = Math.max(0, Math.min(helpPanels.length - 1, helpIndex + dir));
+        if (dir === 1 && helpIndex === helpPanelKeys.length - 1) { closeHelp(); return; }
+        helpIndex = Math.max(0, Math.min(helpPanelKeys.length - 1, helpIndex + dir));
         renderHelpPanel();
     }
 
@@ -3507,7 +3537,7 @@
             .then(r => r.json())
             .then(renderDashboard)
             .catch(() => {
-                document.getElementById('dash-cards').innerHTML = '<p style="color:#6b7280">Could not load stats.</p>';
+                document.getElementById('dash-cards').innerHTML = '<p style="color:#6b7280">' + tf('dashboard.couldNotLoadStats') + '</p>';
             });
     }
 
@@ -3520,37 +3550,37 @@
         var cards = document.getElementById('dash-cards');
         cards.innerHTML = `
             <div class="stat-card accent-blue">
-                <div class="stat-label">Clients</div>
+                <div class="stat-label">${tf('dashboard.clients')}</div>
                 <div class="stat-value">${s.totalClients}</div>
             </div>
             <div class="stat-card accent-purple">
-                <div class="stat-label">Drivers</div>
+                <div class="stat-label">${tf('dashboard.drivers')}</div>
                 <div class="stat-value">${s.totalDrivers}</div>
             </div>
             <div class="stat-card accent-orange">
-                <div class="stat-label">Active Jobs</div>
+                <div class="stat-label">${tf('dashboard.activeJobs')}</div>
                 <div class="stat-value">${(s.ridesByStatus && s.ridesByStatus.IN_PROGRESS) || 0}</div>
-                <div class="stat-sub">IN PROGRESS · Jobs tab</div>
+                <div class="stat-sub">${tf('dashboard.inProgressJobsTab')}</div>
             </div>
             <div class="stat-card accent-blue">
-                <div class="stat-label">Rides today</div>
+                <div class="stat-label">${tf('dashboard.ridesToday')}</div>
                 <div class="stat-value">${s.ridesToday}</div>
-                <div class="stat-sub">${s.ridesThisWeek} this week &middot; ${s.ridesThisMonth} this month</div>
+                <div class="stat-sub">${tf('dashboard.thisWeek', { count: s.ridesThisWeek })} &middot; ${tf('dashboard.thisMonth', { count: s.ridesThisMonth })}</div>
             </div>
             <div class="stat-card accent-green">
-                <div class="stat-label">Revenue this month</div>
+                <div class="stat-label">${tf('dashboard.revenueThisMonth')}</div>
                 <div class="stat-value">$${Number(s.revenueThisMonth).toFixed(2)}</div>
-                <div class="stat-sub">$${Number(s.revenueTotal).toFixed(2)} all time</div>
+                <div class="stat-sub">${tf('dashboard.allTime', { amount: '$' + Number(s.revenueTotal).toFixed(2) })}</div>
             </div>
             <div class="stat-card accent-orange">
-                <div class="stat-label">Outstanding</div>
+                <div class="stat-label">${tf('dashboard.outstanding')}</div>
                 <div class="stat-value">$${Number(s.outstandingAmount).toFixed(2)}</div>
-                <div class="stat-sub">${s.outstandingCount} invoice${s.outstandingCount === 1 ? '' : 's'}</div>
+                <div class="stat-sub">${s.outstandingCount === 1 ? tf('dashboard.invoices', { count: s.outstandingCount }) : tf('dashboard.invoicesPlural', { count: s.outstandingCount })}</div>
             </div>
             <div class="stat-card accent-red">
-                <div class="stat-label">Driver Payouts Owed</div>
+                <div class="stat-label">${tf('dashboard.payoutsOwed')}</div>
                 <div class="stat-value">$${Number(s.payoutsOwed || 0).toFixed(2)}</div>
-                <div class="stat-sub">${s.payoutsOwedCount || 0} ride${(s.payoutsOwedCount || 0) === 1 ? '' : 's'} unpaid</div>
+                <div class="stat-sub">${(s.payoutsOwedCount || 0) === 1 ? tf('dashboard.ridesUnpaid', { count: s.payoutsOwedCount || 0 }) : tf('dashboard.ridesUnpaidPlural', { count: s.payoutsOwedCount || 0 })}</div>
             </div>
         `;
 
@@ -3565,21 +3595,21 @@
             var pct = Math.round((count / maxCount) * 100);
             var color = colors[st] || '#6b7280';
             html += '<div class="status-bar-row">' +
-                '<span class="status-bar-label">' + st.replace('_', ' ') + '</span>' +
+                '<span class="status-bar-label">' + statusLabel(st) + '</span>' +
                 '<div class="status-bar-track"><div class="status-bar-fill" style="width:' + (count > 0 ? Math.max(pct, 8) : 0) + '%;background:' + color + '">' + count + '</div></div>' +
                 '</div>';
         }
-        statusBars.innerHTML = html || guidedEmptyState('🚘', 'No rides yet — book one from the Rides tab.', 'Book a ride', 'focusRideForm');
+        statusBars.innerHTML = html || guidedEmptyState('🚘', tf('dashboard.noRidesYet'), tf('dashboard.bookRide'), 'focusRideForm');
 
         // Revenue summary
         var rev = document.getElementById('dash-revenue');
         rev.innerHTML = `
-            <div class="revenue-line"><span class="revenue-label">Paid (this month)</span><span class="revenue-value green">$${Number(s.revenueThisMonth).toFixed(2)}</span></div>
-            <div class="revenue-line"><span class="revenue-label">Paid (all time)</span><span class="revenue-value green">$${Number(s.revenueTotal).toFixed(2)}</span></div>
-            <div class="revenue-line"><span class="revenue-label">Outstanding</span><span class="revenue-value red">$${Number(s.outstandingAmount).toFixed(2)}</span></div>
-            <div class="revenue-line"><span class="revenue-label">Driver payouts owed</span><span class="revenue-value red">$${Number(s.payoutsOwed || 0).toFixed(2)}</span></div>
-            <div class="revenue-line"><span class="revenue-label">Total rides</span><span class="revenue-value">${s.totalRides}</span></div>
-            <div class="revenue-line" style="font-size:0.75rem;color:#64748b;border-top:1px dashed #eee;margin-top:4px;padding-top:4px;">Jobs use $20/hr · see Jobs tab for live timers</div>
+            <div class="revenue-line"><span class="revenue-label">${tf('dashboard.paidThisMonth')}</span><span class="revenue-value green">$${Number(s.revenueThisMonth).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">${tf('dashboard.paidAllTime')}</span><span class="revenue-value green">$${Number(s.revenueTotal).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">${tf('dashboard.outstandingLabel')}</span><span class="revenue-value red">$${Number(s.outstandingAmount).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">${tf('dashboard.driverPayoutsOwed')}</span><span class="revenue-value red">$${Number(s.payoutsOwed || 0).toFixed(2)}</span></div>
+            <div class="revenue-line"><span class="revenue-label">${tf('dashboard.totalRides')}</span><span class="revenue-value">${s.totalRides}</span></div>
+            <div class="revenue-line" style="font-size:0.75rem;color:#64748b;border-top:1px dashed #eee;margin-top:4px;padding-top:4px;">${tf('dashboard.jobsNote')}</div>
         `;
     }
 
@@ -3593,13 +3623,13 @@
                 var entries = data.content || [];
                 var el = document.getElementById('activity-list');
                 var countEl = document.getElementById('activity-count');
-                countEl.textContent = entries.length + ' entries';
+                countEl.textContent = tf('activity.entries', { count: entries.length });
                 if (entries.length === 0) {
-                    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No activity yet. Actions will appear here as you use the app.</p></div>';
+                    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>' + tf('activity.empty') + '</p></div>';
                     return;
                 }
                 var actionIcons = { CREATE: '➕', UPDATE: '✏️', DELETE: '🗑️', CANCEL: '❌', COMPLETE: '✅' };
-                var html = '<table><thead><tr><th>Time</th><th>Action</th><th>Type</th><th>Details</th></tr></thead><tbody>';
+                var html = '<table><thead><tr><th>' + tf('activity.table.time') + '</th><th>' + tf('activity.table.action') + '</th><th>' + tf('activity.table.type') + '</th><th>' + tf('activity.table.details') + '</th></tr></thead><tbody>';
                 entries.forEach(function(e) {
                     var t = e.timestamp ? new Date(e.timestamp) : null;
                     var timeStr = t ? t.toLocaleDateString() + ' ' + t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
@@ -3610,7 +3640,7 @@
                 el.innerHTML = html;
             })
             .catch(() => {
-                document.getElementById('activity-list').innerHTML = '<p style="color:#6b7280">Could not load activity log.</p>';
+                document.getElementById('activity-list').innerHTML = '<p style="color:#6b7280">' + tf('activity.couldNotLoad') + '</p>';
             });
     }
 
@@ -3625,7 +3655,7 @@
                 .then(r => r.json())
                 .then(data => {
                     var html = '';
-                    var sections = { clients: 'Clients', rides: 'Rides', invoices: 'Invoices' };
+                    var sections = { clients: tf('search.clients'), rides: tf('search.rides'), invoices: tf('search.invoices') };
                     for (var key in sections) {
                         if (data[key] && data[key].length > 0) {
                             html += '<div style="padding:6px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #f0f0f0">' + sections[key] + '</div>';
@@ -3637,7 +3667,7 @@
                             });
                         }
                     }
-                    if (!html) html = '<div style="padding:12px;color:#6b7280;font-size:.85rem">No results</div>';
+                    if (!html) html = '<div style="padding:12px;color:#6b7280;font-size:.85rem">' + tf('search.noResults') + '</div>';
                     el.innerHTML = html;
                     el.style.display = 'block';
                 });
@@ -3671,9 +3701,9 @@
                 window.location.href = data.redirect;
                 return;
             }
-            alert(data.message || 'Could not start Google linking. Try again.');
+            alert(data.message || tf('messages.linkGoogleFailed'));
         } catch (err) {
-            alert('Could not start Google linking. Try again.');
+            alert(tf('messages.linkGoogleFailed'));
         }
     };
 
@@ -3694,9 +3724,9 @@
         const confirm = document.getElementById('cp-confirm').value;
         const errEl = document.getElementById('cp-error');
 
-        if (!current) { errEl.textContent = 'Current password is required'; errEl.style.display = 'block'; return; }
-        if (newPw.length < 4) { errEl.textContent = 'New password must be at least 4 characters'; errEl.style.display = 'block'; return; }
-        if (newPw !== confirm) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+        if (!current) { errEl.textContent = tf('messages.currentPasswordRequired'); errEl.style.display = 'block'; return; }
+        if (newPw.length < 4) { errEl.textContent = tf('messages.passwordMinLength'); errEl.style.display = 'block'; return; }
+        if (newPw !== confirm) { errEl.textContent = tf('messages.passwordsNoMatch'); errEl.style.display = 'block'; return; }
 
         const res = await fetch('/api/users/change-password', {
             method: 'POST',
@@ -3706,12 +3736,33 @@
         const data = await res.json();
         if (res.ok) {
             closeChangePassword();
-            alert('Password changed successfully');
+            alert(tf('messages.passwordChanged'));
         } else {
-            errEl.textContent = data.message || 'Failed to change password';
+            errEl.textContent = data.message || tf('messages.changePasswordFailed');
             errEl.style.display = 'block';
         }
     };
+
+    document.addEventListener('tatalance:langchange', () => {
+        applyI18n();
+        updateFormLabels();
+        const activePane = document.querySelector('.tab-pane.active');
+        if (!activePane) return;
+        const id = activePane.id;
+        if (id === 'tab-dashboard') loadDashboard();
+        else if (id === 'tab-clients') filterClients();
+        else if (id === 'tab-drivers') loadDrivers();
+        else if (id === 'tab-rides') applyRideFilter();
+        else if (id === 'tab-jobs') applyJobFilter();
+        else if (id === 'tab-invoices') applyInvoiceFilter();
+        else if (id === 'tab-activity') loadActivity();
+        else if (id && id.startsWith('tab-custom-')) {
+            const tableId = id.replace('tab-custom-', '');
+            renderAllCustomPanes();
+            restoreActiveCustomTab(tableId);
+        }
+        if (document.getElementById('help-overlay')?.classList.contains('open')) renderHelpPanel();
+    });
 </script>
 
 <footer class="status-footer" aria-label="Environment status">
