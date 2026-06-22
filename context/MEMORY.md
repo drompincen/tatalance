@@ -2,9 +2,9 @@
 
 ## Current Focus
 
-Merged `main` into `luciano` — Epic 13 (#103–#104, #108, #107) shipped; job booking error fixes; PR to main in progress; #105 auth pages next.
+PR #114 open (`luciano` → `main`): Epic 13 chauffeur i18n + job errors + auth pages (#105).
 
-Epic 13 (#102): Spanish UI — chauffeur app done; auth pages (#105) and API messages (#106) remain.
+Epic 13 (#102): nearly complete — only #106 Spanish API validation messages remain (deferred).
 Epic 12 (#96): map location picker — blocked on #97 / #109 (Google credentials).
 Epic 11 (#93): freelance mode completed on luciano.
 
@@ -30,3 +30,4 @@ Epic 11 (#93): freelance mode completed on luciano.
 - 2026-06-21 (drom): jacoco-coverage-gate completed on main — 283 tests, LINE 85.8%, BRANCH 66.3%.
 - 2026-06-22: Epic 13 #103–#104, #108, #107 shipped on luciano; i18n E2E 4/4 pass.
 - 2026-06-22: Job save UX — friendly API errors, profile stale fix (de8232b).
+- 2026-06-22: PR #114 opened; closed #103–#105, #107–#108; auth pages i18n (#105) shipped.
