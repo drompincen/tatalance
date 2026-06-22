@@ -276,4 +276,24 @@ class InvoiceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("OUTSTANDING"));
     }
+
+    @Test
+    void should_createInvoice_rideNotCompleted() throws Exception {
+        var ride = completedRide();
+        ride.setStatus(RideStatus.SCHEDULED);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        mockMvc.perform(post("/api/invoices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rideId\":\"ride001\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_listInvoices_paged() throws Exception {
+        when(invoiceRepository.findByUserId(eq(TEST_USER_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleInvoice())));
+        mockMvc.perform(get("/api/invoices?page=0&size=10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)));
+    }
 }

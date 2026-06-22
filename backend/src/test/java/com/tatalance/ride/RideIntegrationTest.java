@@ -34,6 +34,8 @@ class RideIntegrationTest {
             mongoTemplate.dropCollection("clients");
             mongoTemplate.dropCollection("drivers");
         } catch (Exception e) {
+            // NOTE: Requires in-mem Flapdoodle Mongo (-P-dev) for full execution/coverage.
+            // Skips gracefully otherwise (see drom-plans/jacoco-code-coverage-gate.md).
             assumeTrue(false, "Skipping integration test - Mongo not available: " + e.getMessage());
         }
     }

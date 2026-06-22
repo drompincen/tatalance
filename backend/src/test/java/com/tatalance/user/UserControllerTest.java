@@ -296,4 +296,170 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("Incorrect answer"));
     }
 
+    @Test
+    void updateSettings_withBothModeAndRate() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(patch("/api/users/me/settings").with(user(USERNAME))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"businessMode\":\"FREELANCE\",\"defaultHourlyRate\":99}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.businessMode").value("FREELANCE"))
+                .andExpect(jsonPath("$.defaultHourlyRate").value(99));
+    }
+
+    @Test
+    void register_withoutSecurityQuestion_succeeds() throws Exception {
+        when(repository.existsByUsername("plain")).thenReturn(false);
+        when(passwordEncoder.encode("pass1234")).thenReturn("enc");
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"plain\",\"password\":\"pass1234\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void me_withGoogleLinked_andEnabled() throws Exception {
+        AppUser u = sampleUser();
+        u.setGoogleId("g123");
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        // client reg is mocked in class? but to hit enabled true branch if present
+        mockMvc.perform(get("/api/users/me").with(user(USERNAME)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.googleLinked").value(true));
+    }
+
+    @Test
+    void updateSettings_zeroRate_returns400() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        mockMvc.perform(patch("/api/users/me/settings").with(user(USERNAME))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"defaultHourlyRate\": 0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Hourly rate must be positive"));
+    }
+
+    @Test
+    void forgotPasswordQuestion_noUser_returns404() throws Exception {
+        when(repository.findByUsername("missing")).thenReturn(Optional.empty());
+        mockMvc.perform(post("/api/users/forgot-password/question")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"missing\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void changePassword_newTooShort_returns400() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        mockMvc.perform(post("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"oldpass\",\"newPassword\":\"ab\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("New password must be at least 4 characters"));
+    }
+
+    @Test
+    void register_blankPassword_returns400() throws Exception {
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"u\",\"password\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateSettings_businessModeInvalid_returns400() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        mockMvc.perform(patch("/api/users/me/settings").with(user(USERNAME))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"businessMode\":\"BAD\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid businessMode"));
+    }
+
+    @Test
+    void changePassword_currentBlank_returns400() throws Exception {
+        mockMvc.perform(post("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"\",\"newPassword\":\"newpass\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Current password is required"));
+    }
+
+    @Test
+    void forgotPasswordReset_newShort_returns400() throws Exception {
+        when(repository.findByUsername("u")).thenReturn(Optional.of(sampleUser()));
+        mockMvc.perform(post("/api/users/forgot-password/reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"u\",\"securityAnswer\":\"ans\",\"newPassword\":\"ab\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void me_defaultBusinessMode_whenNoUser() throws Exception {
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/users/me").with(user(USERNAME)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.businessMode").value("CHAUFFEUR"))
+                .andExpect(jsonPath("$.defaultHourlyRate").value(20.00));
+    }
+
+    @Test
+    void forgotPasswordReset_noQuestion_returns404() throws Exception {
+        AppUser u = sampleUser();
+        u.setSecurityQuestion(null);
+        when(repository.findByUsername("u")).thenReturn(Optional.of(u));
+        mockMvc.perform(post("/api/users/forgot-password/reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"u\",\"securityAnswer\":\"ans\",\"newPassword\":\"newp\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void register_duplicateUsername() throws Exception {
+        when(repository.existsByUsername("dup")).thenReturn(true);
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"dup\",\"password\":\"pass1234\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Username already taken"));
+    }
+
+    @Test
+    void updateSettings_noChange() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(patch("/api/users/me/settings").with(user(USERNAME))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.businessMode").value("CHAUFFEUR"));
+    }
+
+    @Test
+    void changePassword_success_updates() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        when(passwordEncoder.matches("old", "encoded-old")).thenReturn(true);
+        when(passwordEncoder.encode("new4")).thenReturn("encnew");
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(post("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"old\",\"newPassword\":\"new4\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void forgotPasswordReset_noUser_returns404() throws Exception {
+        when(repository.findByUsername("no")).thenReturn(Optional.empty());
+        mockMvc.perform(post("/api/users/forgot-password/reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"no\",\"securityAnswer\":\"ans\",\"newPassword\":\"newp\"}"))
+                .andExpect(status().isNotFound());
+    }
 }

@@ -136,4 +136,30 @@ class TimerServiceTest {
         assertTrue(mins >= 0);
         assertNotNull(ride.getActualEnd());
     }
+
+    @Test
+    void billable_flatPlusHourly_coversAddAndSwitch() throws Exception {
+        Ride ride = new Ride();
+        ride.setPricingMode(PricingMode.FLAT_PLUS_HOURLY);
+        ride.setBasePrice(new BigDecimal("100"));
+        ride.setHourlyRate(new BigDecimal("20"));
+        ride.setWorkSegments(new ArrayList<>());
+        timer.startTimer(ride);
+        // set segment start back to simulate 1h work
+        if (ride.getWorkSegments() != null && !ride.getWorkSegments().isEmpty()) {
+            ride.getWorkSegments().get(0).setStartedAt(Instant.now().minusSeconds(3600));
+        }
+        BigDecimal b = timer.billableAmount(ride, Instant.now());
+        assertTrue(b.compareTo(new BigDecimal("120")) >= 0); // base + 1h
+    }
+
+    @Test
+    void timerState_scheduled_coversDefaultBranches() {
+        Ride ride = new Ride();
+        ride.setId("r2");
+        ride.setStatus(RideStatus.SCHEDULED);
+        var state = timer.timerState(ride);
+        assertEquals("r2", state.get("rideId"));
+        assertFalse((Boolean) state.get("running"));
+    }
 }

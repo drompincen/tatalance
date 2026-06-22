@@ -289,4 +289,92 @@ class DriverControllerTest {
         mockMvc.perform(get("/api/drivers/drv001"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void should_createDriver() throws Exception {
+        when(repository.save(any(Driver.class))).thenAnswer(i -> {
+            Driver d = i.getArgument(0);
+            d.setId("drv002");
+            return d;
+        });
+        mockMvc.perform(post("/api/drivers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"New\",\"lastName\":\"Driver\",\"phone\":\"+13055551003\",\"payoutType\":\"FLAT\",\"payoutRate\":50}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void should_updateAvailability_toAvailable() throws Exception {
+        var driver = sampleDriver();
+        driver.setAvailability(Availability.ON_TRIP);
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
+        when(repository.save(any(Driver.class))).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(patch("/api/drivers/drv001/availability")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availability\":\"AVAILABLE\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void should_updateDriver_payout() throws Exception {
+        var d = sampleDriver();
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(d));
+        when(repository.save(any(Driver.class))).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(put("/api/drivers/drv001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"U\",\"lastName\":\"D\",\"phone\":\"+13055551002\",\"payoutType\":\"PERCENTAGE\",\"payoutRate\":75}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payoutRate").value(75));
+    }
+
+    @Test
+    void should_return400_when_availabilityInvalidInPatch() throws Exception {
+        var driver = sampleDriver();
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
+        mockMvc.perform(patch("/api/drivers/drv001/availability")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availability\":\"INVALID\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_return400_when_createWithInvalidPhone() throws Exception {
+        mockMvc.perform(post("/api/drivers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"C\",\"lastName\":\"D\",\"phone\":\"123\",\"payoutType\":\"FLAT\",\"payoutRate\":50}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void should_updateDriver_setsAllFields() throws Exception {
+        var d = sampleDriver();
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(d));
+        when(repository.save(any(Driver.class))).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(put("/api/drivers/drv001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Updated\",\"lastName\":\"Driver\",\"phone\":\"+13055551099\",\"email\":\"u@d.com\",\"vehicle\":\"Van\",\"payoutType\":\"PERCENTAGE\",\"payoutRate\":60}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Updated"))
+                .andExpect(jsonPath("$.vehicle").value("Van"));
+    }
+
+    @Test
+    void should_getDriverStats_returnsRidesEarnedUnpaid() throws Exception {
+        when(repository.existsByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(true);
+        var r1 = new com.tatalance.ride.Ride();
+        r1.setStatus(RideStatus.COMPLETED);
+        r1.setDriverPayout(new BigDecimal("70"));
+        r1.setPayoutPaid(true);
+        var r2 = new com.tatalance.ride.Ride();
+        r2.setStatus(RideStatus.COMPLETED);
+        r2.setDriverPayout(new BigDecimal("30"));
+        r2.setPayoutPaid(false);
+        when(rideRepository.findByAssignedDriverId("drv001")).thenReturn(List.of(r1, r2));
+
+        mockMvc.perform(get("/api/drivers/drv001/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalRides").value(2))
+                .andExpect(jsonPath("$.completedRides").value(2))
+                .andExpect(jsonPath("$.unpaidCount").value(1));
+    }
 }
