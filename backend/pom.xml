@@ -76,10 +76,14 @@
             <dependencies>
                 <dependency>
                     <groupId>de.flapdoodle.embed</groupId>
-                    <artifactId>de.flapdoodle.embed.mongo.spring4x</artifactId>
+                    <artifactId>de.flapdoodle.embed.mongo.spring3x</artifactId>
                     <version>4.12.2</version>
                     <scope>runtime</scope>
                 </dependency>
+                <!-- NOTE: In-memory Flapdoodle MongoDB (spring3x = Spring Boot 3.x; do NOT use spring4x,
+                     which targets Spring Boot 4.x). Active by default; run `mvn clean verify` (NOT -P-dev,
+                     which deactivates this profile and removes Mongo). Required for full JUnit coverage to
+                     pass the 60% LINE+BRANCH jacoco:check gate. See drom-plans/jacoco-code-coverage-gate.md -->
             </dependencies>
         </profile>
     </profiles>
