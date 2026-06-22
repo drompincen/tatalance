@@ -1054,28 +1054,82 @@
         const el = document.getElementById(elId);
         if (el) el.textContent = tf('common.autoRefresh', { time: new Date().toLocaleTimeString() });
     }
-    function friendlyApiMessage(raw) {
-        if (!raw) return tf('messages.saveFailed');
+    function friendlyApiMessage(raw, status) {
+        const text = (raw || '').trim();
+        if (!text) {
+            if (status === 401 || status === 403) return tf('messages.sessionExpired');
+            if (status >= 500) return tf('messages.serverError');
+            if (status) return tf('messages.httpError', { status });
+            return tf('messages.saveFailed');
+        }
         const exact = {
             'Pickup date/time cannot be in the past': 'messages.scheduledPast',
+            'Pickup date/time is required': 'messages.scheduledRequired',
             'Client not found': 'messages.clientNotFound',
             'Profile not found or does not belong to user': 'messages.profileNotFound',
             'Ride not found': 'messages.rideNotFound',
             'Driver not found': 'messages.driverNotFound',
             'A client with this phone number already exists': 'messages.duplicatePhone',
             'Invalid request body': 'messages.invalidRequest',
+            'Only SCHEDULED rides can be edited': 'messages.onlyScheduledEdit',
         };
-        if (exact[raw]) return tf(exact[raw]);
-        if (raw.includes('E.164') || raw.includes('Phone must start with +')) return tf('client.form.phoneE164');
-        return raw;
+        if (exact[text]) return tf(exact[text]);
+        const partial = [
+            ['cannot be in the past', 'messages.scheduledPast'],
+            ['Profile not found', 'messages.profileNotFound'],
+            ['Client not found', 'messages.clientNotFound'],
+            ['Ride not found', 'messages.rideNotFound'],
+            ['Driver not found', 'messages.driverNotFound'],
+            ['phone number already exists', 'messages.duplicatePhone'],
+            ['Invalid request body', 'messages.invalidRequest'],
+            ['Only SCHEDULED rides can be edited', 'messages.onlyScheduledEdit'],
+        ];
+        for (const [needle, key] of partial) {
+            if (text.includes(needle)) return tf(key);
+        }
+        if (text.includes('E.164') || text.includes('Phone must start with +')) return tf('client.form.phoneE164');
+        return text;
     }
     async function apiErrorFromResponse(r) {
-        const err = await r.json().catch(() => ({}));
-        const raw = err.errors?.[0]?.message || err.message || err.error || '';
-        return friendlyApiMessage(raw);
+        const text = await r.text().catch(() => '');
+        let err = {};
+        if (text) {
+            try { err = JSON.parse(text); } catch (_) {
+                return friendlyApiMessage(text.replace(/\s+/g, ' ').trim(), r.status);
+            }
+        }
+        const msgs = Array.isArray(err.errors)
+            ? err.errors.map(e => e && e.message).filter(Boolean)
+            : [];
+        const raw = (msgs.join('; ')
+            || err.detail
+            || err.message
+            || (typeof err.error === 'string' && err.error !== 'Bad Request' ? err.error : '')
+            || '').trim();
+        return friendlyApiMessage(raw, r.status);
     }
     function formError(msg) {
-        return '✗ ' + (msg || tf('messages.saveFailed'));
+        const m = (msg || tf('messages.saveFailed')).trim();
+        return m.startsWith('✗') ? m : '✗ ' + m;
+    }
+    function clearStaleProfile() {
+        if (!activeProfileId) return;
+        if ((profilesCache || []).some(p => p.id === activeProfileId)) return;
+        activeProfileId = '';
+        localStorage.removeItem('activeProfileId');
+        const sel = document.getElementById('profile-switcher');
+        if (sel) sel.value = '';
+    }
+    function profileQueryString() {
+        clearStaleProfile();
+        return activeProfileId ? `?profileId=${encodeURIComponent(activeProfileId)}` : '';
+    }
+    function handleProfileApiError(msg) {
+        const m = msg || '';
+        if (m.includes('Profile not found') || m.includes('Perfil no encontrado')
+            || m === tf('messages.profileNotFound')) {
+            switchProfile('');
+        }
     }
 
     function updateFormLabels() {
@@ -2241,6 +2295,7 @@
 
     /* Profile helpers for switcher (shared clients, scoped rides/jobs) */
     function getProfileParam() {
+        clearStaleProfile();
         return activeProfileId ? `&profileId=${encodeURIComponent(activeProfileId)}` : '';
     }
     async function loadProfiles() {
@@ -2249,12 +2304,13 @@
             if (!r.ok) return;
             const data = await r.json();
             profilesCache = data.content || data || [];
+            clearStaleProfile();
             const sel = document.getElementById('profile-switcher');
             if (!sel) return;
             const allLabel = typeof t === 'function' ? t('account.allProfiles') : 'All (account)';
             sel.innerHTML = '<option value="">' + esc(allLabel) + '</option>' +
                 profilesCache.map(p => `<option value="${p.id}">${esc(p.name || p.type || 'Profile')}</option>`).join('');
-            if (activeProfileId) sel.value = activeProfileId;
+            sel.value = activeProfileId || '';
         } catch (e) { /* non-fatal */ }
     }
     window.switchProfile = function(pid) {
@@ -2837,7 +2893,7 @@
             try {
                 let scheduledInstant = new Date(scheduled);
                 const floor = new Date(Date.now() + 60000);
-                if (scheduledInstant < floor) scheduledInstant = floor;
+                if (isNaN(scheduledInstant.getTime()) || scheduledInstant < floor) scheduledInstant = floor;
 
                 const notesVal = `EST:${est}|${scope}`;
                 const body = {
@@ -2849,17 +2905,23 @@
                     hourlyRate: 20,
                     notes: notesVal
                 };
-                const profQ = activeProfileId ? `?profileId=${encodeURIComponent(activeProfileId)}` : '';
-                const url = editingJobId ? `/api/rides/${editingJobId}${profQ}` : `/api/rides${profQ}`;
+                const profQ = editingJobId ? '' : profileQueryString();
+                const url = editingJobId ? `/api/rides/${editingJobId}` : `/api/rides${profQ}`;
                 const method = editingJobId ? 'PUT' : 'POST';
-                const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const r = await fetch(url, {
+                    method,
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
                 if (!r.ok) throw new Error(await apiErrorFromResponse(r));
                 const wasEdit = !!editingJobId;
-                cancelJobEdit();
                 fb.className = 'form-feedback ok';
                 fb.textContent = wasEdit ? tf('messages.jobUpdated') : tf('messages.jobBooked');
+                cancelJobEdit();
                 loadJobs(true);
             } catch (err) {
+                handleProfileApiError(err.message);
                 fb.className = 'form-feedback fail';
                 fb.textContent = formError(err.message);
             } finally {
