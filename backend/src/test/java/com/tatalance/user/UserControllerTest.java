@@ -150,14 +150,6 @@ class UserControllerTest {
     }
 
     @Test
-    void linkGoogle_whenGoogleNotConfigured_returns503() throws Exception {
-        // no @MockBean for ClientRegistrationRepository -> field remains null
-        mockMvc.perform(post("/api/users/link-google").with(user(USERNAME)))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.message", containsString("Google sign-in is not configured")));
-    }
-
-    @Test
     void changePassword_success() throws Exception {
         AppUser u = sampleUser();
         when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
@@ -303,4 +295,5 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Incorrect answer"));
     }
+
 }

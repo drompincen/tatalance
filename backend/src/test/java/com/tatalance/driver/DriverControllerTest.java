@@ -282,4 +282,11 @@ class DriverControllerTest {
         mockMvc.perform(get("/api/drivers"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void should_getDriverById() throws Exception {
+        when(repository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(sampleDriver()));
+        mockMvc.perform(get("/api/drivers/drv001"))
+                .andExpect(status().isOk());
+    }
 }

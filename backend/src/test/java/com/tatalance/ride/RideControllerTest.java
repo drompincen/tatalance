@@ -637,4 +637,24 @@ class RideControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("jobNoC"));
     }
+
+    @Test
+    void should_listRides_withProfileId() throws Exception {
+        when(profileRepository.findByIdAndUserId("prof1", TEST_USER_ID)).thenReturn(Optional.of(new com.tatalance.profile.Profile()));
+        when(rideRepository.findByUserIdAndProfileId(eq(TEST_USER_ID), eq("prof1"), any()))
+                .thenReturn(new PageImpl<>(List.of(sampleRide())));
+        mockMvc.perform(get("/api/rides?profileId=prof1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void should_createRide_withValidProfileId() throws Exception {
+        when(clientRepository.findByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(Optional.of(sampleClient()));
+        when(profileRepository.findByIdAndUserId("prof1", TEST_USER_ID)).thenReturn(Optional.of(new com.tatalance.profile.Profile()));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+        mockMvc.perform(post("/api/rides?profileId=prof1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli001\",\"pickupDateTime\":\"2028-06-01T14:00:00Z\",\"pickupLocation\":\"A\",\"dropoffLocation\":\"B\",\"basePrice\":50}"))
+                .andExpect(status().isCreated());
+    }
 }

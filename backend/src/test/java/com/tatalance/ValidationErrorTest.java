@@ -94,4 +94,59 @@ class ValidationErrorTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("pickupLocation", "dropoffLocation")));
     }
+
+    @Test
+    void should_handleResponseStatusException() throws Exception {
+        // e.g. past date or bad profile in ride create
+        mockMvc.perform(post("/api/rides")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli1\",\"pickupDateTime\":\"2020-01-01T00:00:00Z\",\"pickupLocation\":\"x\",\"dropoffLocation\":\"y\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message", containsString("past")));
+    }
+
+    @Test
+    void should_handleUnreadableForPayoutType() throws Exception {
+        mockMvc.perform(post("/api/drivers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"T\",\"lastName\":\"D\",\"phone\":\"+1234567890\",\"payoutType\":\"BAD\",\"payoutRate\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message", containsString("Payout type must be one of")));
+    }
+
+    @Test
+    void should_handleUnreadableForAvailability() throws Exception {
+        mockMvc.perform(post("/api/drivers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"T\",\"lastName\":\"D\",\"phone\":\"+1234567890\",\"payoutType\":\"PERCENTAGE\",\"payoutRate\":10,\"availability\":\"BAD\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message", containsString("Availability must be one of")));
+    }
+
+    @Test
+    void should_returnError_forMissingLastName() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Test\",\"phone\":\"+1234567890\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("lastName")));
+    }
+
+    @Test
+    void should_returnError_forMissingPickupLocationInRide() throws Exception {
+        mockMvc.perform(post("/api/rides")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli1\",\"dropoffLocation\":\"y\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("pickupLocation")));
+    }
+
+    @Test
+    void should_returnError_forMissingClientIdInRide() throws Exception {
+        mockMvc.perform(post("/api/rides")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pickupLocation\":\"x\",\"dropoffLocation\":\"y\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("clientId")));
+    }
 }

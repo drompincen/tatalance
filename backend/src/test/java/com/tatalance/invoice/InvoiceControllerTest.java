@@ -243,4 +243,37 @@ class InvoiceControllerTest {
         mockMvc.perform(post("/api/invoices/unknown/mark-paid"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void should_createInvoice_withExtrasAndTax() throws Exception {
+        var ride = completedRide();
+        ride.setTolls(new BigDecimal("5.00"));
+        ride.setParking(new BigDecimal("3.00"));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(invoiceRepository.countByUserId(TEST_USER_ID)).thenReturn(1L);
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> {
+            Invoice i = inv.getArgument(0);
+            i.setId("inv004");
+            return i;
+        });
+
+        mockMvc.perform(post("/api/invoices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rideId\":\"ride001\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.additionalCharges").value(28.00))
+                .andExpect(jsonPath("$.total").value(138.24));  // 100+28=128, tax~10.24, total 138.24
+    }
+
+    @Test
+    void should_togglePaidBackToOutstanding_coversBothStates() throws Exception {
+        var invoice = sampleInvoice();
+        invoice.setStatus(InvoiceStatus.PAID);
+        when(invoiceRepository.findByIdAndUserId("inv001", TEST_USER_ID)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/invoices/inv001/mark-paid"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OUTSTANDING"));
+    }
 }
