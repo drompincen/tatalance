@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/login.html", "/logout",
                                  "/register.html", "/api/users/register",
                                  "/forgot-password.html", "/api/users/forgot-password/**",
+                                 "/auth.css", "/js/i18n.js",
                                  "/api/info",
                                  "/oauth2/**", "/login/oauth2/**").permitAll()
                 .anyRequest().authenticated()
