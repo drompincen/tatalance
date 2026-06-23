@@ -69,6 +69,7 @@ test.describe('i18n auth pages (#105)', () => {
     await page.goto('/login.html');
     await page.evaluate(() => localStorage.setItem('tatalance-lang', 'en'));
     await page.reload();
+    await page.waitForFunction(() => typeof t === 'function' && t('auth.login.submit') === 'Sign in');
     await expect(page.locator('h1')).toHaveText('Sign in');
     await expect(page.locator('button[type=submit]')).toHaveText('Sign in');
 
@@ -83,6 +84,7 @@ test.describe('i18n auth pages (#105)', () => {
     await page.goto('/register.html');
     await page.evaluate(() => localStorage.setItem('tatalance-lang', 'en'));
     await page.reload();
+    await page.waitForFunction(() => typeof t === 'function' && t('auth.register.title') === 'Create Account');
     await expect(page.locator('h1')).toHaveText('Create Account');
 
     await page.locator('#langToggle .lang-option[data-lang="es"]').click();
@@ -94,6 +96,7 @@ test.describe('i18n auth pages (#105)', () => {
     await page.goto('/forgot-password.html');
     await page.evaluate(() => localStorage.setItem('tatalance-lang', 'en'));
     await page.reload();
+    await page.waitForFunction(() => typeof t === 'function' && t('auth.forgot.title') === 'Reset Password');
     await expect(page.locator('h1')).toHaveText('Reset Password');
 
     await page.locator('#langToggle .lang-option[data-lang="es"]').click();

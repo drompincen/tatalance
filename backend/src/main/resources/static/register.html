@@ -75,16 +75,25 @@
 
     <script src="/js/i18n.js"></script>
     <script>
-        function tf(k) { return typeof t === 'function' ? t(k) : k; }
+        function tf(k) {
+            if (typeof t !== 'function') return null;
+            var v = t(k);
+            return (v && v !== k) ? v : null;
+        }
 
         function refreshRegisterPage() {
-            document.title = tf('auth.register.pageTitle');
+            var title = tf('auth.register.pageTitle');
+            if (title) document.title = title;
             var btn = document.querySelector('#register-form button[type=submit]');
-            if (btn && !btn.disabled) btn.textContent = tf('auth.register.submit');
+            var label = tf('auth.register.submit');
+            if (btn && !btn.disabled && label) btn.textContent = label;
         }
 
         document.addEventListener('tatalance:langchange', refreshRegisterPage);
-        document.addEventListener('DOMContentLoaded', refreshRegisterPage);
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof applyI18n === 'function') applyI18n();
+            refreshRegisterPage();
+        });
 
         var form = document.getElementById('register-form');
         var msgError = document.getElementById('msg-error');

@@ -68,24 +68,35 @@
 
     <script src="/js/i18n.js"></script>
     <script>
-        function tf(k) { return typeof t === 'function' ? t(k) : k; }
+        function tf(k) {
+            if (typeof t !== 'function') return null;
+            var v = t(k);
+            return (v && v !== k) ? v : null;
+        }
 
         function refreshLoginPage() {
-            document.title = tf('auth.login.pageTitle');
+            var title = tf('auth.login.pageTitle');
+            if (title) document.title = title;
             var msgError = document.getElementById('msg-error');
             var msgInfo = document.getElementById('msg-info');
-            if (msgError.style.display === 'block') {
-                msgError.textContent = tf('auth.login.wrongCredentials');
+            if (msgError && msgError.style.display === 'block') {
+                var err = tf('auth.login.wrongCredentials');
+                if (err) msgError.textContent = err;
             }
-            if (msgInfo.style.display === 'block') {
-                msgInfo.textContent = tf('auth.login.signedOut');
+            if (msgInfo && msgInfo.style.display === 'block') {
+                var info = tf('auth.login.signedOut');
+                if (info) msgInfo.textContent = info;
             }
             var btn = document.querySelector('form button[type=submit]');
-            if (btn && !btn.disabled) btn.textContent = tf('auth.login.submit');
+            var label = tf('auth.login.submit');
+            if (btn && !btn.disabled && label) btn.textContent = label;
         }
 
         document.addEventListener('tatalance:langchange', refreshLoginPage);
-        document.addEventListener('DOMContentLoaded', refreshLoginPage);
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof applyI18n === 'function') applyI18n();
+            refreshLoginPage();
+        });
 
         function getCsrfToken() {
             var m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
