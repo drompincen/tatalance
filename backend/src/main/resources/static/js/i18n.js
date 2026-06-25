@@ -1381,6 +1381,23 @@
   window.toggleLang = toggleLang;
   window.applyI18n = applyTranslations;
 
+  /** Attach Accept-Language on /api/* calls so validation errors match UI locale (#106). */
+  (function installApiLanguageHeader() {
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (url.includes('/api/')) {
+        init = init ? { ...init } : {};
+        const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+        if (!headers.has('Accept-Language')) {
+          headers.set('Accept-Language', currentLang === 'es' ? 'es' : 'en');
+        }
+        init.headers = headers;
+      }
+      return nativeFetch(input, init);
+    };
+  })();
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
