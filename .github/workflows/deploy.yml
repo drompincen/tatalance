@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [main, drom, luciano]
+    branches: [main, drom, luciano, prod]
   workflow_dispatch:
     inputs:
       environment:
