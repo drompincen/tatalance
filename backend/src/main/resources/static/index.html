@@ -2945,9 +2945,9 @@
                 });
                 if (!r.ok) throw new Error(await apiErrorFromResponse(r));
                 const wasEdit = !!editingJobId;
+                cancelJobEdit();
                 fb.className = 'form-feedback ok';
                 fb.textContent = wasEdit ? tf('messages.jobUpdated') : tf('messages.jobBooked');
-                cancelJobEdit();
                 loadJobs(true);
             } catch (err) {
                 handleProfileApiError(err.message);

@@ -338,7 +338,7 @@
         }
 
         function actionsFor(r) {
-            if (r.status === 'SCHEDULED' || r.status === 'ACCEPTED') {
+            if (r.status === 'SCHEDULED' || r.status === 'ACCEPTED' || r.status === 'ASSIGNED') {
                 return `<div class="actions">
                     <button class="action-btn primary" data-test="start-btn"
                             onclick="startRide('${esc(r.id)}')">Start ride</button>

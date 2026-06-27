@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { MobilePage } from './pages/mobile.page';
-import { seedAssignedRide, seedClient, uniq } from './fixtures/mobile-seed';
+import { seedAssignedRide, seedClient, seedDriver } from './fixtures/mobile-seed';
 
 test.describe('M4 — Driver start + complete on iPhone', () => {
   test('Start button transitions ride to IN_PROGRESS', async ({ page, request }) => {
-    const driverId = `drv-${uniq()}`;
+    const { id: driverId } = await seedDriver(request);
     const clientId = (await seedClient(request)).id;
     const ride = await seedAssignedRide(request, clientId, driverId);
-    expect(ride.status).toBe('SCHEDULED');
+    expect(ride.status).toBe('ASSIGNED');
 
     await page.goto(`/driver-queue.html?id=${driverId}`);
     const card = page.locator(`[data-ride-id="${ride.id}"]`);
@@ -20,7 +20,7 @@ test.describe('M4 — Driver start + complete on iPhone', () => {
   });
 
   test('live stopwatch ticks while ride is in progress', async ({ page, request }) => {
-    const driverId = `drv-${uniq()}`;
+    const { id: driverId } = await seedDriver(request);
     const clientId = (await seedClient(request)).id;
     const ride = await seedAssignedRide(request, clientId, driverId);
     await request.post(`/api/rides/${ride.id}/start`);
@@ -36,7 +36,7 @@ test.describe('M4 — Driver start + complete on iPhone', () => {
   });
 
   test('Complete form calculates billable live as driver edits extras', async ({ page, request }) => {
-    const driverId = `drv-${uniq()}`;
+    const { id: driverId } = await seedDriver(request);
     const clientId = (await seedClient(request)).id;
     const ride = await seedAssignedRide(request, clientId, driverId, 100);
     await request.post(`/api/rides/${ride.id}/start`);
@@ -56,7 +56,7 @@ test.describe('M4 — Driver start + complete on iPhone', () => {
   });
 
   test('Confirming complete updates status and persists billable to backend', async ({ page, request }) => {
-    const driverId = `drv-${uniq()}`;
+    const { id: driverId } = await seedDriver(request);
     const clientId = (await seedClient(request)).id;
     const ride = await seedAssignedRide(request, clientId, driverId, 50);
     await request.post(`/api/rides/${ride.id}/start`);
@@ -81,7 +81,7 @@ test.describe('M4 — Driver start + complete on iPhone', () => {
 
   test('inputs in the complete form use 16px font (no iOS auto-zoom)', async ({ page, request }) => {
     const mobile = new MobilePage(page);
-    const driverId = `drv-${uniq()}`;
+    const { id: driverId } = await seedDriver(request);
     const clientId = (await seedClient(request)).id;
     const ride = await seedAssignedRide(request, clientId, driverId);
     await request.post(`/api/rides/${ride.id}/start`);
