@@ -1170,7 +1170,7 @@
         onlyScheduledEdit: 'Solo se pueden editar trabajos programados.',
         sessionExpired: 'Sesión expirada — actualiza la página e inicia sesión de nuevo.',
         serverError: 'Error del servidor — intenta de nuevo en un momento.',
-        httpError: 'Solicitud fallida (HTTP {status}).',
+        httpError: 'El servidor rechazó la solicitud (error {status}). Actualice la página e intente de nuevo.',
         deleteConfirm: '¿Eliminar {name}?',
         deleteClients: '¿Eliminar {count} cliente(s)?',
         deleteDrivers: '¿Eliminar {count} chofer(es)?',
