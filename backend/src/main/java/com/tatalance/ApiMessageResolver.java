@@ -36,7 +36,9 @@ public final class ApiMessageResolver {
                     "El viaje debe estar COMPLETADO para generar la factura"),
             Map.entry("Invoice not found", "Factura no encontrada"),
             Map.entry("Profile not found", "Perfil no encontrado"),
-            Map.entry("Profile type is required", "El tipo de perfil es obligatorio")
+            Map.entry("Profile type is required", "El tipo de perfil es obligatorio"),
+            Map.entry("Phone must have 10 digits, or 11 digits starting with 1 (e.g. 2223334444 or +12223334444)",
+                    "El teléfono debe tener 10 dígitos, u 11 dígitos que comiencen con 1 (ej. 2223334444 o +12223334444)")
     );
 
     private ApiMessageResolver() {
