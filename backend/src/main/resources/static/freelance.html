@@ -277,7 +277,7 @@
           <label>Last name</label>
           <input type="text" id="c-last" placeholder="Smith" autocomplete="family-name">
           <label>Phone (E.164)</label>
-          <input type="tel" id="c-phone" placeholder="+15551234567" inputmode="tel" autocomplete="tel">
+          <input type="tel" id="c-phone" placeholder="(555) 123-4567 or +15551234567" inputmode="tel" autocomplete="tel">
           <label>Email (optional)</label>
           <input type="email" id="c-email" placeholder="client@example.com" autocomplete="email">
           <button class="btn" id="add-client-btn" onclick="addClient()">Save client</button>
@@ -353,6 +353,13 @@ function defaultBookWhen() {
   d.setHours(d.getHours() + 1);
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 16);
+}
+function normalizePhoneInput(raw) {
+  if (!raw || !String(raw).trim()) return null;
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 10) return '+1' + digits;
+  if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
+  return null;
 }
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: 'same-origin', ...opts,
@@ -462,10 +469,11 @@ async function saveVenmo() {
 async function addClient() {
   const firstName = document.getElementById('c-first').value.trim();
   const lastName = document.getElementById('c-last').value.trim();
-  const phone = document.getElementById('c-phone').value.trim();
+  const phoneRaw = document.getElementById('c-phone').value.trim();
   const email = document.getElementById('c-email').value.trim();
+  const phone = normalizePhoneInput(phoneRaw);
   if (!firstName || !lastName || !phone) {
-    toast('First name, last name, and phone are required');
+    toast('First name, last name, and a valid US phone (10–11 digits) are required');
     return;
   }
   const btn = document.getElementById('add-client-btn');

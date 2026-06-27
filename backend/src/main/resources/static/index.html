@@ -160,6 +160,7 @@
         .complete-panel .panel-actions { display: flex; gap: 8px; }
         .complete-panel .err-inline { font-size: .75rem; color: #e53e3e; margin-top: 2px; display: none; }
         .complete-panel .err-inline.show { display: block; }
+        #ride-list .ride-assign-select { font-size: .78rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; max-width: 100%; }
         .form-feedback { margin-top: 12px; font-size: 0.82rem; min-height: 18px; text-align: center; }
         .form-feedback.ok { color: #38a169; }
         .form-feedback.fail { color: #e53e3e; }
@@ -507,6 +508,14 @@
             td:last-child { justify-content: flex-end; gap: 6px; margin-top: 6px; }
             .filter-btn { padding: 6px 14px; font-size: .82rem; }
             #ride-date-filter input[type="date"] { flex: 1; min-width: 0; }
+            #ride-list .ride-assign-select { width: 100%; max-width: 200px; font-size: 16px; padding: 8px; min-height: 44px; }
+            #ride-list tr.ride-complete-row td { display: block; padding: 0; }
+            #ride-list tr.ride-complete-row td::before { display: none; }
+            #ride-list tr.ride-detail-row td { display: block; padding: 0; }
+            #ride-list tr.ride-detail-row td::before { display: none; }
+            #ride-list td.ride-mobile-skip { display: none !important; }
+            #ride-list td.row-actions { flex-direction: column; align-items: stretch; gap: 8px; }
+            #ride-list td.row-actions .btn-sm { width: 100%; min-height: 44px; }
         }
     </style>
 </head>
@@ -576,9 +585,9 @@
             <h3 data-i18n="dashboard.welcome">Welcome to Tatalance</h3>
             <p data-i18n="dashboard.subtitle">Your dashboard is empty. Follow these steps to get your chauffeur business running.</p>
             <div class="onboarding-steps">
-                <button type="button" onclick="showTab('clients');focusClientForm()" data-i18n="dashboard.step1">1. Add a client</button>
-                <button type="button" onclick="showTab('drivers');focusDriverForm()" data-i18n="dashboard.step2">2. Add a driver</button>
-                <button type="button" onclick="showTab('rides');focusRideForm()" data-i18n="dashboard.step3">3. Book a ride</button>
+                <button type="button" data-onboard-step="client" onclick="showTab('clients');focusClientForm()" data-i18n="dashboard.step1">1. Add a client</button>
+                <button type="button" data-onboard-step="driver" onclick="showTab('drivers');focusDriverForm()" data-i18n="dashboard.step2">2. Add a driver</button>
+                <button type="button" data-onboard-step="ride" onclick="showTab('rides');focusRideForm()" data-i18n="dashboard.step3">3. Book a ride</button>
             </div>
         </div>
         <div class="dash-grid" id="dash-cards">
@@ -1072,6 +1081,8 @@
             'A client with this phone number already exists': 'messages.duplicatePhone',
             'Invalid request body': 'messages.invalidRequest',
             'Only SCHEDULED rides can be edited': 'messages.onlyScheduledEdit',
+            'actualStart and actualEnd are required to complete an assigned ride': 'messages.completeTimesRequired',
+            'actualEnd must be after actualStart': 'messages.completeEndAfterStart',
         };
         if (exact[text]) return tf(exact[text]);
         const partial = [
@@ -1083,6 +1094,9 @@
             ['phone number already exists', 'messages.duplicatePhone'],
             ['Invalid request body', 'messages.invalidRequest'],
             ['Only SCHEDULED rides can be edited', 'messages.onlyScheduledEdit'],
+            ['actualStart and actualEnd are required', 'messages.completeTimesRequired'],
+            ['actualEnd must be after actualStart', 'messages.completeEndAfterStart'],
+            ['Phone must have 10 digits', 'client.form.phoneE164'],
         ];
         for (const [needle, key] of partial) {
             if (text.includes(needle)) return tf(key);
@@ -1157,8 +1171,14 @@
 
     const esc = s => String(s ?? '').replace(/[&<>"']/g,
         c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-    const PHONE_E164 = /^\+[1-9]\d{9,14}$/;
-    function isPhoneE164(value) { return PHONE_E164.test((value || '').trim()); }
+    function normalizePhoneInput(raw) {
+        if (!raw || !String(raw).trim()) return null;
+        const digits = String(raw).replace(/\D/g, '');
+        if (digits.length === 10) return '+1' + digits;
+        if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
+        return null;
+    }
+    function isPhoneAcceptable(value) { return normalizePhoneInput(value) !== null; }
     function guidedEmptyState(icon, text, ctaLabel, actionName) {
         const cta = ctaLabel && actionName
             ? `<button type="button" class="empty-state-cta" onclick="${actionName}()">${esc(ctaLabel)}</button>` : '';
@@ -1192,7 +1212,7 @@
         if (!el) return;
         el.addEventListener('blur', () => {
             const value = el.value.trim();
-            if (!value && validateFn === isPhoneE164) return;
+            if (!value && validateFn === isPhoneAcceptable) return;
             setFieldValidity(inputId, errId, validateFn(value));
         });
     }
@@ -1635,7 +1655,8 @@
             document.getElementById(`e-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
         }
-        const phoneValid = isPhoneE164(phone);
+        const normalizedPhone = normalizePhoneInput(phone);
+        const phoneValid = normalizedPhone !== null;
         setFieldValidity('f-phone', 'e-phone', phoneValid);
         if (!phoneValid) valid = false;
         if (!valid) return;
@@ -1651,7 +1672,7 @@
             const r = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, phone, email: email || null, notes: notes || null })
+                body: JSON.stringify({ firstName, lastName, phone: normalizedPhone, email: email || null, notes: notes || null })
             });
             if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             const wasEdit = !!editingClientId;
@@ -1659,6 +1680,7 @@
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? tf('messages.personUpdated', { name: firstName + ' ' + lastName }) : tf('messages.personAdded', { name: firstName + ' ' + lastName });
             load();
+            if (typeof loadDashboard === 'function') loadDashboard();
         } catch (err) {
             fb.className = 'form-feedback fail';
             fb.textContent = formError(err.message);
@@ -1677,9 +1699,12 @@
     bindBlurValidation('f-firstName', 'e-firstName', v => v.length > 0);
     bindBlurValidation('f-lastName', 'e-lastName', v => v.length > 0);
     document.getElementById('f-phone').addEventListener('blur', () => {
-        const value = document.getElementById('f-phone').value.trim();
+        const el = document.getElementById('f-phone');
+        const value = el.value.trim();
         if (!value) { setFieldValidity('f-phone', 'e-phone', true); return; }
-        setFieldValidity('f-phone', 'e-phone', isPhoneE164(value));
+        const normalized = normalizePhoneInput(value);
+        if (normalized) { el.value = normalized; setFieldValidity('f-phone', 'e-phone', true); }
+        else setFieldValidity('f-phone', 'e-phone', false);
     });
 
     /* ── Edit / Delete client ── */
@@ -1898,7 +1923,8 @@
             document.getElementById(`de-${f}`).classList.toggle('show', !v);
             if (!v) valid = false;
         }
-        const phoneValid = isPhoneE164(phone);
+        const normalizedPhone = normalizePhoneInput(phone);
+        const phoneValid = normalizedPhone !== null;
         setFieldValidity('d-phone', 'de-phone', phoneValid);
         if (!phoneValid) valid = false;
 
@@ -1920,7 +1946,7 @@
             const r = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, phone, email: email || null, vehicle: vehicle || null, payoutType, payoutRate: Number(payoutRate) })
+                body: JSON.stringify({ firstName, lastName, phone: normalizedPhone, email: email || null, vehicle: vehicle || null, payoutType, payoutRate: Number(payoutRate) })
             });
             if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             const wasEdit = !!editingDriverId;
@@ -1928,6 +1954,7 @@
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? tf('messages.personUpdated', { name: firstName + ' ' + lastName }) : tf('messages.personAdded', { name: firstName + ' ' + lastName });
             loadDrivers();
+            if (typeof loadDashboard === 'function') loadDashboard();
         } catch (err) {
             fb.className = 'form-feedback fail';
             fb.textContent = formError(err.message);
@@ -1949,9 +1976,12 @@
     bindBlurValidation('d-lastName', 'de-lastName', v => v.length > 0);
     bindBlurValidation('d-payoutRate', 'de-payoutRate', v => v !== '' && Number(v) >= 0);
     document.getElementById('d-phone').addEventListener('blur', () => {
-        const value = document.getElementById('d-phone').value.trim();
+        const el = document.getElementById('d-phone');
+        const value = el.value.trim();
         if (!value) { setFieldValidity('d-phone', 'de-phone', true); return; }
-        setFieldValidity('d-phone', 'de-phone', isPhoneE164(value));
+        const normalized = normalizePhoneInput(value);
+        if (normalized) { el.value = normalized; setFieldValidity('d-phone', 'de-phone', true); }
+        else setFieldValidity('d-phone', 'de-phone', false);
     });
 
     /* ── Edit / Delete driver ── */
@@ -2158,7 +2188,20 @@
         document.getElementById('cp-total').textContent = tf('ride.complete.total', { amount: total.toFixed(2) });
     };
 
+    function showCompleteError(msg) {
+        const el = document.getElementById('cp-error');
+        if (!el) return;
+        if (msg) {
+            el.textContent = formError(msg);
+            el.classList.add('show');
+        } else {
+            el.textContent = '';
+            el.classList.remove('show');
+        }
+    }
+
     window.submitComplete = async function(rideId, basePrice) {
+        showCompleteError('');
         const actualStart = document.getElementById('cp-start').value;
         const actualEnd = document.getElementById('cp-end').value;
         let valid = true;
@@ -2196,9 +2239,10 @@
             loadAvailableDrivers();
             loadRides(true).catch(() => {});
             loadDrivers(true).catch(() => {});
+            if (typeof loadDashboard === 'function') loadDashboard();
         } catch (err) {
             btn.disabled = false; btn.textContent = tf('ride.complete.confirmBtn');
-            alert(formError(err.message || tf('messages.completeFailed')));
+            showCompleteError(err.message || tf('messages.completeFailed'));
         }
     };
 
@@ -2257,20 +2301,20 @@
             <thead><tr><th class="${sortClass('rides','clientName')}" onclick="sortRides('clientName')">${tf('ride.table.client')}</th><th class="${sortClass('rides','pickupDateTime')}" onclick="sortRides('pickupDateTime')">${tf('ride.table.pickup')}</th><th>${tf('ride.table.from')}</th><th>${tf('ride.table.to')}</th><th>${tf('ride.table.driver')}</th><th class="${sortClass('rides','status')}" onclick="sortRides('status')">${tf('ride.table.status')}</th><th>${tf('ride.table.payout')}</th><th></th></tr></thead>
             <tbody>${sorted.map(r => `<tr>
                 <td data-label="${esc(tf('ride.table.client'))}" style="font-weight:600;cursor:pointer" onclick="toggleRideDetail('${r.id}')">${esc(r.clientName)} <span style="font-size:.65rem;color:#6b7280">${expandedRideId === r.id ? '▼' : '▸'}</span></td>
-                <td data-label="${esc(tf('ride.table.pickup'))}" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
-                <td data-label="${esc(tf('ride.table.from'))}">${mapsLink(r.pickupLocation)}</td>
-                <td data-label="${esc(tf('ride.table.to'))}">${mapsLink(r.dropoffLocation)}</td>
-                <td>${r.assignedDriverName ? esc(r.assignedDriverName) :
+                <td data-label="${esc(tf('ride.table.pickup'))}" class="ride-mobile-skip" style="font-size:.8rem">${r.pickupDateTime ? new Date(r.pickupDateTime).toLocaleString() : '—'}</td>
+                <td data-label="${esc(tf('ride.table.from'))}" class="ride-mobile-skip">${mapsLink(r.pickupLocation)}</td>
+                <td data-label="${esc(tf('ride.table.to'))}" class="ride-mobile-skip">${mapsLink(r.dropoffLocation)}</td>
+                <td data-label="${esc(tf('ride.table.driver'))}">${r.assignedDriverName ? esc(r.assignedDriverName) :
                     (r.status === 'SCHEDULED' && availableDriversCache.length ?
-                        `<select onchange="if(this.value)assignDriver('${r.id}',this.value)" style="font-size:.78rem;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">
+                        `<select class="ride-assign-select" onchange="if(this.value)assignDriver('${r.id}',this.value)">
                             <option value="">${tf('ride.assign')}</option>
                             ${availableDriversCache.map(d => `<option value="${d.id}">${esc(d.firstName)} ${esc(d.lastName)}</option>`).join('')}
                         </select>` : '<span class="muted">—</span>')}</td>
-                <td><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${statusLabel(r.status)}</span></td>
-                <td style="font-size:.8rem">${r.status === 'COMPLETED' && r.driverPayout ? (r.payoutPaid ? `<span style="color:#10b981;font-weight:600">$${Number(r.driverPayout).toFixed(2)} ${tf('common.paid')}</span>` : `<span style="color:#ef4444;font-weight:600">$${Number(r.driverPayout).toFixed(2)}</span> <button class="btn-sm" onclick="markPayoutPaid('${r.id}')" style="font-size:.7rem">${tf('common.pay')}</button>`) : '<span class="muted">—</span>'}</td>
+                <td data-label="${esc(tf('ride.table.status'))}"><span style="font-size:.75rem;font-weight:600;color:${statusColors[r.status] || '#555'}">${statusLabel(r.status)}</span></td>
+                <td data-label="${esc(tf('ride.table.payout'))}" class="ride-mobile-skip" style="font-size:.8rem">${r.status === 'COMPLETED' && r.driverPayout ? (r.payoutPaid ? `<span style="color:#10b981;font-weight:600">$${Number(r.driverPayout).toFixed(2)} ${tf('common.paid')}</span>` : `<span style="color:#ef4444;font-weight:600">$${Number(r.driverPayout).toFixed(2)}</span> <button class="btn-sm" onclick="markPayoutPaid('${r.id}')" style="font-size:.7rem">${tf('common.pay')}</button>`) : '<span class="muted">—</span>'}</td>
                 <td class="row-actions" style="white-space:nowrap">${r.status === 'SCHEDULED' ? `<button class="btn-sm" onclick="editRide('${r.id}','${r.clientId}','${r.pickupDateTime}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">${tf('common.edit')}</button> ` : ''}${r.status === 'ASSIGNED' ? `<button class="btn-sm" onclick="completeRide('${r.id}')" style="border-color:#38a169;background:#f0fff4;color:#38a169">${tf('ride.actions.complete')}</button> ` :
                     (r.status === 'COMPLETED' ? `<button class="btn-sm" onclick="generateInvoice('${r.id}')" style="border-color:#3182ce;background:#ebf8ff;color:#3182ce">${tf('ride.actions.invoice')} $${r.totalAmount || 0}</button>` : '')}${(r.status === 'SCHEDULED' || r.status === 'ASSIGNED') ? `<button class="btn-sm btn-danger" onclick="cancelRide('${r.id}')">${tf('ride.actions.cancel')}</button>` : ''}${(r.status === 'COMPLETED' || r.status === 'CANCELLED') ? ` <button class="btn-sm" onclick="rebookRide('${r.clientId}','${esc(r.pickupLocation)}','${esc(r.dropoffLocation)}','${r.basePrice||''}','${esc(r.notes)||''}','${r.pricingMode||'FLAT'}','${r.hourlyRate||''}')">${tf('ride.actions.rebook')}</button>` : ''}</td>
-            </tr>${completingRideId === r.id ? `<tr><td colspan="8" style="padding:0">
+            </tr>${completingRideId === r.id ? `<tr class="ride-complete-row"><td colspan="8" style="padding:0">
                 <div class="complete-panel">
                     <div class="panel-header"><strong>${esc(r.clientName)}</strong> — ${esc(r.pickupLocation)} → ${esc(r.dropoffLocation)} · ${r.pricingMode === 'HOURLY' ? `$${r.hourlyRate||0}/hr` : r.pricingMode === 'FLAT_PLUS_HOURLY' ? `$${r.basePrice||0} + $${r.hourlyRate||0}/hr` : `$${r.basePrice||0} ${tf('pricing.flatSuffix')}`}</div>
                     <div class="field-row">
@@ -2297,12 +2341,13 @@
                     </div>
                     ${(r.pricingMode === 'HOURLY' || r.pricingMode === 'FLAT_PLUS_HOURLY') ? `<div class="total-line" id="cp-time-breakdown" style="font-size:.85rem;color:#4b5563;margin-bottom:4px"></div>` : ''}
                     <div class="total-line" id="cp-total">${tf('ride.complete.total', { amount: (r.basePrice || 0).toFixed ? Number(r.basePrice || 0).toFixed(2) : '0.00' })}</div>
+                    <div class="err-inline" id="cp-error" role="alert"></div>
                     <div class="panel-actions">
                         <button class="btn-sm" id="cp-submit-btn" onclick="submitComplete('${r.id}',${r.basePrice||0})" style="background:#38a169;color:white;border-color:#38a169;padding:5px 14px">${tf('ride.complete.confirmBtn')}</button>
                         <button class="btn-sm" onclick="cancelComplete()">${tf('common.cancel')}</button>
                     </div>
                 </div>
-            </td></tr>` : ''}${expandedRideId === r.id ? `<tr><td colspan="8" style="padding:0;background:#f8fafb">
+            </td></tr>` : ''}${expandedRideId === r.id ? `<tr class="ride-detail-row"><td colspan="8" style="padding:0;background:#f8fafb">
                 <div style="padding:16px 20px;font-size:.82rem">
                     <div style="display:flex;gap:32px;flex-wrap:wrap">
                         <div>
@@ -2561,6 +2606,7 @@
             fb.className = 'form-feedback ok';
             fb.textContent = wasEdit ? tf('messages.rideUpdated') : tf('messages.rideBooked');
             loadRides();
+            if (typeof loadDashboard === 'function') loadDashboard();
             setTimeout(() => { if (typeof applyRideFilter === 'function') applyRideFilter(); }, 50);
         } catch (err) {
             fb.className = 'form-feedback fail';
@@ -3718,12 +3764,26 @@
             });
     }
 
-    function renderDashboard(s) {
+    function renderOnboardingSteps(s) {
         var onboarding = document.getElementById('dash-onboarding');
-        if (onboarding) {
-            var isFresh = (s.totalClients || 0) === 0 && (s.totalRides || 0) === 0;
-            onboarding.style.display = isFresh ? 'block' : 'none';
-        }
+        if (!onboarding) return;
+        var done = {
+            client: (s.totalClients || 0) > 0,
+            driver: (s.totalDrivers || 0) > 0,
+            ride: (s.totalRides || 0) > 0
+        };
+        var anyOpen = false;
+        onboarding.querySelectorAll('[data-onboard-step]').forEach(function(btn) {
+            var step = btn.getAttribute('data-onboard-step');
+            var complete = !!done[step];
+            btn.style.display = complete ? 'none' : '';
+            if (!complete) anyOpen = true;
+        });
+        onboarding.style.display = anyOpen ? 'block' : 'none';
+    }
+
+    function renderDashboard(s) {
+        renderOnboardingSteps(s);
         var cards = document.getElementById('dash-cards');
         cards.innerHTML = `
             <div class="stat-card accent-blue">

@@ -1,5 +1,6 @@
 package com.tatalance.driver;
 
+import com.tatalance.client.PhoneNormalizer;
 import com.tatalance.ride.JobRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
@@ -92,6 +93,7 @@ public class DriverController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Driver create(@Valid @RequestBody Driver driver) {
+        driver.setPhone(requireNormalizedPhone(driver.getPhone()));
         driver.setUserId(authHelper.getCurrentUserId());
         driver.setCreatedAt(Instant.now());
         return repository.save(driver);
@@ -102,6 +104,7 @@ public class DriverController {
     @ApiResponse(responseCode = "404", description = "Driver not found")
     @PutMapping("/{id}")
     public Driver update(@PathVariable String id, @Valid @RequestBody Driver updates) {
+        updates.setPhone(requireNormalizedPhone(updates.getPhone()));
         Driver existing = repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
         existing.setFirstName(updates.getFirstName());
@@ -152,5 +155,13 @@ public class DriverController {
                     "Invalid availability. Must be one of: AVAILABLE, ON_TRIP, OFF_DUTY");
         }
         return repository.save(driver);
+    }
+
+    private static String requireNormalizedPhone(String raw) {
+        try {
+            return PhoneNormalizer.normalize(raw);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 }

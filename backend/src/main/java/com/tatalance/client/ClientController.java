@@ -94,6 +94,7 @@ public class ClientController {
     @ResponseStatus(HttpStatus.CREATED)
     public Client create(@Valid @RequestBody Client client) {
         String userId = authHelper.getCurrentUserId();
+        client.setPhone(requireNormalizedPhone(client.getPhone()));
         if (repository.existsByUserIdAndPhone(userId, client.getPhone())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "A client with this phone number already exists");
@@ -112,6 +113,7 @@ public class ClientController {
     @PutMapping("/{id}")
     public Client update(@PathVariable String id, @Valid @RequestBody Client updates) {
         String userId = authHelper.getCurrentUserId();
+        updates.setPhone(requireNormalizedPhone(updates.getPhone()));
         Client existing = repository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
         if (!existing.getPhone().equals(updates.getPhone())
@@ -149,5 +151,13 @@ public class ClientController {
         }
         repository.deleteById(id);
         activityLog.log(authHelper.getCurrentUserId(), "DELETE", "Client", id, "Deleted client");
+    }
+
+    private static String requireNormalizedPhone(String raw) {
+        try {
+            return PhoneNormalizer.normalize(raw);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 }

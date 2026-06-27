@@ -2,7 +2,7 @@ package com.tatalance.driver;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -21,7 +21,6 @@ public class Driver {
     @NotBlank
     private String lastName;
     @NotBlank
-    @Pattern(regexp = "^\\+[1-9]\\d{9,14}$", message = "Phone must be E.164 format: + followed by 10-15 digits")
     private String phone;
     private String email;
     private String vehicle;
