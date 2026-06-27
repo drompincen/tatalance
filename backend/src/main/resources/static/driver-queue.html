@@ -226,6 +226,18 @@
         .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
         .empty-state p { font-size: 0.95rem; }
 
+        .form-error {
+            display: none;
+            margin: 10px 0 0;
+            padding: 10px 12px;
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 8px;
+            color: #c53030;
+            font-size: .88rem;
+            line-height: 1.35;
+        }
+        .form-error.show { display: block; }
         .error-state {
             padding: 24px 16px;
             border-radius: 12px;
@@ -255,7 +267,10 @@
         <div id="rides"></div>
     </main>
 
+    <script src="/js/i18n.js"></script>
+    <script src="/js/api-errors.js"></script>
     <script>
+        function tf(k, vars) { return typeof t === 'function' ? t(k, vars) : k; }
         const esc = s => String(s ?? '').replace(/[&<>"']/g,
             c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
@@ -363,6 +378,7 @@
                     <span>Total billable</span>
                     <span data-test="billable" id="billable-${rid}">$${base.toFixed(2)}</span>
                 </div>
+                <div class="form-error" id="complete-err-${rid}" role="alert"></div>
                 <div class="confirm-row">
                     <button class="action-btn cancel" onclick="closeCompleteForm('${esc(r.id)}')">Cancel</button>
                     <button class="action-btn complete" data-test="confirm-complete-btn"
@@ -417,27 +433,50 @@
             document.querySelector(`.complete-form[data-ride-id="${id}"]`)?.classList.remove('open');
         }
 
-        function startRide(id) {
-            fetch(`/api/rides/${encodeURIComponent(id)}/start`, { method: 'POST' })
-                .then(r => { if (!r.ok) throw new Error(`start failed: ${r.status}`); return r.json(); })
-                .then(loadQueue)
-                .catch(err => alert(err.message));
+        function showQueueError(id, msg) {
+            const el = document.getElementById(`complete-err-${id}`);
+            if (!el) {
+                if (msg) alert(formError(msg, 'messages.completeFailed'));
+                return;
+            }
+            if (msg) {
+                el.textContent = formError(msg, 'messages.completeFailed');
+                el.classList.add('show');
+            } else {
+                el.textContent = '';
+                el.classList.remove('show');
+            }
         }
 
-        function submitComplete(id) {
+        async function startRide(id) {
+            try {
+                const r = await fetch(`/api/rides/${encodeURIComponent(id)}/start`, { method: 'POST' });
+                if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+                await loadQueue();
+            } catch (err) {
+                alert(formError(resolveError(err, 'messages.cannotStartRide'), 'messages.cannotStartRide'));
+            }
+        }
+
+        async function submitComplete(id) {
+            showQueueError(id, '');
             const body = {
                 tolls: readNumber(`tolls-${id}`),
                 parking: readNumber(`parking-${id}`),
                 additionalCharges: readNumber(`extras-${id}`),
             };
-            fetch(`/api/rides/${encodeURIComponent(id)}/complete`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            })
-                .then(r => { if (!r.ok) throw new Error(`complete failed: ${r.status}`); return r.json(); })
-                .then(loadQueue)
-                .catch(err => alert(err.message));
+            try {
+                const r = await fetch(`/api/rides/${encodeURIComponent(id)}/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+                closeCompleteForm(id);
+                await loadQueue();
+            } catch (err) {
+                showQueueError(id, resolveError(err, 'messages.completeFailed'));
+            }
         }
 
         function loadDriverHeader() {

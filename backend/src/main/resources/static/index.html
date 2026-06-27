@@ -1039,6 +1039,7 @@
 </div>
 
 <script src="/js/i18n.js"></script>
+<script src="/js/api-errors.js"></script>
 <script>
     /* ── Helpers ── */
     function tf(k, vars) { return typeof t === 'function' ? t(k, vars) : k; }
@@ -1063,69 +1064,7 @@
         const el = document.getElementById(elId);
         if (el) el.textContent = tf('common.autoRefresh', { time: new Date().toLocaleTimeString() });
     }
-    function friendlyApiMessage(raw, status) {
-        const text = (raw || '').trim();
-        if (!text) {
-            if (status === 401 || status === 403) return tf('messages.sessionExpired');
-            if (status >= 500) return tf('messages.serverError');
-            if (status) return tf('messages.httpError', { status });
-            return tf('messages.saveFailed');
-        }
-        const exact = {
-            'Pickup date/time cannot be in the past': 'messages.scheduledPast',
-            'Pickup date/time is required': 'messages.scheduledRequired',
-            'Client not found': 'messages.clientNotFound',
-            'Profile not found or does not belong to user': 'messages.profileNotFound',
-            'Ride not found': 'messages.rideNotFound',
-            'Driver not found': 'messages.driverNotFound',
-            'A client with this phone number already exists': 'messages.duplicatePhone',
-            'Invalid request body': 'messages.invalidRequest',
-            'Only SCHEDULED rides can be edited': 'messages.onlyScheduledEdit',
-            'actualStart and actualEnd are required to complete an assigned ride': 'messages.completeTimesRequired',
-            'actualEnd must be after actualStart': 'messages.completeEndAfterStart',
-        };
-        if (exact[text]) return tf(exact[text]);
-        const partial = [
-            ['cannot be in the past', 'messages.scheduledPast'],
-            ['Profile not found', 'messages.profileNotFound'],
-            ['Client not found', 'messages.clientNotFound'],
-            ['Ride not found', 'messages.rideNotFound'],
-            ['Driver not found', 'messages.driverNotFound'],
-            ['phone number already exists', 'messages.duplicatePhone'],
-            ['Invalid request body', 'messages.invalidRequest'],
-            ['Only SCHEDULED rides can be edited', 'messages.onlyScheduledEdit'],
-            ['actualStart and actualEnd are required', 'messages.completeTimesRequired'],
-            ['actualEnd must be after actualStart', 'messages.completeEndAfterStart'],
-            ['Phone must have 10 digits', 'client.form.phoneE164'],
-        ];
-        for (const [needle, key] of partial) {
-            if (text.includes(needle)) return tf(key);
-        }
-        if (text.includes('E.164') || text.includes('Phone must start with +')) return tf('client.form.phoneE164');
-        return text;
-    }
-    async function apiErrorFromResponse(r) {
-        const text = await r.text().catch(() => '');
-        let err = {};
-        if (text) {
-            try { err = JSON.parse(text); } catch (_) {
-                return friendlyApiMessage(text.replace(/\s+/g, ' ').trim(), r.status);
-            }
-        }
-        const msgs = Array.isArray(err.errors)
-            ? err.errors.map(e => e && e.message).filter(Boolean)
-            : [];
-        const raw = (msgs.join('; ')
-            || err.detail
-            || err.message
-            || (typeof err.error === 'string' && err.error !== 'Bad Request' ? err.error : '')
-            || '').trim();
-        return friendlyApiMessage(raw, r.status);
-    }
-    function formError(msg) {
-        const m = (msg || tf('messages.saveFailed')).trim();
-        return m.startsWith('✗') ? m : '✗ ' + m;
-    }
+
     function clearStaleProfile() {
         if (!activeProfileId) return;
         if ((profilesCache || []).some(p => p.id === activeProfileId)) return;
@@ -1744,15 +1683,10 @@
         if (!confirm(tf('messages.deleteConfirm', { name }))) return;
         try {
             const r = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
-            if (r.status === 400) {
-                const data = await r.json();
-                alert(data.message || tf('messages.cannotDeleteClient'));
-                return;
-            }
-            if (!r.ok) throw new Error();
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             load();
-        } catch {
-            alert(tf('messages.deleteFailed'));
+        } catch (e) {
+            alert(formError(resolveError(e, 'messages.deleteFailed'), 'messages.deleteFailed'));
         }
     };
 
@@ -1901,7 +1835,7 @@
             renderDrivers((pageMeta.drivers && pageMeta.drivers.content) || []);
             loadDrivers(true).catch(() => {});
         } catch (e) {
-            alert(formError(e.message || tf('messages.saveFailed')));
+            alert(formError(resolveError(e, 'messages.saveFailed'), 'messages.saveFailed'));
             loadDrivers(true).catch(() => {});
         }
     }
@@ -2017,15 +1951,10 @@
         if (!confirm(tf('messages.deleteConfirm', { name }))) return;
         try {
             const r = await fetch(`/api/drivers/${id}`, { method: 'DELETE' });
-            if (r.status === 400) {
-                const data = await r.json();
-                alert(data.message || tf('messages.cannotDeleteDriver'));
-                return;
-            }
-            if (!r.ok) throw new Error();
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             loadDrivers();
-        } catch {
-            alert(tf('messages.deleteFailed'));
+        } catch (e) {
+            alert(formError(resolveError(e, 'messages.deleteFailed'), 'messages.deleteFailed'));
         }
     };
 
@@ -2128,7 +2057,7 @@
             loadRides(true).catch(() => {});
             loadDrivers(true).catch(() => {});
         } catch (e) {
-            alert(formError(e.message || tf('messages.saveFailed')));
+            alert(formError(resolveError(e, 'messages.assignFailed'), 'messages.assignFailed'));
         }
     }
 
@@ -2242,7 +2171,7 @@
             if (typeof loadDashboard === 'function') loadDashboard();
         } catch (err) {
             btn.disabled = false; btn.textContent = tf('ride.complete.confirmBtn');
-            showCompleteError(err.message || tf('messages.completeFailed'));
+            showCompleteError(resolveError(err, 'messages.completeFailed'));
         }
     };
 
@@ -2695,7 +2624,7 @@
             loadRides(true).catch(() => {});
             loadDrivers(true).catch(() => {});
         } catch (e) {
-            alert(formError(e.message || tf('messages.cancelFailed')));
+            alert(formError(resolveError(e, 'messages.cancelFailed'), 'messages.cancelFailed'));
         }
     };
 
@@ -2712,7 +2641,7 @@
             if (typeof loadDashboard === 'function') loadDashboard();
             loadRides(true).catch(() => {});
         } catch (e) {
-            alert(formError(e.message || tf('messages.markPayoutFailed')));
+            alert(formError(resolveError(e, 'messages.markPayoutFailed'), 'messages.markPayoutFailed'));
         }
     };
 
@@ -2923,7 +2852,7 @@
             }
             loadJobs(true);
             if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides(true);
-        } catch(e) { alert(tf('messages.startJobFailed')); }
+        } catch (e) { alert(formError(resolveError(e, 'messages.startJobFailed'), 'messages.startJobFailed')); }
     };
 
     window.completeJob = async function(jobId) {
@@ -2957,7 +2886,7 @@
             const fb = document.getElementById('job-fb');
             if (fb) { fb.className = 'form-feedback ok'; fb.textContent = tf('messages.jobCompleted'); setTimeout(()=>{if(fb)fb.textContent='';}, 2400); }
         } catch(e) {
-            alert(tf('messages.failed', { message: e.message }));
+            alert(tf('messages.failed', { message: resolveError(e, 'messages.requestFailed') }));
             if (btns[0]) { btns[0].disabled = false; btns[0].textContent = tf('job.actions.complete'); }
         }
     };
@@ -3076,7 +3005,7 @@
             await loadInvoices(true);
             showTab('invoices');
         } catch (e) {
-            alert(tf('messages.invoiceFailed', { message: e.message || tf('messages.saveFailed') }));
+            alert(tf('messages.invoiceFailed', { message: resolveError(e, 'messages.invoiceRideNotCompleted') }));
         }
     }
 
@@ -3118,7 +3047,7 @@
             if (typeof loadDashboard === 'function') loadDashboard();
             loadInvoices(true).catch(() => {});
         } catch (e) {
-            alert(formError(e.message || tf('messages.saveFailed')));
+            alert(formError(resolveError(e, 'messages.saveFailed'), 'messages.saveFailed'));
             if (btn && btn.tagName === 'BUTTON') {
                 btn.disabled = false;
                 btn.textContent = prevLabel;
@@ -3525,7 +3454,7 @@
             editingColumnState[tableId] = null;
             await loadCustomTables(true);
             showTab(`custom-${tableId}`);
-        } catch (e) { alert(tf('messages.failed', { message: e.message })); }
+        } catch (e) { alert(tf('messages.failed', { message: resolveError(e, 'messages.requestFailed') })); }
     };
 
     window.deleteColumn = async function(tableId, colName) {
@@ -3536,7 +3465,7 @@
             editingColumnState[tableId] = null;
             await loadCustomTables(true);
             showTab(`custom-${tableId}`);
-        } catch (e) { alert(tf('messages.failed', { message: e.message })); }
+        } catch (e) { alert(tf('messages.failed', { message: resolveError(e, 'messages.requestFailed') })); }
     };
 
     function isUserEditingCustomTable() {
@@ -3631,7 +3560,7 @@
             customTableRows[tableId] = await rr.json();
             renderAllCustomPanes();
             showTab(`custom-${tableId}`);
-        } catch { alert(tf('messages.deleteFailed')); }
+        } catch (e) { alert(formError(resolveError(e, 'messages.deleteFailed'), 'messages.deleteFailed')); }
     };
 
     window.bulkDeleteCustomRows = async function(tableId) {
@@ -3663,7 +3592,7 @@
             delete editingRowState[tableId];
             loadCustomTables();
             showTab('clients');
-        } catch { alert(tf('messages.deleteFailed')); }
+        } catch (e) { alert(formError(resolveError(e, 'messages.deleteFailed'), 'messages.deleteFailed')); }
     };
 
     /* bootstrap loads moved inside successful /api/users/me to avoid partial renders or extra work on unauth (helps mobile) */
@@ -3938,9 +3867,9 @@
                 window.location.href = data.redirect;
                 return;
             }
-            alert(data.message || tf('messages.linkGoogleFailed'));
+            alert(formError(resolveError({ message: data.message }, 'messages.linkGoogleFailed'), 'messages.linkGoogleFailed'));
         } catch (err) {
-            alert(tf('messages.linkGoogleFailed'));
+            alert(formError(resolveError(err, 'messages.linkGoogleFailed'), 'messages.linkGoogleFailed'));
         }
     };
 
