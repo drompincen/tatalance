@@ -235,7 +235,7 @@ class DriverControllerTest {
     @Test
     void should_deleteDriver() throws Exception {
         when(repository.existsByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(true);
-        when(rideRepository.findByAssignedDriverIdAndStatusIn(eq("drv001"), any()))
+        when(rideRepository.findByUserIdAndAssignedDriverIdAndStatusIn(eq(TEST_USER_ID), eq("drv001"), any()))
                 .thenReturn(Collections.emptyList());
 
         mockMvc.perform(delete("/api/drivers/drv001"))
@@ -248,7 +248,7 @@ class DriverControllerTest {
         when(repository.existsByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(true);
         var ride = new com.tatalance.ride.Ride();
         ride.setStatus(RideStatus.IN_PROGRESS);
-        when(rideRepository.findByAssignedDriverIdAndStatusIn(eq("drv001"), any()))
+        when(rideRepository.findByUserIdAndAssignedDriverIdAndStatusIn(eq(TEST_USER_ID), eq("drv001"), any()))
                 .thenReturn(List.of(ride));
 
         mockMvc.perform(delete("/api/drivers/drv001"))
@@ -369,7 +369,7 @@ class DriverControllerTest {
         r2.setStatus(RideStatus.COMPLETED);
         r2.setDriverPayout(new BigDecimal("30"));
         r2.setPayoutPaid(false);
-        when(rideRepository.findByAssignedDriverId("drv001")).thenReturn(List.of(r1, r2));
+        when(rideRepository.findByUserIdAndAssignedDriverId(TEST_USER_ID, "drv001")).thenReturn(List.of(r1, r2));
 
         mockMvc.perform(get("/api/drivers/drv001/stats"))
                 .andExpect(status().isOk())

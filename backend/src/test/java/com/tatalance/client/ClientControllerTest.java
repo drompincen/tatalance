@@ -223,7 +223,7 @@ class ClientControllerTest {
     @Test
     void should_deleteClient() throws Exception {
         when(repository.existsByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(true);
-        when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
+        when(rideRepository.findByUserIdAndClientIdAndStatusIn(eq(TEST_USER_ID), eq("abc123"), any()))
                 .thenReturn(Collections.emptyList());
 
         mockMvc.perform(delete("/api/clients/abc123"))
@@ -236,7 +236,7 @@ class ClientControllerTest {
         when(repository.existsByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(true);
         var ride = new com.tatalance.ride.Ride();
         ride.setStatus(RideStatus.SCHEDULED);
-        when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
+        when(rideRepository.findByUserIdAndClientIdAndStatusIn(eq(TEST_USER_ID), eq("abc123"), any()))
                 .thenReturn(List.of(ride));
 
         mockMvc.perform(delete("/api/clients/abc123"))

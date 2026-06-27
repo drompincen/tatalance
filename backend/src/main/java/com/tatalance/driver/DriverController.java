@@ -63,7 +63,7 @@ public class DriverController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
         }
-        var rides = rideRepository.findByAssignedDriverId(id);
+        var rides = rideRepository.findByUserIdAndAssignedDriverId(authHelper.getCurrentUserId(), id);
         long totalRides = rides.size();
         long completedRides = rides.stream().filter(r -> r.getStatus() == RideStatus.COMPLETED).count();
         BigDecimal totalEarned = rides.stream()
@@ -124,8 +124,9 @@ public class DriverController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
         }
-        var activeRides = rideRepository.findByAssignedDriverIdAndStatusIn(id,
-                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS)); // uses ride-specific query (post #93)
+        var activeRides = rideRepository.findByUserIdAndAssignedDriverIdAndStatusIn(
+                authHelper.getCurrentUserId(), id,
+                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
         if (!activeRides.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot delete driver with active rides (" + activeRides.size() + " active)");

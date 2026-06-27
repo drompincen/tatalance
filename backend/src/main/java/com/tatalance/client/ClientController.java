@@ -67,7 +67,7 @@ public class ClientController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
         }
-        var rides = rideRepository.findByClientId(id);
+        var rides = rideRepository.findByUserIdAndClientId(authHelper.getCurrentUserId(), id);
         long totalRides = rides.size();
         long completedRides = rides.stream().filter(r -> r.getStatus() == RideStatus.COMPLETED).count();
         BigDecimal totalSpent = rides.stream()
@@ -140,8 +140,9 @@ public class ClientController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
         }
-        var activeRides = rideRepository.findByClientIdAndStatusIn(id,
-                List.of(RideStatus.SCHEDULED, RideStatus.ASSIGNED, RideStatus.IN_PROGRESS)); // ride-only check post Job refactor
+        String userId = authHelper.getCurrentUserId();
+        var activeRides = rideRepository.findByUserIdAndClientIdAndStatusIn(userId, id,
+                List.of(RideStatus.SCHEDULED, RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
         if (!activeRides.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot delete client with active rides (" + activeRides.size() + " active)");

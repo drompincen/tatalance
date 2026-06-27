@@ -22,7 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -138,7 +140,11 @@ public class RideController {
     @ApiResponse(responseCode = "200", description = "Client rides")
     @GetMapping("/clients/{clientId}/rides")
     public List<Ride> listByClient(@PathVariable String clientId) {
-        return rideRepository.findByClientId(clientId);
+        String userId = authHelper.getCurrentUserId();
+        if (!clientRepository.existsByIdAndUserId(clientId, userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
+        }
+        return rideRepository.findByUserIdAndClientId(userId, clientId);
     }
 
     @Operation(summary = "List rides assigned to a driver",
@@ -147,7 +153,11 @@ public class RideController {
     @ApiResponse(responseCode = "200", description = "Driver's rides")
     @GetMapping("/drivers/{driverId}/rides")
     public List<Ride> listByDriver(@PathVariable String driverId) {
-        return rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc(driverId);
+        String userId = authHelper.getCurrentUserId();
+        if (!driverRepository.existsByIdAndUserId(driverId, userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
+        }
+        return rideRepository.findByUserIdAndAssignedDriverIdOrderByPickupDateTimeAsc(userId, driverId);
     }
 
     @Operation(summary = "Assign a driver to a ride")
@@ -298,12 +308,34 @@ public class RideController {
                     + "additionalCharges; billableAmount = basePrice + extras. Issue #34.")
     @PostMapping("/rides/{id}/complete")
     public Ride complete(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        Ride ride = rideRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
+        String userId = authHelper.getCurrentUserId();
+        Ride ride = rideRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
-        if (ride.getStatus() != RideStatus.IN_PROGRESS && ride.getStatus() != RideStatus.PAUSED) {
+
+        Instant end;
+        if (ride.getStatus() == RideStatus.ASSIGNED) {
+            Instant start = asInstant(body, "actualStart");
+            end = asInstant(body, "actualEnd");
+            if (start == null || end == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "actualStart and actualEnd are required to complete an assigned ride");
+            }
+            if (!end.isAfter(start)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "actualEnd must be after actualStart");
+            }
+            ride.setActualStart(start);
+            ride.setActualEnd(end);
+            ride.setWorkSegments(new ArrayList<>(List.of(new WorkSegment(start, end))));
+            ride.setDurationMinutes(Duration.between(start, end).toMinutes());
+        } else if (ride.getStatus() == RideStatus.IN_PROGRESS || ride.getStatus() == RideStatus.PAUSED) {
+            end = Instant.now();
+            timerService.finalizeDurationMinutes(ride, end);
+        } else {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Cannot complete a ride in status " + ride.getStatus() + " — start the timer first");
         }
+
         BigDecimal tolls   = asDecimal(body, "tolls");
         BigDecimal parking = asDecimal(body, "parking");
         BigDecimal extras  = asDecimal(body, "additionalCharges");
@@ -311,8 +343,6 @@ public class RideController {
         ride.setTolls(tolls);
         ride.setParking(parking);
         ride.setAdditionalCharges(extras);
-        Instant end = Instant.now();
-        timerService.finalizeDurationMinutes(ride, end);
 
         PricingMode mode = ride.getPricingMode() == null ? PricingMode.FLAT : ride.getPricingMode();
         BigDecimal total = timerService.billableAmount(ride, end);
@@ -325,7 +355,7 @@ public class RideController {
 
         // Calculate driver payout (#87)
         if (ride.getAssignedDriverId() != null) {
-            driverRepository.findByIdAndUserId(ride.getAssignedDriverId(), authHelper.getCurrentUserId())
+            driverRepository.findByIdAndUserId(ride.getAssignedDriverId(), userId)
                     .ifPresent(driver -> {
                         if (driver.getPayoutType() != null && driver.getPayoutRate() != null) {
                             BigDecimal payout = switch (driver.getPayoutType()) {
@@ -335,15 +365,25 @@ public class RideController {
                             };
                             ride.setDriverPayout(payout);
                         }
+                        driver.setAvailability(Availability.AVAILABLE);
+                        driverRepository.save(driver);
                     });
         }
 
         ride.setStatus(RideStatus.COMPLETED);
         ride.addStatusEvent(RideStatus.COMPLETED);
         Ride saved = rideRepository.save(ride);
-        activityLog.log(authHelper.getCurrentUserId(), "COMPLETE", "Ride", id,
+        activityLog.log(userId, "COMPLETE", "Ride", id,
                 "Completed ride for " + ride.getClientName() + " — $" + total);
         return saved;
+    }
+
+    private static Instant asInstant(Map<String, Object> body, String key) {
+        if (body == null || body.get(key) == null) {
+            return null;
+        }
+        Object v = body.get(key);
+        return Instant.parse(v.toString());
     }
 
     private static BigDecimal asDecimal(Map<String, Object> body, String key) {
@@ -376,6 +416,7 @@ public class RideController {
     @ApiResponse(responseCode = "200", description = "Available drivers")
     @GetMapping("/drivers/available")
     public List<Driver> listAvailableDrivers() {
-        return driverRepository.findByAvailability(Availability.AVAILABLE);
+        return driverRepository.findByUserIdAndAvailability(
+                authHelper.getCurrentUserId(), Availability.AVAILABLE);
     }
 }
