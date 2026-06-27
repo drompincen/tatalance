@@ -1701,8 +1701,8 @@
                 if (r.status === 400) {
                     const data = await r.json();
                     errors.push(data.message || `Cannot delete client ${id}`);
-                } else if (!r.ok) { errors.push(`Failed to delete client ${id}`); }
-            } catch { errors.push(`Failed to delete client ${id}`); }
+                } else if (!r.ok) { errors.push(tf('messages.cannotDeleteClient')); }
+            } catch (e) { errors.push(resolveError(e, 'messages.deleteFailed')); }
         }
         selectedItems['clients'] = new Set();
         deleteModeState['clients'] = false;
@@ -1969,8 +1969,8 @@
                 if (r.status === 400) {
                     const data = await r.json();
                     errors.push(data.message || `Cannot delete driver ${id}`);
-                } else if (!r.ok) { errors.push(`Failed to delete driver ${id}`); }
-            } catch { errors.push(`Failed to delete driver ${id}`); }
+                } else if (!r.ok) { errors.push(tf('messages.cannotDeleteDriver')); }
+            } catch (e) { errors.push(resolveError(e, 'messages.deleteFailed')); }
         }
         selectedItems['drivers'] = new Set();
         deleteModeState['drivers'] = false;
@@ -3572,8 +3572,8 @@
         for (const rowId of sel) {
             try {
                 const r = await fetch(`/api/tables/${tableId}/rows/${rowId}`, { method: 'DELETE' });
-                if (!r.ok) errors.push(`Failed to delete row ${rowId}`);
-            } catch { errors.push(`Failed to delete row ${rowId}`); }
+                if (!r.ok) errors.push(tf('messages.deleteFailed'));
+            } catch (e) { errors.push(resolveError(e, 'messages.deleteFailed')); }
         }
         selectedItems[key] = new Set();
         deleteModeState[key] = false;
