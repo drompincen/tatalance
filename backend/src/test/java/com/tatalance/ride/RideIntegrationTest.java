@@ -327,12 +327,13 @@ class RideIntegrationTest {
     void should_listRidesByDriver_sortedByPickupTime() {
         // M3 (#33) — driver queue endpoint
         var clientId = createClient();
-        final String drv = "drv-q-test-" + System.currentTimeMillis();  // unique to avoid cross-test pollution (baseline fix)
+        final String drv = createDriver();
+        var otherDrv = createDriver();
 
         // Two rides, one earlier, one later. Both assigned to the same driver.
-        var laterId = createRide(clientId, "2028-08-01T18:00:00Z", "Bayfront", "Wynwood", drv);
-        var earlierId = createRide(clientId, "2028-08-01T08:00:00Z", "MIA", "Downtown", drv);
-        createRide(clientId, "2028-08-01T10:00:00Z", "Brickell", "South Beach", "other-driver");
+        createRide(clientId, "2028-08-01T18:00:00Z", "Bayfront", "Wynwood", drv);
+        createRide(clientId, "2028-08-01T08:00:00Z", "MIA", "Downtown", drv);
+        createRide(clientId, "2028-08-01T10:00:00Z", "Brickell", "South Beach", otherDrv);
 
         var response = restTemplate.getForEntity("/api/drivers/" + drv + "/rides", List.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -344,9 +345,16 @@ class RideIntegrationTest {
 
     @Test
     void should_returnEmptyList_when_driverHasNoRides() {
-        var response = restTemplate.getForEntity("/api/drivers/no-such-driver/rides", List.class);
+        var driverId = createDriver();
+        var response = restTemplate.getForEntity("/api/drivers/" + driverId + "/rides", List.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEmpty();
+    }
+
+    @Test
+    void should_return404_when_listRidesForUnknownDriver() {
+        var response = restTemplate.getForEntity("/api/drivers/no-such-driver/rides", Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     /**

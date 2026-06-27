@@ -247,7 +247,7 @@ class ValidationErrorTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"phone\":\"+123\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[?(@.field=='phone')].message")
+                .andExpect(jsonPath("$.errors[?(@.field=='phone')].message[0]")
                         .value(containsString("El teléfono debe comenzar con +")));
     }
 

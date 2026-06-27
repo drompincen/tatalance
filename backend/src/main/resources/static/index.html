@@ -1596,16 +1596,23 @@
     function isUserEditingTab(tabId) {
         const active = document.activeElement;
         if (!active || active === document.body) return false;
-        return !!active.closest('#' + tabId);
+        const tab = document.getElementById(tabId);
+        if (!tab || !tab.contains(active)) return false;
+        // Inline table controls (assign driver, availability) should not block list refresh
+        if (active.closest('.complete-panel')) return true;
+        const form = active.closest('form');
+        if (!form || !tab.contains(form)) return false;
+        const tag = active.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active.isContentEditable;
     }
 
-    function load() {
-        fetch(`/api/clients?page=${pageState.clients}&size=${PAGE_SIZE}`)
+    function load(forceRender) {
+        return fetch(`/api/clients?page=${pageState.clients}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
                 allClientsCache = data.content || [];
                 pageMeta.clients = data;
-                if (!isUserEditingTab('tab-clients')) filterClients();
+                if (forceRender || !isUserEditingTab('tab-clients')) filterClients();
                 refreshTimestamp('ts');
             })
             .catch(() => {
@@ -1837,12 +1844,12 @@
     function driverPrev() { if (pageState.drivers > 0) { pageState.drivers--; loadDrivers(); } }
     function driverNext() { if (pageState.drivers < (pageMeta.drivers.totalPages || 1) - 1) { pageState.drivers++; loadDrivers(); } }
 
-    function loadDrivers() {
-        fetch(`/api/drivers?page=${pageState.drivers}&size=${PAGE_SIZE}`)
+    function loadDrivers(forceRender) {
+        return fetch(`/api/drivers?page=${pageState.drivers}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
                 pageMeta.drivers = data;
-                if (!isUserEditingTab('tab-drivers')) renderDrivers(data.content || []);
+                if (forceRender || !isUserEditingTab('tab-drivers')) renderDrivers(data.content || []);
                 refreshTimestamp('driver-ts');
             })
             .catch(() => {
@@ -1851,12 +1858,27 @@
             });
     }
 
-    function updateAvailability(id, value) {
-        fetch(`/api/drivers/${id}/availability`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ availability: value })
-        }).then(() => loadDrivers());
+    async function updateAvailability(id, value) {
+        try {
+            const r = await fetch(`/api/drivers/${id}/availability`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ availability: value })
+            });
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            const updated = await r.json();
+            const page = pageMeta.drivers && pageMeta.drivers.content;
+            if (page) {
+                const idx = page.findIndex(d => d.id === id);
+                if (idx >= 0) page[idx] = Object.assign({}, page[idx], updated);
+            }
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            renderDrivers((pageMeta.drivers && pageMeta.drivers.content) || []);
+            loadDrivers(true).catch(() => {});
+        } catch (e) {
+            alert(formError(e.message || tf('messages.saveFailed')));
+            loadDrivers(true).catch(() => {});
+        }
     }
 
     /* ── Driver form ── */
@@ -2059,12 +2081,25 @@
         }).catch(() => {});
     }
 
-    function assignDriver(rideId, driverId) {
-        fetch(`/api/rides/${rideId}/assign`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ driverId })
-        }).then(() => { loadRides(); loadAvailableDrivers(); loadDrivers(); });
+    async function assignDriver(rideId, driverId) {
+        try {
+            const r = await fetch(`/api/rides/${rideId}/assign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ driverId })
+            });
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            const updated = await r.json();
+            const idx = allRidesCache.findIndex(ride => ride.id === rideId);
+            if (idx >= 0) allRidesCache[idx] = Object.assign({}, allRidesCache[idx], updated);
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            applyRideFilter();
+            loadAvailableDrivers();
+            loadRides(true).catch(() => {});
+            loadDrivers(true).catch(() => {});
+        } catch (e) {
+            alert(formError(e.message || tf('messages.saveFailed')));
+        }
     }
 
     let completingRideId = null;
@@ -2153,7 +2188,14 @@
             });
             if (!r.ok) throw new Error(await apiErrorFromResponse(r));
             completingRideId = null;
-            loadRides(); loadAvailableDrivers(); loadDrivers();
+            if (btn && btn.blur) btn.blur();
+            const idx = allRidesCache.findIndex(r => r.id === rideId);
+            const completed = await r.json();
+            if (idx >= 0) allRidesCache[idx] = Object.assign({}, allRidesCache[idx], completed);
+            applyRideFilter();
+            loadAvailableDrivers();
+            loadRides(true).catch(() => {});
+            loadDrivers(true).catch(() => {});
         } catch (err) {
             btn.disabled = false; btn.textContent = tf('ride.complete.confirmBtn');
             alert(formError(err.message || tf('messages.completeFailed')));
@@ -2439,14 +2481,14 @@
         }
     }
 
-    function loadRides() {
+    function loadRides(forceRender) {
         const prof = getProfileParam();
-        fetch(`/api/rides?page=${pageState.rides}&size=${PAGE_SIZE}${prof}`)
+        return fetch(`/api/rides?page=${pageState.rides}&size=${PAGE_SIZE}${prof}`)
             .then(r => r.json())
             .then(data => {
                 allRidesCache = data.content || [];
                 pageMeta.rides = data;
-                if (!isUserEditingTab('tab-rides')) {
+                if (forceRender || !isUserEditingTab('tab-rides')) {
                     applyRideFilter();
                 }
                 refreshTimestamp('ride-ts');
@@ -2597,14 +2639,17 @@
         if (!confirm(tf('messages.cancelRide'))) return;
         try {
             const r = await fetch(`/api/rides/${rideId}/cancel`, { method: 'POST' });
-            if (!r.ok) {
-                const data = await r.json();
-                alert(data.message || tf('messages.cannotCancelRide'));
-                return;
-            }
-            loadRides(); loadAvailableDrivers(); loadDrivers();
-        } catch {
-            alert(tf('messages.cancelFailed'));
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            const updated = await r.json();
+            const idx = allRidesCache.findIndex(ride => ride.id === rideId);
+            if (idx >= 0) allRidesCache[idx] = Object.assign({}, allRidesCache[idx], updated);
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            applyRideFilter();
+            loadAvailableDrivers();
+            loadRides(true).catch(() => {});
+            loadDrivers(true).catch(() => {});
+        } catch (e) {
+            alert(formError(e.message || tf('messages.cancelFailed')));
         }
     };
 
@@ -2612,9 +2657,17 @@
         if (!confirm(tf('messages.markPayoutPaid'))) return;
         try {
             const r = await fetch(`/api/rides/${rideId}/mark-payout-paid`, { method: 'POST' });
-            if (!r.ok) { alert(tf('messages.markPayoutFailed')); return; }
-            loadRides(); loadDashboard();
-        } catch { alert(tf('messages.failed', { message: '' })); }
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            const updated = await r.json();
+            const idx = allRidesCache.findIndex(ride => ride.id === rideId);
+            if (idx >= 0) allRidesCache[idx] = Object.assign({}, allRidesCache[idx], updated);
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            applyRideFilter();
+            if (typeof loadDashboard === 'function') loadDashboard();
+            loadRides(true).catch(() => {});
+        } catch (e) {
+            alert(formError(e.message || tf('messages.markPayoutFailed')));
+        }
     };
 
     loadClientDropdown();
@@ -2822,8 +2875,8 @@
                 // trigger timer render on next tick
                 setTimeout(tickJobTimers, 10);
             }
-            loadJobs();
-            if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
+            loadJobs(true);
+            if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides(true);
         } catch(e) { alert(tf('messages.startJobFailed')); }
     };
 
@@ -2837,10 +2890,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
             });
-            if (!resp.ok) {
-                const e = await resp.json().catch(() => ({}));
-                throw new Error(e.message || 'Complete failed');
-            }
+            if (!resp.ok) throw new Error(await apiErrorFromResponse(resp));
             // Optimistic UI update for instant feedback + E2E reliability
             const card = document.querySelector(`[data-job-id="${jobId}"]`);
             if (card) {
@@ -2851,8 +2901,12 @@
                 const timer = card.querySelector('.job-timer');
                 if (timer) timer.style.display = 'none';
             }
-            loadJobs();
-            if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides();
+            const updated = await resp.json();
+            const jidx = allJobsCache.findIndex(j => j.id === jobId);
+            if (jidx >= 0) allJobsCache[jidx] = Object.assign({}, allJobsCache[jidx], updated);
+            applyJobFilter();
+            loadJobs(true);
+            if (document.getElementById('tab-rides') && document.getElementById('tab-rides').classList.contains('active')) loadRides(true);
             loadDashboard();
             const fb = document.getElementById('job-fb');
             if (fb) { fb.className = 'form-feedback ok'; fb.textContent = tf('messages.jobCompleted'); setTimeout(()=>{if(fb)fb.textContent='';}, 2400); }
@@ -2962,18 +3016,22 @@
     setInterval(tickJobTimers, 1000);
 
     /* ── Invoices ── */
-    function generateInvoice(rideId) {
-        fetch('/api/invoices', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rideId })
-        }).then(r => {
-            if (!r.ok) return r.json().then(e => { throw new Error(e.message || 'Failed'); });
-            return r.json();
-        }).then(inv => {
-            loadInvoices();
+    async function generateInvoice(rideId) {
+        try {
+            const r = await fetch('/api/invoices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rideId })
+            });
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            const inv = await r.json();
+            allInvoicesCache.unshift(inv);
+            applyInvoiceFilter();
+            await loadInvoices(true);
             showTab('invoices');
-        }).catch(e => alert(tf('messages.invoiceFailed', { message: e.message })));
+        } catch (e) {
+            alert(tf('messages.invoiceFailed', { message: e.message || tf('messages.saveFailed') }));
+        }
     }
 
     const invStatusColors = { OUTSTANDING: '#d97706', PAID: '#38a169' };
@@ -2991,14 +3049,36 @@
         renderInvoices(filtered);
     }
 
-    function markPaid(invoiceId) {
-        fetch(`/api/invoices/${invoiceId}/mark-paid`, {
-            method: 'POST'
-        }).then(r => {
-            if (!r.ok) return r.json().then(e => { throw new Error(e.message || 'Failed'); });
-            loadInvoices();
-        }).catch(e => alert(tf('messages.failed', { message: e.message })));
-    }
+    window.markPaid = async function(invoiceId) {
+        const btn = document.activeElement;
+        const prevLabel = btn && btn.tagName === 'BUTTON' ? btn.textContent : '';
+        if (btn && btn.tagName === 'BUTTON') {
+            btn.disabled = true;
+            btn.textContent = tf('common.saving');
+        }
+        try {
+            const r = await fetch(`/api/invoices/${invoiceId}/mark-paid`, { method: 'POST' });
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            const updated = await r.json();
+            const idx = allInvoicesCache.findIndex(i => i.id === invoiceId);
+            if (idx >= 0) {
+                allInvoicesCache[idx] = Object.assign({}, allInvoicesCache[idx], updated);
+            } else {
+                allInvoicesCache.unshift(updated);
+            }
+            if (btn && btn.blur) btn.blur();
+            applyInvoiceFilter();
+            refreshTimestamp('invoice-ts');
+            if (typeof loadDashboard === 'function') loadDashboard();
+            loadInvoices(true).catch(() => {});
+        } catch (e) {
+            alert(formError(e.message || tf('messages.saveFailed')));
+            if (btn && btn.tagName === 'BUTTON') {
+                btn.disabled = false;
+                btn.textContent = prevLabel;
+            }
+        }
+    };
 
     function invoiceChargeLabel(i) {
         const mode = i.pricingMode || 'FLAT';
@@ -3043,13 +3123,13 @@
     function invoicePrev() { if (pageState.invoices > 0) { pageState.invoices--; loadInvoices(); } }
     function invoiceNext() { if (pageState.invoices < (pageMeta.invoices.totalPages || 1) - 1) { pageState.invoices++; loadInvoices(); } }
 
-    function loadInvoices() {
-        fetch(`/api/invoices?page=${pageState.invoices}&size=${PAGE_SIZE}`)
+    function loadInvoices(forceRender) {
+        return fetch(`/api/invoices?page=${pageState.invoices}&size=${PAGE_SIZE}`)
             .then(r => r.json())
             .then(data => {
                 allInvoicesCache = data.content || [];
                 pageMeta.invoices = data;
-                if (!isUserEditingTab('tab-invoices')) applyInvoiceFilter();
+                if (forceRender || !isUserEditingTab('tab-invoices')) applyInvoiceFilter();
                 refreshTimestamp('invoice-ts');
             })
             .catch(() => {
