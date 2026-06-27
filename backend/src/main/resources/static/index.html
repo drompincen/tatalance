@@ -438,10 +438,46 @@
         }
         .search-box input::placeholder { color: rgba(255,255,255,.45); }
         .mobile-logout-only { display: none; }
-        .nav-external-link { display: none; text-decoration: none; }
+        .nav-drawer-only { display: none; text-decoration: none; }
+        .nav-mode-switch {
+            display: none; margin: 8px 16px 12px; padding: 14px 16px; border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; text-decoration: none;
+            border: 2px solid rgba(255,255,255,.25); box-shadow: 0 4px 14px rgba(79,70,229,.35);
+        }
+        .nav-mode-switch strong { display: block; font-size: .95rem; letter-spacing: -.02em; }
+        .nav-mode-switch small { display: block; margin-top: 4px; font-size: .72rem; opacity: .9; }
+        .nav-section-label {
+            display: none; padding: 10px 24px 4px; font-size: .65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.45);
+        }
+        .menu-item-freelance { font-weight: 700; color: #4f46e5 !important; }
+        .account-menu-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 104;
+        }
+        .account-menu-overlay.open { display: block; }
+        .account-menu-panel .account-tax-row {
+            display: flex; gap: 6px; align-items: center; padding: 0 14px 10px;
+        }
+        .account-menu-panel .account-tax-row input {
+            flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;
+        }
+        .jobs-freelance-banner {
+            margin-bottom: 16px; padding: 14px 16px; border-radius: 10px;
+            background: linear-gradient(135deg, #eef2ff, #fff); border: 2px solid #c7d2fe;
+        }
+        .jobs-freelance-banner h4 { font-size: .92rem; font-weight: 800; margin-bottom: 6px; color: #3730a3; }
+        .jobs-freelance-banner p { font-size: .82rem; color: #4b5563; margin-bottom: 10px; line-height: 1.45; }
+        .jobs-freelance-banner .banner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .jobs-freelance-banner .banner-actions a,
+        .jobs-freelance-banner .banner-actions button {
+            min-height: 44px; padding: 10px 14px; border-radius: 8px; font-size: .85rem; font-weight: 700;
+            text-decoration: none; border: none; cursor: pointer;
+        }
+        .jobs-freelance-banner .banner-primary { background: #6366f1; color: #fff; }
+        .jobs-freelance-banner .banner-secondary { background: #fff; color: #4338ca; border: 1.5px solid #c7d2fe !important; }
 
         /* ── Hamburger menu ── */
-        .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; }
+        .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
         .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
         .nav-overlay.open { display: block; }
 
@@ -461,27 +497,35 @@
             .header-nav-row { display: block; position: absolute; width: 0; height: 0; overflow: visible; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
-            .account-menu-panel { position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 12px 12px 0 0; max-height: 70vh; overflow-y: auto; }
+            .account-menu-panel {
+                position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0;
+                max-height: 78vh; overflow-y: auto; z-index: 110;
+                padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            }
+            .account-menu-panel.open { display: block !important; }
             #link-google-btn { display: none !important; }
             .hamburger { display: flex; align-items: center; }
             .status-footer { display: none; }
             nav {
-                display: none; position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
-                background: #1a1a2e; flex-direction: column; padding: 20px 0; z-index: 100;
-                gap: 0; margin-left: 0; overflow-y: auto; padding-top: calc(20px + env(safe-area-inset-top));
+                display: none; position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 88vw);
+                background: #1a1a2e; flex-direction: column; padding: 12px 0 20px; z-index: 100;
+                gap: 0; margin-left: 0; overflow-y: auto; padding-top: calc(12px + env(safe-area-inset-top));
             }
             nav.open { display: flex; }
-            nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; }
+            .nav-mode-switch, .nav-section-label { display: block; }
+            nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; min-height: 44px; }
             nav .tab-btn.active { background: rgba(255,255,255,.12); }
             nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             .user-menu { margin-left: auto; }
-            .account-trigger { display: none; }
-            .account-menu-panel { display: none !important; }
-            .mobile-logout-only { display: inline-block; }
+            .account-trigger {
+                display: inline-flex !important; align-items: center; justify-content: center;
+                min-width: 44px; min-height: 44px; padding: 6px 10px; font-size: 0.72rem;
+            }
+            .mobile-logout-only { display: none; }
             .search-box { display: none; }
-            .nav-external-link { display: block; }
+            .nav-drawer-only { display: none; }
             header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             nav #custom-tab-buttons { display: contents; }
             .page { margin: 16px auto; padding: 0 12px; }
@@ -538,7 +582,7 @@
                 <div id="search-results" style="display:none;position:absolute;top:100%;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
             </div>
             <div class="user-menu">
-                <button type="button" class="account-trigger" id="account-menu-btn" onclick="toggleAccountMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel">
+                <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="toggleAccountMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel" aria-label="Account settings">
                     <span id="username-display">Account</span> ▾
                 </button>
                 <div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
@@ -548,8 +592,14 @@
                     </select>
                     <div class="account-menu-divider"></div>
                     <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem" data-i18n="account.manageProfiles">Manage profiles</button>
+                    <span class="account-menu-label" data-i18n="invoice.tax">Tax</span>
+                    <div class="account-tax-row">
+                        <input type="number" id="account-tax-rate" min="0" max="100" step="0.01" value="8" aria-label="Invoice tax percent">
+                        <span style="font-size:.8rem;color:#64748b">%</span>
+                        <button type="button" class="btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
+                    </div>
                     <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
-                    <a href="/freelance.html" class="menu-item nav-external-link" role="menuitem" data-i18n="account.freelanceMode">Freelance mode</a>
+                    <a href="/freelance.html" class="menu-item menu-item-freelance" role="menuitem" data-test="account-freelance-link" data-i18n="account.freelanceMode">Freelance mode</a>
                     <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
                     <div class="account-menu-divider"></div>
                     <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
@@ -560,6 +610,11 @@
     </div>
     <div class="header-nav-row">
         <nav id="main-nav" aria-label="Main navigation">
+            <a href="/freelance.html" class="nav-mode-switch" id="link-freelance-mobile" data-test="nav-freelance-mode">
+                <strong data-i18n="account.freelanceMode">Freelance mode</strong>
+                <small>Jobs, timer, ENGINEER profile &amp; invoicing</small>
+            </a>
+            <div class="nav-section-label" data-i18n="nav.chauffeurOps">Chauffeur ops</div>
             <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')" data-i18n="nav.dashboard">Dashboard</button>
             <button class="tab-btn" id="btn-clients" onclick="showTab('clients')" data-i18n="nav.clients">Clients</button>
             <button class="tab-btn" id="btn-drivers" onclick="showTab('drivers')" data-i18n="nav.drivers">Drivers</button>
@@ -570,17 +625,16 @@
             <button class="tab-btn" id="btn-api" onclick="showTab('api')" data-i18n="nav.api">API Spec</button>
             <span id="custom-tab-buttons"></span>
             <button class="add-table-btn" onclick="openCreateTableModal()" data-i18n-title="common.createCustomTable" data-i18n-aria="common.createCustomTable" title="Create custom table" aria-label="Create custom table">+</button>
-            <a href="/freelance.html" class="tab-btn nav-external-link" id="link-freelance-mobile" data-i18n="nav.freelance">Freelance</a>
             <button class="help-btn" onclick="openHelp()" data-i18n-title="nav.help" title="Help" data-i18n-aria="nav.help" aria-label="Help">?</button>
         </nav>
     </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
+<div class="account-menu-overlay" id="account-menu-overlay" onclick="closeAccountMenu()"></div>
 
 <!-- ── Dashboard tab ── -->
 <div id="tab-dashboard" class="tab-pane active">
     <div class="page">
-        <p style="text-align: center; padding: 10px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; margin-bottom: 10px; font-size: 0.9rem;">LOCAL WIFI TEST - ?m=1 flag. If you see this banner + header, page loaded. Content loads via API (may be limited without full DB). Tap hamburger for menu.</p>
         <div id="dash-onboarding" class="onboarding-banner" style="display:none" role="region" aria-label="Getting started">
             <h3 data-i18n="dashboard.welcome">Welcome to Tatalance</h3>
             <p data-i18n="dashboard.subtitle">Your dashboard is empty. Follow these steps to get your chauffeur business running.</p>
@@ -818,6 +872,14 @@
 <!-- ── Jobs tab (Category B - Desktop UI for freelance hourly jobs, reusing /api/rides backend) -->
 <div id="tab-jobs" class="tab-pane">
     <div class="page">
+        <div id="jobs-freelance-banner" class="jobs-freelance-banner" style="display:none" role="region" aria-label="Freelance setup">
+            <h4>Bill hourly work?</h4>
+            <p>Use <strong>Freelance mode</strong> for the timer, ENGINEER profile, and no-tax invoices — or create an ENGINEER profile here to scope jobs.</p>
+            <div class="banner-actions">
+                <a href="/freelance.html" class="banner-primary" data-test="jobs-freelance-cta">Open Freelance mode</a>
+                <button type="button" class="banner-secondary" onclick="showProfileManager()">Create ENGINEER profile</button>
+            </div>
+        </div>
         <div class="grid-2">
             <div class="card">
                 <div class="card-title" id="job-form-title" data-i18n="job.form.bookTitle">Book a Job</div>
@@ -1275,6 +1337,9 @@
                 body.force-mobile nav { display: none; }
                 body.force-mobile nav.open { display: flex !important; }
                 body.force-mobile .nav-overlay.open { display: block !important; }
+                body.force-mobile .account-trigger { display: inline-flex !important; }
+                body.force-mobile .nav-mode-switch, body.force-mobile .nav-section-label { display: block !important; }
+                body.force-mobile .account-menu-panel.open { display: block !important; }
                 body.force-mobile header { padding: 0 12px !important; }
                 body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; }
                 /* Full mobile simulation for flag testing (dvh, fonts, btns, jobs etc) */
@@ -1288,6 +1353,7 @@
     })();
 
     function toggleNav() {
+        closeAccountMenu();
         document.getElementById('main-nav').classList.toggle('open');
         document.getElementById('nav-overlay').classList.toggle('open');
     }
@@ -1297,20 +1363,25 @@
     }
     function toggleAccountMenu() {
         const panel = document.getElementById('account-menu-panel');
+        const overlay = document.getElementById('account-menu-overlay');
         const btn = document.getElementById('account-menu-btn');
         if (!panel || !btn) return;
         const open = !panel.classList.contains('open');
+        if (open) closeNav();
         panel.classList.toggle('open', open);
+        if (overlay) overlay.classList.toggle('open', open);
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
     function closeAccountMenu() {
         const panel = document.getElementById('account-menu-panel');
+        const overlay = document.getElementById('account-menu-overlay');
         const btn = document.getElementById('account-menu-btn');
         if (panel) panel.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
         if (btn) btn.setAttribute('aria-expanded', 'false');
     }
     document.addEventListener('click', e => {
-        if (!e.target.closest('.user-menu')) closeAccountMenu();
+        if (!e.target.closest('.user-menu') && !e.target.closest('#account-menu-panel')) closeAccountMenu();
     });
 
     /* ── Tab switching ── */
@@ -2340,6 +2411,28 @@
         updateTabVisibility();
     };
 
+    window.saveAccountTaxRate = async function() {
+        const input = document.getElementById('account-tax-rate');
+        if (!input) return;
+        const pct = input.value === '' ? 0 : Number(input.value);
+        if (isNaN(pct) || pct < 0 || pct > 100) {
+            alert(tf('messages.failed', { message: 'Tax rate must be between 0 and 100' }));
+            return;
+        }
+        try {
+            const r = await fetch('/api/users/me/settings', {
+                method: 'PATCH',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ defaultTaxRatePercent: pct })
+            });
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            input.value = pct;
+        } catch (e) {
+            alert(tf('messages.failed', { message: resolveError(e, 'messages.requestFailed') }));
+        }
+    };
+
     let editingProfileId = null;
 
     function showProfileManager() {
@@ -2453,6 +2546,14 @@
         if (!isDriver && ridesPane && ridesPane.classList.contains('active')) {
             if (typeof showTab === 'function') showTab('jobs');
         }
+        updateJobsFreelanceBanner();
+    }
+
+    function updateJobsFreelanceBanner() {
+        const banner = document.getElementById('jobs-freelance-banner');
+        if (!banner) return;
+        const hasEngineer = (profilesCache || []).some(p => p.type === 'ENGINEER');
+        banner.style.display = hasEngineer ? 'none' : 'block';
     }
 
     function loadRides(forceRender) {
@@ -3619,6 +3720,12 @@
             if (!data) return;
             const el = document.getElementById('username-display');
             if (el) el.textContent = data.username;
+            const taxInput = document.getElementById('account-tax-rate');
+            if (taxInput) {
+                const pct = data.defaultTaxRatePercent != null ? Number(data.defaultTaxRatePercent)
+                    : (data.defaultTaxRate != null ? Number(data.defaultTaxRate) * 100 : 8);
+                taxInput.value = pct;
+            }
             const linkBtn = document.getElementById('link-google-btn');
             if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = 'block';
 

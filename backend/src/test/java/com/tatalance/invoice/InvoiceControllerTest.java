@@ -278,6 +278,28 @@ class InvoiceControllerTest {
     }
 
     @Test
+    void should_createInvoice_withUserConfiguredTaxRate() throws Exception {
+        AppUser user = new AppUser();
+        user.setId(TEST_USER_ID);
+        user.setDefaultTaxRate(new BigDecimal("0.10"));
+        when(appUserRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(completedRide()));
+        when(invoiceRepository.countByUserId(TEST_USER_ID)).thenReturn(0L);
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> {
+            Invoice i = inv.getArgument(0);
+            i.setId("inv-custom-tax");
+            return i;
+        });
+
+        mockMvc.perform(post("/api/invoices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rideId\":\"ride001\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tax").value(13.50))
+                .andExpect(jsonPath("$.total").value(148.50));
+    }
+
+    @Test
     void should_createHourlyInvoice_withNoTax() throws Exception {
         var ride = completedRide();
         ride.setPricingMode(PricingMode.HOURLY);

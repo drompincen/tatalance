@@ -151,7 +151,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>${argLine}</argLine>
+                    <!-- Byte Buddy experimental: required for Mockito on JDK 24+ (local dev); harmless on CI Java 21 -->
+                    <argLine>${argLine} -Dnet.bytebuddy.experimental=true</argLine>
                 </configuration>
             </plugin>
         </plugins>

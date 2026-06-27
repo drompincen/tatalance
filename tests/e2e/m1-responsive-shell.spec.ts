@@ -27,6 +27,17 @@ test.describe('M1 — Responsive shell on iPhone SE', () => {
     await mobile.assertMinFontSize();
   });
 
+  test('account menu and freelance mode are reachable on mobile', async ({ page }) => {
+    const accountBtn = page.locator('#account-menu-btn');
+    await expect(accountBtn).toBeVisible();
+    await accountBtn.click();
+    await expect(page.locator('#account-menu-panel.open')).toBeVisible();
+    await expect(page.locator('[data-test="account-freelance-link"]')).toBeVisible();
+    await page.locator('#account-menu-overlay').click();
+    await page.locator('#hamburger').click();
+    await expect(page.locator('[data-test="nav-freelance-mode"]')).toBeVisible();
+  });
+
   test('tab bar fits within viewport width', async ({ page }) => {
     await page.locator('#hamburger').click();
     const nav = page.locator('header nav');

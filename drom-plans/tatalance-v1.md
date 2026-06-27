@@ -2,8 +2,8 @@
 title: "Tatalance v1 — MVP: Book a Ride, Complete It, Get Paid"
 status: in-progress
 created: 2026-04-27
-updated: 2026-06-21
-current_chapter: epic-13
+updated: 2026-06-27
+current_chapter: epic-14
 ---
 
 # Tatalance v1 Plan
@@ -216,13 +216,13 @@ David can add clients, book rides, and get paid — end to end in the browser.
 | #99 | Wire picker into book/edit ride form | Epic 12 | feature | pending |
 | #100 | Store lat/lng on Ride for precise links | Epic 12 | enhancement | pending |
 | #101 | E2E: book ride using LocationPicker | Epic 12 | qa | pending |
-| #102 | Spanish UI for Tata — EN/ES toggle (epic) | Epic 13 | epic | pending |
-| #103 | i18n foundation — toggle + shared module | Epic 13 | feature | pending |
-| #104 | Translate chauffeur UI (`index.html`) | Epic 13 | feature | pending |
-| #108 | Translate ? help overlay to Spanish | Epic 13 | feature | pending |
-| #105 | Translate login/register/forgot-password | Epic 13 | feature | pending |
-| #106 | Spanish API validation messages | Epic 13 | enhancement | pending |
-| #107 | E2E: language toggle smoke | Epic 13 | qa | pending |
+| #102 | Spanish UI for Tata — EN/ES toggle (epic) | Epic 13 | epic | completed |
+| #103 | i18n foundation — toggle + shared module | Epic 13 | feature | completed |
+| #104 | Translate chauffeur UI (`index.html`) | Epic 13 | feature | completed |
+| #108 | Translate ? help overlay to Spanish | Epic 13 | feature | completed |
+| #105 | Translate login/register/forgot-password | Epic 13 | feature | completed |
+| #106 | Spanish API validation messages | Epic 13 | enhancement | completed |
+| #107 | E2E: language toggle smoke | Epic 13 | qa | completed |
 
 ---
 
@@ -457,9 +457,10 @@ Same `Ride` collection and APIs; freelance uses deferred timer start (book ≠ s
 
 # Epic 12: Map-based location picker (issue #96)
 **Status:** pending
+**Blocked by:** #97, #109 (Google Maps API key + EB env — drom)
 **Outcome:** David picks pickup and dropoff on an embedded Google Map (search or drop a pin) instead of typing addresses. The ride table shows simple location text; clicking it opens Google Maps for navigation (extends Epic 9 #73).
 **Depends on:** Epic 9 #73 (clickable Maps links) — done; Epic 1 #12 (Create Ride form) — done
-**Blocked by:** #97 (Google Maps API key in EB — drom)
+**Luciano:** do not start #98 until drom confirms #97 done (or local dev key available).
 
 ## User journey
 
@@ -502,7 +503,7 @@ Opening external `google.com/maps` in another tab cannot return the picked pin t
 ---
 
 # Epic 13: Spanish UI for Tata — EN/ES toggle (issue #102)
-**Status:** pending
+**Status:** completed (PR #114 open → `main`; merge closes epic)
 **Outcome:** Tata and other Spanish-speaking users use Tatalance in Spanish: tabs, forms, buttons, the **? help guide**, and auth pages — with an EN/ES toggle that remembers their choice.
 **Depends on:** Epic 3 #41 (Help page) — done; UI stable enough to port i18n from mockup
 **Reference:** `docs/js/i18n.js`, `docs/index.html` (redesign mockup with working EN/ES toggle)
@@ -522,12 +523,12 @@ Opening external `google.com/maps` in another tab cannot return the picked pin t
 
 | # | Story | Status | Owner | Issue |
 |---|---|---|---|---|
-| 1 | i18n foundation — `i18n.js`, `data-i18n`, EN/ES toggle, `localStorage` | pending | luciano | #103 |
-| 2 | Translate chauffeur UI (`index.html`) | pending | luciano | #104 |
-| 3 | Translate ? help overlay (6 panels) | pending | luciano | #108 |
-| 4 | Translate login / register / forgot-password | pending | luciano | #105 |
-| 5 | Spanish API validation messages | pending | luciano | #106 |
-| 6 | E2E: language toggle smoke | pending | luciano | #107 |
+| 1 | i18n foundation — `i18n.js`, `data-i18n`, EN/ES toggle, `localStorage` | completed | luciano | #103 |
+| 2 | Translate chauffeur UI (`index.html`) | completed | luciano | #104 |
+| 3 | Translate ? help overlay (6 panels) | completed | luciano | #108 |
+| 4 | Translate login / register / forgot-password | completed | luciano | #105 |
+| 5 | Spanish API validation messages | completed | luciano | #106 |
+| 6 | E2E: language toggle smoke | completed | luciano | #107 |
 
 ## Dependencies
 
@@ -546,6 +547,36 @@ Opening external `google.com/maps` in another tab cannot return the picked pin t
 - User-entered data (client names, notes)
 - PDF invoices in Spanish
 - Languages beyond EN/ES
+
+---
+
+# Epic 14: Freelance billing polish — configurable tax + mobile UX (#116, #117)
+**Status:** completed (on `luciano`, pending PR merge)
+**Outcome:** Business owners configure invoice tax per account/profile; mobile users can reach Freelance mode, account settings, and ENGINEER setup without desktop workarounds. Unblocks #115 mobile evidence (tax $0, profile, settings).
+**Depends on:** Epic 11 (#93), #115 (freelancer MVP journey)
+**Issue bodies:** `docs/github-issue-configurable-tax.md`, `docs/github-issue-mobile-freelance-ux.md`
+
+## Feature stories
+
+| # | Story | Status | Owner | Issue |
+|---|---|---|---|---|
+| 1 | Configurable tax rate on account (`defaultTaxRatePercent`) + `TaxRateResolver` | completed | luciano | #116 |
+| 2 | Optional `Profile.taxRate` override (ENGINEER=0%, DRIVER=8% defaults) | completed | luciano | #116 |
+| 3 | Tax settings UI — freelance Settings + chauffeur Account menu | completed | luciano | #116 |
+| 4 | Mobile account menu restored (profile, tax, freelance link) | completed | luciano | #117 |
+| 5 | Prominent Freelance mode CTA in mobile hamburger nav | completed | luciano | #117 |
+| 6 | Jobs tab ENGINEER onboarding banner | completed | luciano | #117 |
+| 7 | Freelance mobile bottom tab bar (Home/Jobs/Clients/Invoices/Settings) | completed | luciano | #117 |
+| 8 | E2E: mobile account + freelance reachable (`m1-responsive-shell`) | completed | luciano | #117 |
+
+## Dependencies
+
+```
+#93 (freelance mode) ✅
+  └──> #115 (mobile money loop — G6 no-tax, G4 profile, G1 settings)
+        └──> #116 (configurable tax replaces hardcoded rules)
+              └──> #117 (mobile UX to reach those settings)
+```
 
 ---
 

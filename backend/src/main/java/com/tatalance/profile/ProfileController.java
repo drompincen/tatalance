@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -60,6 +61,9 @@ public class ProfileController {
         }
         profile.setUserId(userId);
         profile.setCreatedAt(Instant.now());
+        if (profile.getTaxRate() == null) {
+            profile.setTaxRate(defaultTaxRateFor(profile.getType()));
+        }
         Profile saved = repository.save(profile);
         activityLog.log(userId, "CREATE", "Profile", saved.getId(),
                 "Created " + saved.getType() + " profile: " + saved.getName());
@@ -80,6 +84,9 @@ public class ProfileController {
         if (updates.getName() != null) {
             existing.setName(updates.getName());
         }
+        if (updates.getTaxRate() != null) {
+            existing.setTaxRate(updates.getTaxRate());
+        }
         Profile saved = repository.save(existing);
         activityLog.log(userId, "UPDATE", "Profile", saved.getId(),
                 "Updated profile: " + saved.getName() + " (" + saved.getType() + ")");
@@ -98,5 +105,15 @@ public class ProfileController {
         // optional: check no jobs use it, but for MVP allow
         repository.delete(p);
         activityLog.log(userId, "DELETE", "Profile", id, "Deleted profile " + p.getName());
+    }
+
+    private static BigDecimal defaultTaxRateFor(ProfileType type) {
+        if (type == ProfileType.ENGINEER) {
+            return BigDecimal.ZERO;
+        }
+        if (type == ProfileType.DRIVER) {
+            return new BigDecimal("0.08");
+        }
+        return null;
     }
 }

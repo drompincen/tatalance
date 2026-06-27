@@ -3,12 +3,11 @@ package com.tatalance.invoice;
 import com.tatalance.activity.ActivityLogger;
 import com.tatalance.profile.Profile;
 import com.tatalance.profile.ProfileRepository;
-import com.tatalance.profile.ProfileType;
 import com.tatalance.ride.Job;
-import com.tatalance.ride.PricingMode;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
+import com.tatalance.user.AppUser;
 import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,8 +37,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/invoices")
 public class InvoiceController {
-
-    private static final BigDecimal TAX_RATE = new BigDecimal("0.08");
 
     private final InvoiceRepository invoiceRepository;
     private final RideRepository rideRepository;
@@ -87,14 +84,13 @@ public class InvoiceController {
         if (job.getAdditionalCharges() != null) extras = extras.add(job.getAdditionalCharges());
 
         BigDecimal subtotal = baseCharge.add(extras);
-        boolean noTax = isFreelanceInvoice(job);
-        BigDecimal tax = noTax ? BigDecimal.ZERO
-                : subtotal.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
+        AppUser user = appUserRepository.findById(userId).orElse(null);
+        Profile profile = resolveProfile(job);
+        BigDecimal taxRate = TaxRateResolver.resolve(job, user, profile);
+        BigDecimal tax = subtotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
         BigDecimal total = subtotal.add(tax);
 
-        String venmoHandle = appUserRepository.findById(userId)
-                .map(u -> u.getVenmoHandle())
-                .orElse(null);
+        String venmoHandle = user != null ? user.getVenmoHandle() : null;
 
         Invoice invoice = new Invoice();
         invoice.setUserId(userId);
@@ -199,17 +195,11 @@ public class InvoiceController {
         w.flush();
     }
 
-    private boolean isFreelanceInvoice(Job job) {
-        if (job.getPricingMode() == PricingMode.HOURLY) {
-            return true;
-        }
+    private Profile resolveProfile(Job job) {
         if (job.getProfileId() == null || job.getProfileId().isBlank()) {
-            return false;
+            return null;
         }
-        return profileRepository.findById(job.getProfileId())
-                .map(Profile::getType)
-                .filter(t -> t == ProfileType.ENGINEER)
-                .isPresent();
+        return profileRepository.findById(job.getProfileId()).orElse(null);
     }
 
     private static String csvSafe(String value) {
