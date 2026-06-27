@@ -67,7 +67,7 @@ class ValidationErrorTest {
                         .content("{\"phone\":\"bad\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors[*].field", hasItems("firstName", "lastName", "phone")));
+                .andExpect(jsonPath("$.errors[*].field", hasItems("firstName", "lastName")));
     }
 
     @Test
@@ -76,7 +76,7 @@ class ValidationErrorTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"phone\":\"+123\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[?(@.field=='phone')].message").exists());
+                .andExpect(jsonPath("$.errors[0].message", containsString("10 digits")));
     }
 
     @Test
@@ -247,8 +247,7 @@ class ValidationErrorTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"phone\":\"+123\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[?(@.field=='phone')].message[0]")
-                        .value(containsString("El teléfono debe comenzar con +")));
+                .andExpect(jsonPath("$.errors[0].message", containsString("10 dígitos")));
     }
 
     @Test

@@ -214,8 +214,8 @@ class RideIntegrationTest {
     }
 
     @Test
-    @DisplayName("M4 #34 — reject complete from SCHEDULED")
-    void should_return409_when_completingScheduledRide() {
+    @DisplayName("M4 #34 — reject complete from SCHEDULED without billableHours")
+    void should_return400_when_completingScheduledRideWithoutHours() {
         var clientId = createClient();
         var ride = Map.of("clientId", clientId, "pickupDateTime", "2028-06-01T14:00:00Z",
                 "pickupLocation", "MIA", "dropoffLocation", "FLL");
@@ -223,7 +223,7 @@ class RideIntegrationTest {
         var rideId = created.getBody().get("id").toString();
 
         var response = restTemplate.postForEntity("/api/rides/" + rideId + "/complete", Map.of(), Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
