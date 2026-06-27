@@ -2,10 +2,13 @@ package com.tatalance.invoice;
 
 import com.tatalance.SecurityConfig;
 import com.tatalance.activity.ActivityLogger;
-import com.tatalance.ride.Job;
+import com.tatalance.profile.ProfileRepository;
+import com.tatalance.ride.PricingMode;
 import com.tatalance.ride.Ride;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus; // Job base model #93 Category A - Invoice now uses base fields via Job
+import com.tatalance.user.AppUser;
+import com.tatalance.user.AppUserRepository;
 import com.tatalance.user.AuthHelper;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,9 +61,18 @@ class InvoiceControllerTest {
     @MockBean
     private ActivityLogger activityLogger;
 
+    @MockBean
+    private ProfileRepository profileRepository;
+
+    @MockBean
+    private AppUserRepository appUserRepository;
+
     @BeforeEach
     void setUp() {
         when(authHelper.getCurrentUserId()).thenReturn(TEST_USER_ID);
+        AppUser user = new AppUser();
+        user.setId(TEST_USER_ID);
+        when(appUserRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
     }
 
     private Ride completedRide() {
@@ -263,6 +275,32 @@ class InvoiceControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.additionalCharges").value(28.00))
                 .andExpect(jsonPath("$.total").value(138.24));  // 100+28=128, tax~10.24, total 138.24
+    }
+
+    @Test
+    void should_createHourlyInvoice_withNoTax() throws Exception {
+        var ride = completedRide();
+        ride.setPricingMode(PricingMode.HOURLY);
+        ride.setHourlyRate(new BigDecimal("20.00"));
+        ride.setDurationMinutes(600L);
+        ride.setTotalAmount(new BigDecimal("200.00"));
+        ride.setTolls(null);
+        ride.setParking(null);
+        ride.setAdditionalCharges(null);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(invoiceRepository.countByUserId(TEST_USER_ID)).thenReturn(0L);
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> {
+            Invoice i = inv.getArgument(0);
+            i.setId("inv-hourly");
+            return i;
+        });
+
+        mockMvc.perform(post("/api/invoices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rideId\":\"ride001\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tax").value(0))
+                .andExpect(jsonPath("$.total").value(200.00));
     }
 
     @Test

@@ -328,6 +328,14 @@ public class RideController {
             ride.setActualEnd(end);
             ride.setWorkSegments(new ArrayList<>(List.of(new WorkSegment(start, end))));
             ride.setDurationMinutes(Duration.between(start, end).toMinutes());
+        } else if (ride.getStatus() == RideStatus.SCHEDULED) {
+            BigDecimal manualHours = asDecimal(body, "billableHours");
+            if (manualHours == null || manualHours.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "billableHours is required to complete a scheduled job without starting the timer");
+            }
+            end = Instant.now();
+            timerService.applyManualHours(ride, manualHours, end);
         } else if (ride.getStatus() == RideStatus.IN_PROGRESS || ride.getStatus() == RideStatus.PAUSED) {
             end = Instant.now();
             timerService.finalizeDurationMinutes(ride, end);

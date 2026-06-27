@@ -21,6 +21,7 @@ public class AppUser {
     private String securityAnswer;
     private BusinessMode businessMode = BusinessMode.CHAUFFEUR;
     private BigDecimal defaultHourlyRate = new BigDecimal("20.00");
+    private String venmoHandle;
 
     // Business owner and type concepts (for multi-profile support)
     private boolean businessOwner = true;
@@ -46,6 +47,8 @@ public class AppUser {
     public void setBusinessMode(BusinessMode businessMode) { this.businessMode = businessMode; }
     public BigDecimal getDefaultHourlyRate() { return defaultHourlyRate; }
     public void setDefaultHourlyRate(BigDecimal defaultHourlyRate) { this.defaultHourlyRate = defaultHourlyRate; }
+    public String getVenmoHandle() { return venmoHandle; }
+    public void setVenmoHandle(String venmoHandle) { this.venmoHandle = venmoHandle; }
 
     public boolean isBusinessOwner() { return businessOwner; }
     public void setBusinessOwner(boolean businessOwner) { this.businessOwner = businessOwner; }

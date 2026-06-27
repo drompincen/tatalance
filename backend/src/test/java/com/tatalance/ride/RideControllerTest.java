@@ -416,7 +416,7 @@ class RideControllerTest {
     }
 
     @Test
-    void should_return409_when_completingScheduledRide() throws Exception {
+    void should_return400_when_completingScheduledRideWithoutHours() throws Exception {
         var ride = sampleRide();
         ride.setStatus(RideStatus.SCHEDULED);
         when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
@@ -424,7 +424,27 @@ class RideControllerTest {
         mockMvc.perform(post("/api/rides/ride001/complete")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message")
+                        .value("billableHours is required to complete a scheduled job without starting the timer"));
+    }
+
+    @Test
+    void should_completeScheduledRide_withManualBillableHours() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.SCHEDULED);
+        ride.setPricingMode(PricingMode.HOURLY);
+        ride.setHourlyRate(new BigDecimal("20.00"));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"billableHours\":10}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.durationMinutes").value(600))
+                .andExpect(jsonPath("$.totalAmount").value(200.00));
     }
 
     @Test

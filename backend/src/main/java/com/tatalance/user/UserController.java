@@ -40,9 +40,11 @@ public class UserController {
         if (user != null) {
             out.put("businessMode", user.getBusinessMode() != null ? user.getBusinessMode().name() : BusinessMode.CHAUFFEUR.name());
             out.put("defaultHourlyRate", user.getDefaultHourlyRate());
+            out.put("venmoHandle", user.getVenmoHandle());
         } else {
             out.put("businessMode", BusinessMode.CHAUFFEUR.name());
             out.put("defaultHourlyRate", new BigDecimal("20.00"));
+            out.put("venmoHandle", null);
         }
         return out;
     }
@@ -67,10 +69,23 @@ public class UserController {
                 user.setDefaultHourlyRate(new BigDecimal(n.toString()));
             }
         }
+        if (body.containsKey("venmoHandle")) {
+            Object raw = body.get("venmoHandle");
+            if (raw == null || raw.toString().isBlank()) {
+                user.setVenmoHandle(null);
+            } else {
+                String handle = raw.toString().trim();
+                if (!handle.startsWith("@")) {
+                    handle = "@" + handle;
+                }
+                user.setVenmoHandle(handle);
+            }
+        }
         repository.save(user);
         return ResponseEntity.ok(Map.of(
                 "businessMode", user.getBusinessMode().name(),
-                "defaultHourlyRate", user.getDefaultHourlyRate()
+                "defaultHourlyRate", user.getDefaultHourlyRate(),
+                "venmoHandle", user.getVenmoHandle() != null ? user.getVenmoHandle() : ""
         ));
     }
 
