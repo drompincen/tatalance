@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
@@ -23,6 +24,9 @@ public class Profile {
 
     private String name; // optional display name for the profile/business
 
+    /** Optional override; decimal fraction (0.08 = 8%). Null = use account default. */
+    private BigDecimal taxRate;
+
     private Instant createdAt;
 
     public String getId() { return id; }
@@ -36,6 +40,9 @@ public class Profile {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public BigDecimal getTaxRate() { return taxRate; }
+    public void setTaxRate(BigDecimal taxRate) { this.taxRate = taxRate; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

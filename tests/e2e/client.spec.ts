@@ -47,7 +47,7 @@ test.describe('Client management', () => {
     await page.click('#submit-btn');
 
     await expect(page.locator('#e-phone')).toBeVisible();
-    await expect(page.locator('#e-phone')).toContainText('E.164');
+    await expect(page.locator('#e-phone')).toContainText(/valid US phone|10 digits/i);
 
     // client should NOT appear
     const row = page.locator('#client-list table tbody tr', { hasText: 'ValidFirst' });

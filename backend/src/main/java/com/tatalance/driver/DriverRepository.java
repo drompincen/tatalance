@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface DriverRepository extends MongoRepository<Driver, String> {
     List<Driver> findByAvailability(Availability availability);
+    List<Driver> findByUserIdAndAvailability(String userId, Availability availability);
     List<Driver> findByUserId(String userId);
     Page<Driver> findByUserId(String userId, Pageable pageable);
     Optional<Driver> findByIdAndUserId(String id, String userId);

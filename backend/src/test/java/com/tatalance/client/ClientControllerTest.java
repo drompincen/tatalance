@@ -125,13 +125,39 @@ class ClientControllerTest {
     }
 
     @Test
-    void should_return400_when_phoneMissingPlus() throws Exception {
+    void should_acceptPhone_when_11DigitsWithoutPlus() throws Exception {
+        when(repository.save(any(Client.class))).thenAnswer(inv -> {
+            Client c = inv.getArgument(0);
+            c.setId("abc123");
+            c.setCreatedAt(Instant.now());
+            return c;
+        });
+
         mockMvc.perform(post("/api/clients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"firstName":"John","lastName":"Doe","phone":"12125551234"}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.phone").value("+12125551234"));
+    }
+
+    @Test
+    void should_acceptPhone_when_formattedWithParensAndDashes() throws Exception {
+        when(repository.save(any(Client.class))).thenAnswer(inv -> {
+            Client c = inv.getArgument(0);
+            c.setId("abc123");
+            c.setCreatedAt(Instant.now());
+            return c;
+        });
+
+        mockMvc.perform(post("/api/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"John","lastName":"Doe","phone":"(212) 555-1234"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.phone").value("+12125551234"));
     }
 
     @Test
@@ -223,7 +249,7 @@ class ClientControllerTest {
     @Test
     void should_deleteClient() throws Exception {
         when(repository.existsByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(true);
-        when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
+        when(rideRepository.findByUserIdAndClientIdAndStatusIn(eq(TEST_USER_ID), eq("abc123"), any()))
                 .thenReturn(Collections.emptyList());
 
         mockMvc.perform(delete("/api/clients/abc123"))
@@ -236,7 +262,7 @@ class ClientControllerTest {
         when(repository.existsByIdAndUserId("abc123", TEST_USER_ID)).thenReturn(true);
         var ride = new com.tatalance.ride.Ride();
         ride.setStatus(RideStatus.SCHEDULED);
-        when(rideRepository.findByClientIdAndStatusIn(eq("abc123"), any()))
+        when(rideRepository.findByUserIdAndClientIdAndStatusIn(eq(TEST_USER_ID), eq("abc123"), any()))
                 .thenReturn(List.of(ride));
 
         mockMvc.perform(delete("/api/clients/abc123"))

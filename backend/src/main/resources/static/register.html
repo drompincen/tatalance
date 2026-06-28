@@ -8,15 +8,22 @@
 </head>
 <body>
     <div class="login-card">
-        <h1>Create Account</h1>
-        <p class="subtitle">Tatalance — chauffeur platform</p>
+        <div class="auth-top">
+            <div class="lang-toggle" id="langToggle" onclick="toggleLang()" data-i18n-title="lang.switch" title="Switch language / Cambiar idioma">
+                <div class="lang-slider"></div>
+                <span class="lang-option" data-lang="en">EN</span>
+                <span class="lang-option" data-lang="es">ES</span>
+            </div>
+        </div>
+        <h1 data-i18n="auth.register.title">Create Account</h1>
+        <p class="subtitle" data-i18n="auth.register.subtitle">Tatalance — chauffeur platform</p>
 
         <div id="msg-error" class="message message-error" role="alert"></div>
         <div id="msg-success" class="message message-success" role="status"></div>
 
         <form id="register-form" novalidate>
             <div class="field">
-                <label for="username">Username</label>
+                <label for="username" data-i18n="auth.register.username">Username</label>
                 <input type="text"
                        id="username"
                        autocomplete="username"
@@ -27,42 +34,67 @@
                        required>
             </div>
             <div class="field">
-                <label for="password">Password</label>
+                <label for="password" data-i18n="auth.register.password">Password</label>
                 <input type="password"
                        id="password"
                        autocomplete="new-password"
                        required>
             </div>
             <div class="field">
-                <label for="confirm">Confirm Password</label>
+                <label for="confirm" data-i18n="auth.register.confirmPassword">Confirm Password</label>
                 <input type="password"
                        id="confirm"
                        autocomplete="new-password"
                        required>
             </div>
             <div class="field">
-                <label for="securityQuestion">Security Question <span style="font-weight:400;color:#6b7280">(optional — for password recovery)</span></label>
+                <label for="securityQuestion">
+                    <span data-i18n="auth.register.securityQuestion">Security Question</span>
+                    <span style="font-weight:400;color:#6b7280" data-i18n="auth.register.securityOptional"> (optional — for password recovery)</span>
+                </label>
                 <select id="securityQuestion">
-                    <option value="">— none —</option>
-                    <option>What is your pet's name?</option>
-                    <option>What city were you born in?</option>
-                    <option>What is your favorite food?</option>
-                    <option>What was your first car?</option>
-                    <option>What is your mother's maiden name?</option>
+                    <option value="" data-i18n="auth.securityQuestions.none">— none —</option>
+                    <option value="What is your pet's name?" data-i18n="auth.securityQuestions.pet">What is your pet's name?</option>
+                    <option value="What city were you born in?" data-i18n="auth.securityQuestions.city">What city were you born in?</option>
+                    <option value="What is your favorite food?" data-i18n="auth.securityQuestions.food">What is your favorite food?</option>
+                    <option value="What was your first car?" data-i18n="auth.securityQuestions.car">What was your first car?</option>
+                    <option value="What is your mother's maiden name?" data-i18n="auth.securityQuestions.maiden">What is your mother's maiden name?</option>
                 </select>
             </div>
             <div class="field" id="answer-field" style="display:none">
-                <label for="securityAnswer">Your Answer</label>
+                <label for="securityAnswer" data-i18n="auth.register.yourAnswer">Your Answer</label>
                 <input type="text" id="securityAnswer" autocomplete="off">
             </div>
-            <button type="submit">Create Account</button>
+            <button type="submit" data-i18n="auth.register.submit">Create Account</button>
         </form>
         <p class="auth-footer">
-            Already have an account? <a href="/login.html">Sign in</a>
+            <span data-i18n="auth.register.hasAccount">Already have an account?</span>
+            <a href="/login.html" data-i18n="auth.register.signIn">Sign in</a>
         </p>
     </div>
 
+    <script src="/js/i18n.js"></script>
     <script>
+        function tf(k) {
+            if (typeof t !== 'function') return null;
+            var v = t(k);
+            return (v && v !== k) ? v : null;
+        }
+
+        function refreshRegisterPage() {
+            var title = tf('auth.register.pageTitle');
+            if (title) document.title = title;
+            var btn = document.querySelector('#register-form button[type=submit]');
+            var label = tf('auth.register.submit');
+            if (btn && !btn.disabled && label) btn.textContent = label;
+        }
+
+        document.addEventListener('tatalance:langchange', refreshRegisterPage);
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof applyI18n === 'function') applyI18n();
+            refreshRegisterPage();
+        });
+
         var form = document.getElementById('register-form');
         var msgError = document.getElementById('msg-error');
         var msgSuccess = document.getElementById('msg-success');
@@ -82,14 +114,14 @@
             var password = document.getElementById('password').value;
             var confirm = document.getElementById('confirm').value;
 
-            if (!username) { showError('Username is required'); return; }
-            if (password.length < 4) { showError('Password must be at least 4 characters'); return; }
-            if (password !== confirm) { showError('Passwords do not match'); return; }
+            if (!username) { showError(tf('auth.register.usernameRequired')); return; }
+            if (password.length < 4) { showError(tf('auth.register.passwordMin')); return; }
+            if (password !== confirm) { showError(tf('auth.register.passwordsNoMatch')); return; }
 
             var payload = { username: username, password: password };
             if (secQ.value) {
                 var answer = document.getElementById('securityAnswer').value.trim();
-                if (!answer) { showError('Please provide an answer to the security question'); return; }
+                if (!answer) { showError(tf('auth.register.answerRequired')); return; }
                 payload.securityQuestion = secQ.value;
                 payload.securityAnswer = answer;
             }
@@ -101,13 +133,14 @@
                     body: JSON.stringify(payload)
                 });
                 var data = await res.json();
-                if (!res.ok) { showError(data.message || 'Registration failed'); return; }
-                msgSuccess.textContent = data.message || 'Account created!';
+                if (!res.ok) { showError(data.message || tf('auth.register.registrationFailed')); return; }
+                msgSuccess.textContent = data.message || tf('auth.register.accountCreated');
                 msgSuccess.style.display = 'block';
                 form.reset();
+                ansField.style.display = 'none';
                 setTimeout(function() { window.location.href = '/login.html'; }, 1500);
             } catch (err) {
-                showError('Could not reach server');
+                showError(tf('auth.register.serverError'));
             }
         });
 

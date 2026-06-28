@@ -67,7 +67,7 @@ class ValidationErrorTest {
                         .content("{\"phone\":\"bad\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors[*].field", hasItems("firstName", "lastName", "phone")));
+                .andExpect(jsonPath("$.errors[*].field", hasItems("firstName", "lastName")));
     }
 
     @Test
@@ -76,7 +76,7 @@ class ValidationErrorTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"phone\":\"+123\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[?(@.field=='phone')].message").exists());
+                .andExpect(jsonPath("$.errors[0].message", containsString("10 digits")));
     }
 
     @Test
@@ -206,5 +206,57 @@ class ValidationErrorTest {
                         .content("{\"lastName\":\"D\",\"phone\":\"+13055551002\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[*].field").value(containsInAnyOrder("firstName")));
+    }
+
+    @Test
+    void should_returnSpanishPickupLocationError_when_acceptLanguageEs() throws Exception {
+        mockMvc.perform(post("/api/rides")
+                        .header("Accept-Language", "es")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli1\",\"dropoffLocation\":\"y\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[?(@.field=='pickupLocation')].message")
+                        .value("El lugar de recogida es obligatorio"));
+    }
+
+    @Test
+    void should_returnEnglishPickupLocationError_when_acceptLanguageEn() throws Exception {
+        mockMvc.perform(post("/api/rides")
+                        .header("Accept-Language", "en")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli1\",\"dropoffLocation\":\"y\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[?(@.field=='pickupLocation')].message")
+                        .value("Pickup location is required"));
+    }
+
+    @Test
+    void should_returnSpanishPastDateError_when_acceptLanguageEs() throws Exception {
+        mockMvc.perform(post("/api/rides")
+                        .header("Accept-Language", "es")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clientId\":\"cli1\",\"pickupDateTime\":\"2020-01-01T00:00:00Z\",\"pickupLocation\":\"x\",\"dropoffLocation\":\"y\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message", containsString("pasado")));
+    }
+
+    @Test
+    void should_returnSpanishPhoneError_when_acceptLanguageEs() throws Exception {
+        mockMvc.perform(post("/api/clients")
+                        .header("Accept-Language", "es")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Test\",\"lastName\":\"User\",\"phone\":\"+123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message", containsString("10 dígitos")));
+    }
+
+    @Test
+    void should_returnSpanishClientNotFound_when_acceptLanguageEs() throws Exception {
+        mockMvc.perform(post("/api/rides")
+                        .header("Accept-Language", "es")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"pickupLocation\":\"x\",\"dropoffLocation\":\"y\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message", containsString("Cliente no encontrado")));
     }
 }

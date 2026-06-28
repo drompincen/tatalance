@@ -306,7 +306,30 @@ class UserControllerTest {
                         .content("{\"businessMode\":\"FREELANCE\",\"defaultHourlyRate\":99}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.businessMode").value("FREELANCE"))
-                .andExpect(jsonPath("$.defaultHourlyRate").value(99));
+                .andExpect(jsonPath("$.defaultHourlyRate").value(99))
+                .andExpect(jsonPath("$.defaultTaxRatePercent").value(0));
+    }
+
+    @Test
+    void updateSettings_taxRatePercent_updates() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+        mockMvc.perform(patch("/api/users/me/settings").with(user(USERNAME))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"defaultTaxRatePercent\": 8.25}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.defaultTaxRatePercent").value(8.25));
+    }
+
+    @Test
+    void updateSettings_invalidTaxRatePercent_returns400() throws Exception {
+        AppUser u = sampleUser();
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        mockMvc.perform(patch("/api/users/me/settings").with(user(USERNAME))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"defaultTaxRatePercent\": 150}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -67,7 +67,7 @@ public class ClientController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
         }
-        var rides = rideRepository.findByClientId(id);
+        var rides = rideRepository.findByUserIdAndClientId(authHelper.getCurrentUserId(), id);
         long totalRides = rides.size();
         long completedRides = rides.stream().filter(r -> r.getStatus() == RideStatus.COMPLETED).count();
         BigDecimal totalSpent = rides.stream()
@@ -94,6 +94,7 @@ public class ClientController {
     @ResponseStatus(HttpStatus.CREATED)
     public Client create(@Valid @RequestBody Client client) {
         String userId = authHelper.getCurrentUserId();
+        client.setPhone(requireNormalizedPhone(client.getPhone()));
         if (repository.existsByUserIdAndPhone(userId, client.getPhone())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "A client with this phone number already exists");
@@ -112,6 +113,7 @@ public class ClientController {
     @PutMapping("/{id}")
     public Client update(@PathVariable String id, @Valid @RequestBody Client updates) {
         String userId = authHelper.getCurrentUserId();
+        updates.setPhone(requireNormalizedPhone(updates.getPhone()));
         Client existing = repository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
         if (!existing.getPhone().equals(updates.getPhone())
@@ -140,13 +142,22 @@ public class ClientController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
         }
-        var activeRides = rideRepository.findByClientIdAndStatusIn(id,
-                List.of(RideStatus.SCHEDULED, RideStatus.ASSIGNED, RideStatus.IN_PROGRESS)); // ride-only check post Job refactor
+        String userId = authHelper.getCurrentUserId();
+        var activeRides = rideRepository.findByUserIdAndClientIdAndStatusIn(userId, id,
+                List.of(RideStatus.SCHEDULED, RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
         if (!activeRides.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot delete client with active rides (" + activeRides.size() + " active)");
         }
         repository.deleteById(id);
         activityLog.log(authHelper.getCurrentUserId(), "DELETE", "Client", id, "Deleted client");
+    }
+
+    private static String requireNormalizedPhone(String raw) {
+        try {
+            return PhoneNormalizer.normalize(raw);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 }

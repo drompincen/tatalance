@@ -9,7 +9,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.*;
 
+import com.tatalance.invoice.TaxRateResolver;
+
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,9 +43,15 @@ public class UserController {
         if (user != null) {
             out.put("businessMode", user.getBusinessMode() != null ? user.getBusinessMode().name() : BusinessMode.CHAUFFEUR.name());
             out.put("defaultHourlyRate", user.getDefaultHourlyRate());
+            out.put("defaultTaxRate", user.getDefaultTaxRate());
+            out.put("defaultTaxRatePercent", taxRatePercent(user.getDefaultTaxRate()));
+            out.put("venmoHandle", user.getVenmoHandle());
         } else {
             out.put("businessMode", BusinessMode.CHAUFFEUR.name());
             out.put("defaultHourlyRate", new BigDecimal("20.00"));
+            out.put("defaultTaxRate", null);
+            out.put("defaultTaxRatePercent", null);
+            out.put("venmoHandle", null);
         }
         return out;
     }
@@ -53,9 +62,34 @@ public class UserController {
                 .orElseThrow(() -> new IllegalStateException("User not found"));
         if (body.containsKey("businessMode")) {
             try {
-                user.setBusinessMode(BusinessMode.valueOf(body.get("businessMode").toString().toUpperCase()));
+                BusinessMode mode = BusinessMode.valueOf(body.get("businessMode").toString().toUpperCase());
+                user.setBusinessMode(mode);
+                if (user.getDefaultTaxRate() == null && mode == BusinessMode.FREELANCE) {
+                    user.setDefaultTaxRate(BigDecimal.ZERO);
+                }
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Invalid businessMode"));
+            }
+        }
+        if (body.containsKey("defaultTaxRatePercent")) {
+            Object raw = body.get("defaultTaxRatePercent");
+            if (raw == null) {
+                user.setDefaultTaxRate(null);
+            } else if (raw instanceof Number n) {
+                try {
+                    user.setDefaultTaxRate(TaxRateResolver.fromPercent(n));
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+                }
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("message", "defaultTaxRatePercent must be a number"));
+            }
+        } else if (body.containsKey("defaultTaxRate")) {
+            Object raw = body.get("defaultTaxRate");
+            if (raw == null) {
+                user.setDefaultTaxRate(null);
+            } else if (raw instanceof Number n) {
+                user.setDefaultTaxRate(TaxRateResolver.clamp(new BigDecimal(n.toString())));
             }
         }
         if (body.containsKey("defaultHourlyRate")) {
@@ -67,11 +101,33 @@ public class UserController {
                 user.setDefaultHourlyRate(new BigDecimal(n.toString()));
             }
         }
+        if (body.containsKey("venmoHandle")) {
+            Object raw = body.get("venmoHandle");
+            if (raw == null || raw.toString().isBlank()) {
+                user.setVenmoHandle(null);
+            } else {
+                String handle = raw.toString().trim();
+                if (!handle.startsWith("@")) {
+                    handle = "@" + handle;
+                }
+                user.setVenmoHandle(handle);
+            }
+        }
         repository.save(user);
-        return ResponseEntity.ok(Map.of(
-                "businessMode", user.getBusinessMode().name(),
-                "defaultHourlyRate", user.getDefaultHourlyRate()
-        ));
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("businessMode", user.getBusinessMode().name());
+        out.put("defaultHourlyRate", user.getDefaultHourlyRate());
+        out.put("defaultTaxRate", user.getDefaultTaxRate());
+        out.put("defaultTaxRatePercent", taxRatePercent(user.getDefaultTaxRate()));
+        out.put("venmoHandle", user.getVenmoHandle() != null ? user.getVenmoHandle() : "");
+        return ResponseEntity.ok(out);
+    }
+
+    private static BigDecimal taxRatePercent(BigDecimal rate) {
+        if (rate == null) {
+            return null;
+        }
+        return rate.multiply(BigDecimal.valueOf(100)).setScale(2, RoundingMode.HALF_UP);
     }
 
     @PostMapping("/link-google")

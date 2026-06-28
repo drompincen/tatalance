@@ -213,12 +213,21 @@ class RideControllerTest {
 
     @Test
     void should_listRidesByClient() throws Exception {
-        when(rideRepository.findByClientId("cli001")).thenReturn(List.of(sampleRide()));
+        when(clientRepository.existsByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(true);
+        when(rideRepository.findByUserIdAndClientId(TEST_USER_ID, "cli001")).thenReturn(List.of(sampleRide()));
 
         mockMvc.perform(get("/api/clients/cli001/rides"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].clientId").value("cli001"));
+    }
+
+    @Test
+    void should_return404_when_listRidesByClient_notOwned() throws Exception {
+        when(clientRepository.existsByIdAndUserId("cli999", TEST_USER_ID)).thenReturn(false);
+
+        mockMvc.perform(get("/api/clients/cli999/rides"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -299,7 +308,8 @@ class RideControllerTest {
     @Test
     void should_listAvailableDrivers() throws Exception {
         var driver = sampleDriver();
-        when(driverRepository.findByAvailability(Availability.AVAILABLE)).thenReturn(List.of(driver));
+        when(driverRepository.findByUserIdAndAvailability(TEST_USER_ID, Availability.AVAILABLE))
+                .thenReturn(List.of(driver));
 
         mockMvc.perform(get("/api/drivers/available"))
                 .andExpect(status().isOk())
@@ -313,7 +323,8 @@ class RideControllerTest {
         // matches, sorted by pickupDateTime ascending.
         var ride = sampleRide();
         ride.setAssignedDriverId("drv001");
-        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv001"))
+        when(driverRepository.existsByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(true);
+        when(rideRepository.findByUserIdAndAssignedDriverIdOrderByPickupDateTimeAsc(TEST_USER_ID, "drv001"))
                 .thenReturn(List.of(ride));
 
         mockMvc.perform(get("/api/drivers/drv001/rides"))
@@ -324,8 +335,17 @@ class RideControllerTest {
     }
 
     @Test
+    void should_return404_when_listRidesByDriver_notOwned() throws Exception {
+        when(driverRepository.existsByIdAndUserId("drv999", TEST_USER_ID)).thenReturn(false);
+
+        mockMvc.perform(get("/api/drivers/drv999/rides"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void should_returnEmptyList_when_driverHasNoRides() throws Exception {
-        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv999"))
+        when(driverRepository.existsByIdAndUserId("drv999", TEST_USER_ID)).thenReturn(true);
+        when(rideRepository.findByUserIdAndAssignedDriverIdOrderByPickupDateTimeAsc(TEST_USER_ID, "drv999"))
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/drivers/drv999/rides"))
@@ -396,7 +416,7 @@ class RideControllerTest {
     }
 
     @Test
-    void should_return409_when_completingScheduledRide() throws Exception {
+    void should_return400_when_completingScheduledRideWithoutHours() throws Exception {
         var ride = sampleRide();
         ride.setStatus(RideStatus.SCHEDULED);
         when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
@@ -404,7 +424,63 @@ class RideControllerTest {
         mockMvc.perform(post("/api/rides/ride001/complete")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message")
+                        .value("billableHours is required to complete a scheduled job without starting the timer"));
+    }
+
+    @Test
+    void should_completeScheduledRide_withManualBillableHours() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.SCHEDULED);
+        ride.setPricingMode(PricingMode.HOURLY);
+        ride.setHourlyRate(new BigDecimal("20.00"));
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"billableHours\":10}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.durationMinutes").value(600))
+                .andExpect(jsonPath("$.totalAmount").value(200.00));
+    }
+
+    @Test
+    void should_completeAssignedRide_whenActualTimesProvided() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        ride.setAssignedDriverId("drv001");
+        ride.setBasePrice(new BigDecimal("85.00"));
+        var driver = sampleDriver();
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+        when(driverRepository.findByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(Optional.of(driver));
+        when(rideRepository.save(any(Ride.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(driverRepository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"actualStart":"2026-06-25T10:00:00Z","actualEnd":"2026-06-25T11:00:00Z","tolls":5}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.billableAmount").value(90.00));
+    }
+
+    @Test
+    void should_return400_when_completingAssignedWithoutTimes() throws Exception {
+        var ride = sampleRide();
+        ride.setStatus(RideStatus.ASSIGNED);
+        when(rideRepository.findByIdAndUserId("ride001", TEST_USER_ID)).thenReturn(Optional.of(ride));
+
+        mockMvc.perform(post("/api/rides/ride001/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].message")
+                        .value("actualStart and actualEnd are required to complete an assigned ride"));
     }
 
     @Test
@@ -607,7 +683,8 @@ class RideControllerTest {
     void should_listByDriver() throws Exception {
         var ride = sampleRide();
         ride.setAssignedDriverId("drv001");
-        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv001"))
+        when(driverRepository.existsByIdAndUserId("drv001", TEST_USER_ID)).thenReturn(true);
+        when(rideRepository.findByUserIdAndAssignedDriverIdOrderByPickupDateTimeAsc(TEST_USER_ID, "drv001"))
                 .thenReturn(List.of(ride));
         mockMvc.perform(get("/api/drivers/drv001/rides"))
                 .andExpect(status().isOk())
@@ -630,7 +707,8 @@ class RideControllerTest {
 
     @Test
     void should_listByClient() throws Exception {
-        when(rideRepository.findByClientId("cli001")).thenReturn(List.of(sampleRide()));
+        when(clientRepository.existsByIdAndUserId("cli001", TEST_USER_ID)).thenReturn(true);
+        when(rideRepository.findByUserIdAndClientId(TEST_USER_ID, "cli001")).thenReturn(List.of(sampleRide()));
         mockMvc.perform(get("/api/clients/cli001/rides"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].clientId").value("cli001"));
@@ -723,7 +801,8 @@ class RideControllerTest {
 
     @Test
     void should_listRidesByDriver_empty() throws Exception {
-        when(rideRepository.findByAssignedDriverIdOrderByPickupDateTimeAsc("drv999")).thenReturn(List.of());
+        when(driverRepository.existsByIdAndUserId("drv999", TEST_USER_ID)).thenReturn(true);
+        when(rideRepository.findByUserIdAndAssignedDriverIdOrderByPickupDateTimeAsc(TEST_USER_ID, "drv999")).thenReturn(List.of());
         mockMvc.perform(get("/api/drivers/drv999/rides"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));

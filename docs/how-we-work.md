@@ -17,6 +17,7 @@ Two developers — drom and luciano — each with their own branch and cloud san
 - Never push directly to `main` — always open a PR
 - PRs to `main` require 1 reviewer approval
 - Build must pass before merge
+- Always run `mvn clean verify` locally before `git push` — failed CI blocks deploys silently (EB stays on old code)
 
 ---
 
@@ -25,8 +26,9 @@ Two developers — drom and luciano — each with their own branch and cloud san
 1. Pick an issue from the GitHub Project board
 2. Assign yourself
 3. Work on your personal branch (`drom` or `luciano`)
-4. Push → pipeline deploys to your sandbox automatically
-5. Test in your EB environment
+4. Run `mvn clean verify` — all tests must pass
+5. Push → pipeline deploys to your sandbox automatically
+6. Test in your EB environment
 6. Open PR → request review
 7. After approval + merge → auto-deploys to QA
 8. Verify QA → manually trigger prod deploy when ready
