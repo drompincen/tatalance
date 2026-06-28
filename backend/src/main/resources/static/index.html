@@ -403,7 +403,7 @@
         }
         .account-trigger:hover { background: rgba(255,255,255,.12); color: #fff; }
         .account-menu-panel {
-            display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px;
+            display: none; position: fixed; right: 24px; min-width: 220px;
             background: #fff; color: #1a1a2e; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
             padding: 10px 0; z-index: 200;
         }
@@ -585,25 +585,6 @@
                 <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="toggleAccountMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel" aria-label="Account settings">
                     <span id="username-display">Account</span> ▾
                 </button>
-                <div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
-                    <span class="account-menu-label" data-i18n="account.profile">Profile</span>
-                    <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
-                        <option value="" data-i18n="account.allProfiles">All (account)</option>
-                    </select>
-                    <div class="account-menu-divider"></div>
-                    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem" data-i18n="account.manageProfiles">Manage profiles</button>
-                    <span class="account-menu-label" data-i18n="invoice.tax">Tax</span>
-                    <div class="account-tax-row">
-                        <input type="number" id="account-tax-rate" min="0" max="100" step="0.01" value="8" aria-label="Invoice tax percent">
-                        <span style="font-size:.8rem;color:#64748b">%</span>
-                        <button type="button" class="btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
-                    </div>
-                    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
-                    <a href="/freelance.html" class="menu-item menu-item-freelance" role="menuitem" data-test="account-freelance-link" data-i18n="account.freelanceMode">Freelance mode</a>
-                    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
-                    <div class="account-menu-divider"></div>
-                    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
-                </div>
             </div>
             <button class="logout-btn mobile-logout-only" onclick="doLogout()" data-i18n-aria="account.logout" aria-label="Logout" data-i18n="account.logout">Logout</button>
         </div>
@@ -631,6 +612,25 @@
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 <div class="account-menu-overlay" id="account-menu-overlay" onclick="closeAccountMenu()"></div>
+<div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
+    <span class="account-menu-label" data-i18n="account.profile">Profile</span>
+    <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
+        <option value="" data-i18n="account.allProfiles">All (account)</option>
+    </select>
+    <div class="account-menu-divider"></div>
+    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem" data-i18n="account.manageProfiles">Manage profiles</button>
+    <span class="account-menu-label" data-i18n="invoice.tax">Tax</span>
+    <div class="account-tax-row">
+        <input type="number" id="account-tax-rate" min="0" max="100" step="0.01" value="8" aria-label="Invoice tax percent">
+        <span style="font-size:.8rem;color:#64748b">%</span>
+        <button type="button" class="btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
+    </div>
+    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
+    <a href="/freelance.html" class="menu-item menu-item-freelance" role="menuitem" data-test="account-freelance-link" data-i18n="account.freelanceMode">Freelance mode</a>
+    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
+    <div class="account-menu-divider"></div>
+    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
+</div>
 
 <!-- ── Dashboard tab ── -->
 <div id="tab-dashboard" class="tab-pane active">
@@ -1368,6 +1368,11 @@
         if (!panel || !btn) return;
         const open = !panel.classList.contains('open');
         if (open) closeNav();
+        if (open && window.innerWidth > 768) {
+            const rect = btn.getBoundingClientRect();
+            panel.style.top = (rect.bottom + 6) + 'px';
+            panel.style.right = (window.innerWidth - rect.right) + 'px';
+        }
         panel.classList.toggle('open', open);
         if (overlay) overlay.classList.toggle('open', open);
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
