@@ -3,11 +3,8 @@ import type { APIRequestContext, Page } from '@playwright/test';
 /** Jobs tab scopes rides by active profile; E2E uses account-wide scope for stable assertions. */
 export async function useAccountWideProfileScope(page: Page) {
   await page.addInitScript(() => localStorage.removeItem('activeProfileId'));
-  await page.goto('/');
-  const sel = page.locator('#profile-switcher');
-  if (await sel.count()) {
-    await sel.selectOption('');
-  }
+  await page.goto('/index.html');
+  await page.waitForSelector('#hamburger', { timeout: 15_000 });
 }
 
 export const uniq = () => Math.random().toString(36).slice(2, 8);
@@ -33,6 +30,28 @@ export function laterTodayISO(): string {
 
 function assertOk(ok: boolean, label: string) {
   if (!ok) throw new Error(label);
+}
+
+export async function seedDriver(request: APIRequestContext, prefix = 'Mob') {
+  const firstName = `${prefix}-${uniq()}`;
+  const lastName = 'Driver';
+  const r = await request.post('/api/drivers', {
+    data: {
+      firstName,
+      lastName,
+      phone: uniquePhone(),
+      payoutType: 'PERCENTAGE',
+      payoutRate: 70,
+    },
+  });
+  assertOk(r.ok(), `seed driver failed: ${r.status()}`);
+  const body = await r.json();
+  return {
+    id: body.id as string,
+    firstName,
+    lastName,
+    fullName: `${firstName} ${lastName}`,
+  };
 }
 
 export async function seedClient(request: APIRequestContext, prefix = 'Mob') {
@@ -80,7 +99,7 @@ export async function seedAssignedRide(
   driverId: string,
   basePrice = 100,
 ) {
-  return seedRide(
+  const ride = await seedRide(
     request,
     clientId,
     driverId,
@@ -89,6 +108,11 @@ export async function seedAssignedRide(
     'Brickell',
     { basePrice },
   );
+  const assign = await request.post(`/api/rides/${ride.id}/assign`, {
+    data: { driverId },
+  });
+  assertOk(assign.ok(), `assign driver failed: ${assign.status()}`);
+  return await assign.json();
 }
 
 /** Seed a freelance/service job via the unified rides API (used by Jobs tab for #93).

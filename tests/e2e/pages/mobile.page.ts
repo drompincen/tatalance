@@ -13,6 +13,11 @@ export class MobilePage {
     await this.page.locator(`#${buttonId}`).click();
   }
 
+  async openAccountMenu() {
+    await this.page.locator('#account-menu-btn').click();
+    await expect(this.page.locator('#account-menu-panel.open')).toBeVisible();
+  }
+
   async assertNoHorizontalScroll() {
     await this.page.waitForLoadState('load');
     const overflow = await this.page.evaluate(() => ({

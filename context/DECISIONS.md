@@ -7,45 +7,64 @@
 **Consequences:** Trade-offs accepted
 -->
 
-## 2026-04-27 DocumentDB over RDS PostgreSQL
+## Current stack (2026-06)
+
+| Layer | As deployed |
+|---|---|
+| Backend | Spring Boot 3.3.5, Java 21, Maven |
+| Database | MongoDB Atlas (per-env database) |
+| Local/test DB | Flapdoodle embedded MongoDB |
+| Frontend | Plain HTML/JS in `static/` (not React) |
+| Hosting | AWS Elastic Beanstalk (branch-per-env) |
+| CI/CD | GitHub Actions (OIDC deploy) |
+| Auth | Spring Security form login + optional Google OAuth; static `login.html` |
+| Errors | `GlobalExceptionHandler` + `ApiMessageResolver` (EN/ES via `Accept-Language`) |
+
+Entries below marked **[SUPERSEDED]** are historical — kept for context, not current guidance.
+
+---
+
+## 2026-04-27 DocumentDB over RDS PostgreSQL [SUPERSEDED]
+**Superseded by:** MongoDB Atlas (2026 deploy)
 **Context:** Need a managed database on AWS. Project is a chauffeur dispatch tool with flexible, evolving domain objects.
 **Decision:** AWS DocumentDB (MongoDB-compatible). Spring Data MongoDB. No schema migrations.
 **Consequences:** No SQL joins (denormalize clientName into Job documents). Flapdoodle tests run against real MongoDB, not DocumentDB — known minor incompatibilities documented. Simpler schema evolution going forward.
 
-## 2026-04-27 UI bundled in Spring Boot JAR
-**Context:** Need to deploy the React frontend. Options were S3+CloudFront or bundling in the JAR.
-**Decision:** Bundle via `frontend-maven-plugin` + Spring static resources. Single artifact: one JAR serves both API and UI.
-**Consequences:** Simpler CI/CD (one build, one deploy). Same-origin API calls — no CORS in prod. Slightly larger JAR. Build is slower when UI changes (mitigated by Maven dep caching layer in Docker).
+## 2026-04-27 UI bundled in Spring Boot JAR [SUPERSEDED — React path]
+**Superseded by:** Plain HTML/JS in `backend/src/main/resources/static/` (no frontend-maven-plugin)
+**Was:** React bundle via `frontend-maven-plugin`.
+**Decision (current):** Static HTML/JS served from Spring Boot JAR. Single artifact: one JAR serves API + UI.
+**Consequences:** Simpler CI/CD. Same-origin API calls — no CORS in prod.
 
-## 2026-04-27 Server-side session over JWT
-**Context:** Need auth state management. App is a single-admin tool served from one domain.
-**Decision:** Spring Security server-side session cookie. Session stored in ElastiCache Redis in prod so all Fargate tasks share state.
-**Consequences:** No JWT complexity. Redis adds one infrastructure dependency. Session invalidation is immediate (no token expiry race). Requires sticky sessions to be off and Redis to be available.
+## 2026-04-27 Server-side session over JWT [PARTIAL — session model still valid]
+**Context:** Need auth state management. App served from one domain.
+**Decision:** Spring Security server-side session cookie (not JWT).
+**Consequences:** No JWT complexity. Session invalidation is immediate.
+**Note:** Early notes referenced ElastiCache/Fargate — **superseded by EB** (see below). Sessions are in-memory per EB instance; acceptable for current scale.
 
-## 2026-04-27 Thymeleaf login page (not a React route)
-**Context:** Demo login uses `POST /login` (Spring Security form login), which requires a CSRF token. React routes can't easily inject CSRF tokens into a form without backend involvement.
-**Decision:** Login page is a Thymeleaf template. Spring Security injects the CSRF token automatically via `th:action`. The SPA catch-all controller explicitly excludes `/login`.
-**Consequences:** Login page is not part of the React bundle. Requires `spring-boot-starter-thymeleaf` dependency. Login page styled separately (inline CSS or non-bundled stylesheet).
+## 2026-04-27 Thymeleaf login page [SUPERSEDED]
+**Superseded by:** Static `login.html` / `register.html` in `static/` with CSRF token from cookie/meta
+**Was:** Thymeleaf template for `/login`.
+**Consequences (current):** Auth pages are plain HTML + `i18n.js`; no Thymeleaf dependency for login.
 
 ## 2026-04-29 ElastiCache Redis for session store [SUPERSEDED]
 **Superseded by:** 2026-04-30 ALB sticky sessions over Redis
 **Was:** Spring Session Redis to survive rolling-deploy task switches.
 **Why superseded:** Single admin user; low deploy frequency; Redis adds ~$20/month and significant config complexity for a problem that ALB sticky sessions solves for free.
 
-## 2026-04-30 ALB sticky sessions over Redis for session continuity
-**Context:** Rolling Fargate deploys briefly run 2 tasks. Original solution was ElastiCache Redis. Simplification review found Redis unjustified for a single-admin tool.
-**Decision:** Enable ALB sticky sessions (`stickinessCookieDuration: Duration.days(1)`) on the target group. The `AWSALB` cookie pins David's requests to the same task for 24 hours. In-memory Spring sessions require no external store. No `spring-session-data-redis`, no ElastiCache, no Redis connection config.
-**Consequences:** If a task is replaced during a deploy while David is actively using the app, he may need to log in again (rare, ~30s window). Acceptable for a solo-admin tool. Saves ~$20/month and removes one CDK stack, two Maven dependencies, four env vars, and several config lines.
+## 2026-04-30 ALB sticky sessions over Redis [SUPERSEDED — Fargate/CDK path]
+**Superseded by:** AWS Elastic Beanstalk deploy (2026). No Fargate/CDK in current pipeline.
+**Was:** ALB sticky sessions on Fargate target groups.
 
-## 2026-04-29 ProblemDetail (RFC 9457) for API errors
-**Context:** Need consistent JSON error responses. Spring Boot 3 has built-in support.
-**Decision:** `@ControllerAdvice GlobalExceptionHandler` using `ProblemDetail`. Validation errors map to 400 with `errors` array. Unknown entities return 404. Unhandled exceptions return 500 with no stack trace.
-**Consequences:** Standardized contract for the React UI to parse. No custom error DTOs needed — framework type is sufficient.
+## 2026-04-29 ProblemDetail (RFC 9457) for API errors [SUPERSEDED]
+**Superseded by:** `GlobalExceptionHandler` returning `Map` with `errors` array; `ApiMessageResolver` for i18n (#106)
+**Was:** `ProblemDetail` type in handler.
+**Consequences (current):** Static JS parses `errors[].message`; EN/ES via `Accept-Language`.
 
-## 2026-04-30 Bean Validation on DTOs only, not on domain documents
-**Context:** Spring Data MongoDB does NOT run Bean Validation before saving documents (unlike JPA). Putting `@NotBlank` on `Client.java` or `Job.java` is dead code that gives false confidence.
-**Decision:** All `@NotBlank` / `@NotNull` annotations live only on `CreateClientRequest` / `CreateJobRequest` DTOs. `@Valid` on the `@RequestBody` parameter in the controller enforces them. Domain documents have no validation annotations.
-**Consequences:** Clear separation — the controller boundary is the only validation point. Services trust their inputs are valid. Domain classes stay clean.
+## 2026-04-30 Bean Validation on DTOs only [PARTIAL — domain annotations in use]
+**Context:** Spring Data MongoDB does NOT validate documents on save. Validation must run at controller boundary.
+**Decision:** Use `@Valid @RequestBody` on controllers. Domain classes (`Client`, `Ride`) currently carry `@NotBlank` for request-body validation — effective at HTTP boundary, not on Mongo save.
+**Consequences:** Do not assume MongoDB enforces constraints; always validate at API entry.
 
 ## 2026-04-30 BigDecimal → DECIMAL128 in MongoDB
 **Context:** Spring Data MongoDB serializes `BigDecimal` to `String` by default, losing numeric type in the database.
@@ -69,13 +88,23 @@
 
 ## 2026-06-21 EN/ES i18n for Tata (client-side toggle, mockup port)
 **Context:** Tata prefers Spanish. Production UI (`index.html`) is English-only; `docs/js/i18n.js` already prototypes EN/ES for the redesign mockup. Help overlay (`?`) is English hardcoded in `helpPanels`.
-**Decision:** Epic 13 (#102): port `docs/js/i18n.js` pattern to production static UI. `data-i18n` keys + `localStorage` for language. Default to Spanish when `navigator.language` starts with `es`. Translate chauffeur UI, ? help (6 panels), and auth pages. API validation in Spanish (#106) via `Accept-Language` is optional follow-up. Freelance surface out of scope for v1.
-**Consequences:** Duplicate string maintenance in `i18n.js` until/unless extracted. Help panel HTML must use translation keys or parallel ES content. No backend locale framework in v1.
+**Decision:** Epic 13 (#102): port `docs/js/i18n.js` pattern to production static UI. `data-i18n` keys + `localStorage` for language. Default to Spanish when `navigator.language` starts with `es`. Translate chauffeur UI, ? help (6 panels), and auth pages. API validation in Spanish (#106) via `Accept-Language` + `ApiMessageResolver` — **shipped 2026-06-25**. Freelance surface out of scope for v1.
+**Consequences:** Duplicate string maintenance in `i18n.js` until/unless extracted. No Spring MessageSource in v1.
+
+## 2026-06-25 Spanish API errors via Accept-Language (#106)
+**Context:** ES UI showed English validation text from server when only client-side i18n was translated.
+**Decision:** `i18n.js` fetch wrapper sends `Accept-Language: es|en` on `/api/*`. `ApiMessageResolver` translates field messages and known `ResponseStatusException` strings.
+**Consequences:** Server and UI locale stay aligned for booking errors. Add new messages to `KNOWN_ES` map when introducing user-facing API errors.
 
 ## 2026-06-21 Embedded in-app map picker over external Google Maps redirect
 **Context:** Users want to pick pickup/dropoff by dropping a pin on Google Maps instead of typing addresses. Epic 9 #73 already links table text to `google.com/maps/search/...`.
 **Decision:** Build an in-app `LocationPicker` modal using Google Maps JavaScript API + Places. Reverse-geocode pin/search result to human-readable text stored in existing `pickupLocation` / `dropoffLocation` strings. Optional `lat/lng` on `Ride` (#100) for precise navigation links. API key in EB env (`GOOGLE_MAPS_API_KEY`), never in git. External Google Maps tab cannot return picked coordinates to the web app.
 **Consequences:** Requires Google Cloud billing (free-tier usually sufficient). Drom sets up API key (#97); Luciano builds UI (#98–#99). Freelance `freelance.html` out of scope for v1. E2E must mock Maps APIs (#101).
+
+## 2026-06-27 Configurable invoice tax via account + profile (#116)
+**Context:** MVP hardcoded 8% tax on chauffeur invoices; freelance (#115) needed $0 tax. Hardcoded `isFreelanceInvoice()` was not user-configurable.
+**Decision:** `AppUser.defaultTaxRate` (decimal fraction) set via `PATCH /api/users/me/settings` as `defaultTaxRatePercent` (0–100). Optional `Profile.taxRate` override. `TaxRateResolver` priority: profile → account → legacy fallbacks (HOURLY/ENGINEER=0, else 8%). FREELANCE mode auto-sets 0% when unset.
+**Consequences:** Users control tax without code changes. Legacy accounts without a saved rate keep old behavior until they save settings.
 
 ## 2026-04-30 Flapdoodle spring30x artifact for Spring Boot 3 tests
 **Context:** The legacy `de.flapdoodle.embed.mongo` artifact does not auto-configure with Spring Boot 3. `@DataMongoTest` silently fails to start an embedded MongoDB, causing all repository tests to fail with connection refused.

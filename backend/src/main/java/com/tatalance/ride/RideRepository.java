@@ -18,14 +18,26 @@ public interface RideRepository extends JobRepository {
     @Query("{ 'clientId': ?0, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
     List<Ride> findByClientId(String clientId);
 
+    @Query("{ 'userId': ?0, 'clientId': ?1, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
+    List<Ride> findByUserIdAndClientId(String userId, String clientId);
+
     @Query("{ 'clientId': ?0, 'status': { $in: ?1 }, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
     List<Ride> findByClientIdAndStatusIn(String clientId, Collection<RideStatus> statuses);
+
+    @Query("{ 'userId': ?0, 'clientId': ?1, 'status': { $in: ?2 }, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
+    List<Ride> findByUserIdAndClientIdAndStatusIn(String userId, String clientId, Collection<RideStatus> statuses);
 
     @Query("{ 'assignedDriverId': ?0, 'status': { $in: ?1 }, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
     List<Ride> findByAssignedDriverIdAndStatusIn(String driverId, Collection<RideStatus> statuses);
 
+    @Query("{ 'userId': ?0, 'assignedDriverId': ?1, 'status': { $in: ?2 }, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
+    List<Ride> findByUserIdAndAssignedDriverIdAndStatusIn(String userId, String driverId, Collection<RideStatus> statuses);
+
     @Query(value = "{ 'assignedDriverId': ?0, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }", sort = "{ 'scheduledTime' : 1 }")
     List<Ride> findByAssignedDriverIdOrderByPickupDateTimeAsc(String assignedDriverId);
+
+    @Query(value = "{ 'userId': ?0, 'assignedDriverId': ?1, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }", sort = "{ 'scheduledTime' : 1 }")
+    List<Ride> findByUserIdAndAssignedDriverIdOrderByPickupDateTimeAsc(String userId, String assignedDriverId);
 
     @Query("{ 'userId': ?0, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
     List<Ride> findByUserId(String userId);
@@ -53,6 +65,9 @@ public interface RideRepository extends JobRepository {
 
     @Query("{ 'assignedDriverId': ?0, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
     List<Ride> findByAssignedDriverId(String assignedDriverId);
+
+    @Query("{ 'userId': ?0, 'assignedDriverId': ?1, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")
+    List<Ride> findByUserIdAndAssignedDriverId(String userId, String assignedDriverId);
 
     // Profile-scoped variants for multi-profile support (profileId on Job, clients remain userId shared)
     @Query("{ 'userId': ?0, 'profileId': ?1, '$or': [ { 'type': 'RIDE' }, { 'type': { $exists: false } } ] }")

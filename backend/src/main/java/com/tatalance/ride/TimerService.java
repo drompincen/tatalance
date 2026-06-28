@@ -143,4 +143,21 @@ public class TimerService {
         ride.setActualEnd(end);
         return mins;
     }
+
+    /** Apply fixed billable hours without running a live timer (#115 G5). */
+    public void applyManualHours(Ride ride, BigDecimal hours, Instant end) {
+        if (hours == null || hours.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "billableHours must be positive");
+        }
+        long minutes = hours.multiply(BigDecimal.valueOf(60)).setScale(0, RoundingMode.HALF_UP).longValue();
+        Instant start = end.minus(Duration.ofMinutes(minutes));
+        ride.setActualStart(start);
+        ride.setActualEnd(end);
+        ride.setDurationMinutes(minutes);
+        ride.setWorkSegments(new ArrayList<>(List.of(new WorkSegment(start, end))));
+        if (ride.getStatus() != RideStatus.IN_PROGRESS) {
+            ride.setStatus(RideStatus.IN_PROGRESS);
+            ride.addStatusEvent(RideStatus.IN_PROGRESS);
+        }
+    }
 }

@@ -86,7 +86,7 @@ test.describe('Freelance timer flow', () => {
   test('UI: freelance page loads and shows Jobs nav', async ({ page }) => {
     await page.goto('/freelance.html');
     await expect(page.locator('h1')).toContainText('Tatalance');
-    await expect(page.locator('.nav button', { hasText: 'Jobs' })).toBeVisible();
+    await expect(page.locator('.side .nav button[data-view="jobs"]')).toBeVisible();
     await expect(page.locator('#book-btn')).toContainText('Book job');
   });
 });

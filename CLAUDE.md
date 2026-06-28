@@ -21,6 +21,36 @@ At the start of every session:
 3. **Pull latest from main too:** `git fetch origin main`
 4. **Read active issues:** check `https://github.com/drompincen/tatalance/issues` for in-progress work
 5. **Never push directly to `main`** — always open a PR
+6. **Read `context/MEMORY.md`** for current focus and recent session context
+7. **Read `drom-plans/tatalance-v1.md`** for what's next, done, and blocked
+
+## Workflow Rules
+
+**Canonical sources (one concern each — keep in sync after every ship):**
+
+| Concern | Canonical file |
+|---|---|
+| What's next / story status | `drom-plans/tatalance-v1.md` |
+| How to implement a story | GitHub issue body (`gh issue view #N`) |
+| Session startup context | `context/MEMORY.md` |
+| Coding patterns | `context/CONVENTIONS.md` |
+| Architecture history | `context/DECISIONS.md` |
+| Behavioral rules | This file (`CLAUDE.md`) |
+
+**Before every push (mandatory — no exceptions):**
+Run `mvn clean verify` (via Windows Maven) and confirm all tests pass **before** running `git push`. If tests fail, fix them before pushing. Never push code that hasn't passed the full test suite locally — broken pushes block deploys silently.
+
+**After shipping any story (mandatory — same session as the commit/PR):**
+1. Mark the story **completed** in `tatalance-v1.md` (roadmap table + epic section)
+2. Reference the issue in the commit message: `feat: … (#N)`
+3. Update `context/MEMORY.md` current focus if the "what's next" changed
+4. Open or update PR to `main`; do not push to `main` directly
+
+**Specs:** GitHub issue acceptance checkboxes are the implementation spec. Autonomous chaining (`ship next`, `drom-plans/autonomous-runbook.md`) is allowed when the issue has testable criteria.
+
+**Blocked work:** If an epic lists `Blocked by:` (e.g. Epic 12 → #97), do not start dependent stories until unblocked or user provides a local dev workaround.
+
+**Details:** `docs/ai-workflow-guide.md` (ship loop, E2E tips). `docs/how-we-work.md` (team PR process).
 
 ## For Luciano's Claude Sessions
 
@@ -65,6 +95,9 @@ If not, follow `docs/luciano-setup.md` Step 2.
 - `docs/troubleshooting.md` — local + cloud troubleshooting
 - `docs/how-we-work.md` — branch strategy, PR process, issue tracking
 - `README.md` — stack versions, environment table, known limitations
+- `context/CONVENTIONS.md` — API, testing, and naming patterns
+- `context/DECISIONS.md` — architecture history (check "Current stack" first)
+- `drom-plans/tatalance-v1.md` — v1 epic/story status and dependencies
 
 ## Cloud Infrastructure
 

@@ -21,6 +21,9 @@ public class AppUser {
     private String securityAnswer;
     private BusinessMode businessMode = BusinessMode.CHAUFFEUR;
     private BigDecimal defaultHourlyRate = new BigDecimal("20.00");
+    /** Invoice tax as decimal fraction (0.08 = 8%). Null = use legacy defaults per job type. */
+    private BigDecimal defaultTaxRate;
+    private String venmoHandle;
 
     // Business owner and type concepts (for multi-profile support)
     private boolean businessOwner = true;
@@ -46,6 +49,10 @@ public class AppUser {
     public void setBusinessMode(BusinessMode businessMode) { this.businessMode = businessMode; }
     public BigDecimal getDefaultHourlyRate() { return defaultHourlyRate; }
     public void setDefaultHourlyRate(BigDecimal defaultHourlyRate) { this.defaultHourlyRate = defaultHourlyRate; }
+    public BigDecimal getDefaultTaxRate() { return defaultTaxRate; }
+    public void setDefaultTaxRate(BigDecimal defaultTaxRate) { this.defaultTaxRate = defaultTaxRate; }
+    public String getVenmoHandle() { return venmoHandle; }
+    public void setVenmoHandle(String venmoHandle) { this.venmoHandle = venmoHandle; }
 
     public boolean isBusinessOwner() { return businessOwner; }
     public void setBusinessOwner(boolean businessOwner) { this.businessOwner = businessOwner; }

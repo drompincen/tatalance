@@ -72,27 +72,31 @@ test.describe('Ride completion', () => {
       pickupLocation: 'A', dropoffLocation: 'B', basePrice: 50
     }) as { id: string };
 
-    // try to complete a SCHEDULED ride — should fail (must be IN_PROGRESS)
+    // try to complete a SCHEDULED ride without billableHours — should fail with 400
     const resp = await page.request.post(`/api/rides/${ride.id}/complete`, {
       data: {}
     });
-    expect(resp.status()).toBe(409);
+    expect(resp.status()).toBe(400);
+    const body = await resp.json();
+    expect(JSON.stringify(body)).toMatch(/billableHours/i);
 
     // cleanup
     await app.apiDelete(`/api/rides/${ride.id}`);
     await app.apiDelete(`/api/clients/${client.id}`);
   });
 
-  test('cannot complete an ASSIGNED ride before it is started', async ({ page }) => {
+  test('cannot complete an ASSIGNED ride without actual times', async ({ page }) => {
     const app = new AppPage(page);
     await app.goto();
     const { client, driver, ride } = await seedAssignedRide(app);
 
-    // ride is ASSIGNED but not started — complete requires IN_PROGRESS
+    // ASSIGNED rides need actualStart/actualEnd (desktop flow) before complete
     const resp = await page.request.post(`/api/rides/${ride.id}/complete`, {
       data: {}
     });
-    expect(resp.status()).toBe(409);
+    expect(resp.status()).toBe(400);
+    const body = await resp.json();
+    expect(JSON.stringify(body)).toMatch(/actualStart|actualEnd/i);
 
     // cleanup
     await app.apiDelete(`/api/rides/${ride.id}`);

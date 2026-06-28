@@ -13,7 +13,54 @@
       --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
     body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; font-size: 16px; }
-    .layout { display: flex; max-width: 1200px; margin: 0 auto; min-height: 100dvh; }
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      padding: 12px 16px; background: #1a1a2e; color: #fff; position: sticky; top: 0; z-index: 50;
+    }
+    .chauffeur-switch {
+      display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #1a1a2e;
+      background: #fff; border: 2px solid #fbbf24; border-radius: 12px; padding: 10px 16px;
+      min-height: 48px; box-shadow: 0 2px 10px rgba(0,0,0,.25); transition: transform .15s, box-shadow .15s;
+      flex-shrink: 0;
+    }
+    .chauffeur-switch:hover {
+      transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    }
+    .chauffeur-switch:active { transform: translateY(0); }
+    .chauffeur-switch-icon {
+      font-size: 1.35rem; line-height: 1; width: 36px; height: 36px; border-radius: 10px;
+      background: #fef3c7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .chauffeur-switch-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
+    .chauffeur-switch-label { font-size: .95rem; font-weight: 800; letter-spacing: -.02em; }
+    .chauffeur-switch-hint { font-size: .72rem; font-weight: 500; color: #64748b; }
+    .top-bar-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .mode-pill {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: rgba(255,255,255,.7); padding: 6px 10px; border-radius: 999px;
+      background: rgba(99,102,241,.25); border: 1px solid rgba(255,255,255,.15);
+    }
+    .top-logout {
+      color: #fff !important; border-color: rgba(255,255,255,.25) !important;
+      background: transparent !important;
+    }
+    .top-logout:hover { background: rgba(255,255,255,.1) !important; }
+    .lang-toggle {
+      display: flex; align-items: center; background: rgba(255,255,255,.1); border-radius: 999px;
+      padding: 3px; cursor: pointer; position: relative; user-select: none;
+      border: 1px solid rgba(255,255,255,.15); flex-shrink: 0;
+    }
+    .lang-option {
+      position: relative; z-index: 2; padding: .2rem .55rem; font-size: .7rem; font-weight: 700;
+      letter-spacing: .04em; color: rgba(255,255,255,.45); border-radius: 999px; line-height: 1;
+    }
+    .lang-option.active { color: #fff; }
+    .lang-slider {
+      position: absolute; top: 3px; left: 3px; width: calc(50% - 3px); height: calc(100% - 6px);
+      background: rgba(255,255,255,.2); border-radius: 999px; transition: transform .2s ease; z-index: 1;
+    }
+    .lang-toggle.es .lang-slider { transform: translateX(100%); }
+    .layout { display: flex; max-width: 1200px; margin: 0 auto; min-height: calc(100dvh - 56px); }
     .side {
       width: 220px; padding: 24px 16px; border-right: 1px solid var(--border);
       background: var(--surface); flex-shrink: 0; display: flex; flex-direction: column;
@@ -31,8 +78,33 @@
       border-radius: 10px; font-size: .88rem; cursor: pointer; color: var(--muted);
     }
     .nav button.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
-    .side-footer { margin-top: auto; padding-top: 16px; font-size: .75rem; }
-    .side-footer a { color: var(--primary); }
+    .mode-switch-card {
+      display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 14px;
+      border-radius: var(--radius); text-decoration: none; color: #fff;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      border: 2px solid #fbbf24; box-shadow: 0 4px 12px rgba(15,52,96,.25);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .mode-switch-card:hover {
+      transform: translateY(-1px); box-shadow: 0 6px 16px rgba(15,52,96,.35);
+    }
+    .mode-switch-card-icon {
+      font-size: 1.5rem; width: 44px; height: 44px; border-radius: 12px;
+      background: rgba(251,191,36,.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .mode-switch-card-body { flex: 1; min-width: 0; }
+    .mode-switch-card-title { font-size: .92rem; font-weight: 800; letter-spacing: -.02em; }
+    .mode-switch-card-hint { font-size: .72rem; opacity: .8; margin-top: 3px; }
+    .mode-switch-card-arrow { font-size: 1.1rem; font-weight: 700; opacity: .9; flex-shrink: 0; }
+    .mode-switch-bar {
+      display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+      align-items: center; justify-content: center; gap: 10px; padding: 12px 16px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      background: #1a1a2e; border-top: 2px solid #fbbf24;
+      text-decoration: none; color: #fff; font-weight: 800; font-size: 1rem;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.2);
+    }
+    .mode-switch-bar-icon { font-size: 1.25rem; }
 
     .main { flex: 1; padding: 24px; overflow: auto; min-width: 0; }
     .view { display: none; }
@@ -80,41 +152,118 @@
     .timer-btns { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
     .row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
     .empty { text-align: center; padding: 32px; color: var(--muted); font-size: .88rem; }
+    .onboard-card {
+      margin-bottom: 20px; padding: 16px; border-radius: var(--radius);
+      background: linear-gradient(135deg, #eef2ff, #fff); border: 2px solid #c7d2fe;
+    }
+    .onboard-card h3 { font-size: 1rem; font-weight: 800; margin-bottom: 8px; }
+    .onboard-card p { font-size: .82rem; color: var(--muted); margin-bottom: 12px; }
+    .profile-pill {
+      display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700;
+      padding: 6px 10px; border-radius: 999px; background: var(--primary-soft); color: var(--primary);
+      border: 1px solid #c7d2fe; margin-bottom: 12px;
+    }
+    .invoice-detail { font-size: .82rem; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+    .invoice-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .hours-input { max-width: 120px; margin-bottom: 0 !important; display: inline-block; }
     .toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 12px 18px; border-radius: 10px; font-size: .85rem; display: none; z-index: 99; }
     .toast.show { display: block; }
+    .bottom-nav {
+      display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+      box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+    }
+    .bottom-nav-inner {
+      display: grid; grid-template-columns: repeat(5, 1fr); max-width: 1200px; margin: 0 auto;
+    }
+    .bottom-nav button {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      min-height: 56px; padding: 6px 4px; border: none; background: transparent;
+      font-size: .62rem; font-weight: 700; color: var(--muted); cursor: pointer;
+    }
+    .bottom-nav button .ico { font-size: 1.1rem; line-height: 1; }
+    .bottom-nav button.active { color: var(--primary); background: var(--primary-soft); }
     @media (max-width: 768px) {
+      body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
       .layout { flex-direction: column; }
-      .side { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-      .nav { flex-direction: row; overflow-x: auto; }
+      .side {
+        width: 100%; border-right: none; border-bottom: 1px solid var(--border);
+        padding: 12px 16px 8px;
+      }
+      .side .nav { display: none; }
+      .side .rate-badge { margin-top: 8px; }
+      .side h1 { font-size: 1rem; }
+      .side > p { display: none; }
+      .mode-switch-card { display: none; }
+      .mode-pill { display: none; }
+      .chauffeur-switch-hint { display: none; }
+      .chauffeur-switch { padding: 8px 12px; font-size: .82rem; }
+      .mode-switch-bar { display: none; }
+      .bottom-nav { display: block; }
+      .main { padding: 16px 12px 12px; }
+      .toast { bottom: calc(64px + env(safe-area-inset-bottom)); left: 12px; right: 12px; }
       .grid { grid-template-columns: 1fr; }
+      .onboard-card { margin-top: 0; }
     }
   </style>
 </head>
 <body>
+<header class="top-bar">
+  <a href="/index.html" class="chauffeur-switch" data-test="back-to-chauffeur" aria-label="Switch to Chauffeur ops">
+    <span class="chauffeur-switch-icon" aria-hidden="true">🚘</span>
+    <span class="chauffeur-switch-text">
+      <span class="chauffeur-switch-label" data-i18n="nav.switchToChauffeur">Switch to Chauffeur ops</span>
+      <span class="chauffeur-switch-hint" data-i18n="nav.chauffeurOpsHint">Rides, drivers &amp; dispatch</span>
+    </span>
+  </a>
+  <div class="top-bar-actions">
+    <span class="mode-pill" data-i18n="account.freelanceMode">Freelance mode</span>
+    <div class="lang-toggle" id="langToggle" onclick="toggleLang()" data-i18n-title="lang.switch" title="Switch language / Cambiar idioma">
+      <span class="lang-option active" data-lang="en">EN</span>
+      <span class="lang-option" data-lang="es">ES</span>
+      <span class="lang-slider"></span>
+    </div>
+    <button type="button" class="btn-outline btn-sm top-logout" onclick="doLogout()" data-i18n="account.logout">Logout</button>
+  </div>
+</header>
 <div class="layout">
   <aside class="side">
     <h1>Tatalance</h1>
-    <p style="font-size:.78rem;color:var(--muted);margin-top:4px">Freelance mode</p>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:4px" data-i18n="account.freelanceMode">Freelance mode</p>
+    <a href="/index.html" class="mode-switch-card" data-test="nav-chauffeur-ops" aria-label="Switch to Chauffeur ops">
+      <span class="mode-switch-card-icon" aria-hidden="true">🚘</span>
+      <span class="mode-switch-card-body">
+        <div class="mode-switch-card-title" data-i18n="nav.switchToChauffeur">Switch to Chauffeur ops</div>
+        <div class="mode-switch-card-hint" data-i18n="nav.chauffeurOpsHint">Rides, drivers &amp; dispatch</div>
+      </span>
+      <span class="mode-switch-card-arrow" aria-hidden="true">→</span>
+    </a>
     <div class="rate-badge">
       <div class="lbl">Your hourly rate</div>
       <div class="amt">$<span id="rateDisplay">20</span>/hr</div>
       <input type="number" id="rateInput" value="20" min="1" step="0.5" style="margin-top:8px;margin-bottom:0;font-size:14px">
       <p style="font-size:.68rem;color:var(--muted);margin-top:6px">Change anytime — new jobs use this rate.</p>
     </div>
-    <nav class="nav">
-      <button class="active" data-view="dash" onclick="go('dash')">Dashboard</button>
-      <button data-view="jobs" onclick="go('jobs')">Jobs</button>
-      <button data-view="clients" onclick="go('clients')">Clients</button>
-      <button data-view="invoices" onclick="go('invoices')">Invoices</button>
+    <nav class="nav" aria-label="Freelance navigation">
+      <button class="active" data-view="dash" onclick="go('dash')" data-i18n="nav.dashboard">Dashboard</button>
+      <button data-view="jobs" onclick="go('jobs')" data-i18n="nav.jobs">Jobs</button>
+      <button data-view="clients" onclick="go('clients')" data-i18n="nav.clients">Clients</button>
+      <button data-view="invoices" onclick="go('invoices')" data-i18n="nav.invoices">Invoices</button>
+      <button data-view="settings" onclick="go('settings')">Settings</button>
     </nav>
-    <div class="side-footer">
-      <a href="/index.html">Chauffeur ops →</a><br>
-      <button class="btn-outline btn-sm" style="margin-top:8px;width:100%" onclick="doLogout()">Logout</button>
-    </div>
   </aside>
   <main class="main">
     <section class="view active" id="view-dash">
       <h2 id="greeting">Hello</h2>
+      <div id="profile-onboard" class="onboard-card" style="display:none">
+        <h3>Set up your engineer profile</h3>
+        <p>Create an ENGINEER profile so jobs and invoices are scoped to your freelance work.</p>
+        <label>Display name</label>
+        <input type="text" id="onboard-name" placeholder="e.g. luchi">
+        <button class="btn" style="margin-top:8px" onclick="createEngineerProfile()">Create ENGINEER profile</button>
+      </div>
+      <div id="profile-active" class="profile-pill" style="display:none"></div>
       <div class="stats" id="dash-stats"></div>
       <div class="card" id="dash-timer-card">
         <h3>Active timer</h3>
@@ -145,7 +294,39 @@
     </section>
     <section class="view" id="view-clients">
       <h2>Clients</h2>
-      <div class="card" id="client-list"><div class="empty">Loading…</div></div>
+      <div class="grid">
+        <div class="card">
+          <h3>Add client</h3>
+          <label>First name</label>
+          <input type="text" id="c-first" placeholder="David" autocomplete="given-name">
+          <label>Last name</label>
+          <input type="text" id="c-last" placeholder="Smith" autocomplete="family-name">
+          <label>Phone (E.164)</label>
+          <input type="tel" id="c-phone" placeholder="(555) 123-4567 or +15551234567" inputmode="tel" autocomplete="tel">
+          <label>Email (optional)</label>
+          <input type="email" id="c-email" placeholder="client@example.com" autocomplete="email">
+          <button class="btn" id="add-client-btn" onclick="addClient()">Save client</button>
+        </div>
+        <div class="card" id="client-list"><div class="empty">Loading…</div></div>
+      </div>
+    </section>
+    <section class="view" id="view-settings">
+      <h2>Settings</h2>
+      <div class="card" style="max-width:420px">
+        <h3>Payment</h3>
+        <label>Venmo handle</label>
+        <input type="text" id="venmo-input" placeholder="@luchi" autocomplete="off">
+        <p style="font-size:.75rem;color:var(--muted);margin:-4px 0 12px">Shown on invoice PDFs for clients to pay you.</p>
+        <button class="btn" onclick="saveVenmo()">Save Venmo</button>
+        <h3 style="margin-top:20px">Invoicing</h3>
+        <label>Tax rate (%)</label>
+        <input type="number" id="tax-rate-input" min="0" max="100" step="0.01" value="0" inputmode="decimal">
+        <p style="font-size:.75rem;color:var(--muted);margin:-4px 0 12px">Applied to new invoices. Freelance default is 0%.</p>
+        <button class="btn btn-outline btn-sm" onclick="saveTaxRate()">Save tax rate</button>
+        <h3 style="margin-top:20px">Profile</h3>
+        <label>Active ENGINEER profile</label>
+        <select id="profile-select" onchange="switchProfile(this.value)"></select>
+      </div>
     </section>
     <section class="view" id="view-invoices">
       <h2>Invoices</h2>
@@ -153,11 +334,35 @@
     </section>
   </main>
 </div>
+<a href="/index.html" class="mode-switch-bar" data-test="mobile-chauffeur-switch" aria-label="Switch to Chauffeur ops">
+  <span class="mode-switch-bar-icon" aria-hidden="true">🚘</span>
+  <span data-i18n="nav.switchToChauffeur">Switch to Chauffeur ops</span>
+</a>
+<nav class="bottom-nav" aria-label="Freelance navigation">
+  <div class="bottom-nav-inner">
+    <button type="button" class="active" data-view="dash" data-test="bottom-nav-dash" onclick="go('dash')"><span class="ico" aria-hidden="true">🏠</span><span>Home</span></button>
+    <button type="button" data-view="jobs" data-test="bottom-nav-jobs" onclick="go('jobs')"><span class="ico" aria-hidden="true">💼</span><span>Jobs</span></button>
+    <button type="button" data-view="clients" data-test="bottom-nav-clients" onclick="go('clients')"><span class="ico" aria-hidden="true">👥</span><span>Clients</span></button>
+    <button type="button" data-view="invoices" data-test="bottom-nav-invoices" onclick="go('invoices')"><span class="ico" aria-hidden="true">🧾</span><span>Invoices</span></button>
+    <button type="button" data-view="settings" data-test="bottom-nav-settings" onclick="go('settings')"><span class="ico" aria-hidden="true">⚙️</span><span>Settings</span></button>
+  </div>
+</nav>
 <div class="toast" id="toast"></div>
 
+<script src="/js/i18n.js"></script>
+<script src="/js/api-errors.js"></script>
 <script>
-let user = {}, jobs = [], activeJobId = null, timer = { running: false, workedSeconds: 0, billable: 0 };
+let user = {}, jobs = [], profiles = [], activeProfileId = null, activeJobId = null;
+let timer = { running: false, workedSeconds: 0, billable: 0 };
 let tickHandle = null, syncHandle = null;
+const PROFILE_KEY = 'freelanceProfileId';
+
+function profileQs() {
+  return activeProfileId ? '?profileId=' + encodeURIComponent(activeProfileId) : '';
+}
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -175,8 +380,12 @@ function fmtDuration(sec) {
   return h ? h + 'h ' + m + 'm' : m + 'm';
 }
 function apiErrorMessage(data, status) {
-  if (data?.errors?.length) return data.errors.map(e => e.message).join('; ');
-  return data?.message || data?.error || ('Request failed (' + status + ')');
+  const raw = (data?.errors?.length
+    ? data.errors.map(e => e && e.message).filter(Boolean).join('; ')
+    : (data?.message || data?.error || '')).trim();
+  return typeof friendlyApiMessage === 'function'
+    ? friendlyApiMessage(raw, status)
+    : (raw || 'Something went wrong — please try again.');
 }
 function toPickupIso(when) {
   let d = new Date(when);
@@ -189,6 +398,13 @@ function defaultBookWhen() {
   d.setHours(d.getHours() + 1);
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 16);
+}
+function normalizePhoneInput(raw) {
+  if (!raw || !String(raw).trim()) return null;
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 10) return '+1' + digits;
+  if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
+  return null;
 }
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: 'same-origin', ...opts,
@@ -210,12 +426,138 @@ async function loadUser() {
   const rate = user.defaultHourlyRate != null ? Number(user.defaultHourlyRate) : 20;
   document.getElementById('rateInput').value = rate;
   document.getElementById('rateDisplay').textContent = rate;
+  const venmoEl = document.getElementById('venmo-input');
+  if (venmoEl) venmoEl.value = user.venmoHandle || '';
+  const taxEl = document.getElementById('tax-rate-input');
+  if (taxEl) {
+    const pct = user.defaultTaxRatePercent != null ? Number(user.defaultTaxRatePercent)
+      : (user.defaultTaxRate != null ? Number(user.defaultTaxRate) * 100 : 0);
+    taxEl.value = pct;
+  }
   const h = new Date().getHours();
   const part = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
   document.getElementById('greeting').textContent = 'Good ' + part + ', ' + (user.username || 'there');
   if (user.businessMode !== 'FREELANCE') {
     await api('/api/users/me/settings', { method: 'PATCH', body: JSON.stringify({ businessMode: 'FREELANCE' }) });
   }
+}
+
+async function loadProfiles() {
+  profiles = unwrapPage(await api('/api/profiles?page=0&size=50'));
+  const engineers = profiles.filter(p => p.type === 'ENGINEER');
+  const stored = localStorage.getItem(PROFILE_KEY);
+  if (stored && engineers.some(p => p.id === stored)) {
+    activeProfileId = stored;
+  } else if (engineers.length === 1) {
+    activeProfileId = engineers[0].id;
+    localStorage.setItem(PROFILE_KEY, activeProfileId);
+  } else {
+    activeProfileId = null;
+  }
+  renderProfileUi();
+}
+
+function renderProfileUi() {
+  const onboard = document.getElementById('profile-onboard');
+  const active = document.getElementById('profile-active');
+  const engineers = profiles.filter(p => p.type === 'ENGINEER');
+  const current = engineers.find(p => p.id === activeProfileId);
+  if (onboard) onboard.style.display = engineers.length ? 'none' : 'block';
+  if (active) {
+    if (current) {
+      active.style.display = 'inline-flex';
+      active.textContent = 'ENGINEER · ' + (current.name || 'Profile') + ' @ $' + (document.getElementById('rateDisplay').textContent || '20') + '/hr';
+    } else {
+      active.style.display = 'none';
+    }
+  }
+  const sel = document.getElementById('profile-select');
+  if (sel) {
+    sel.innerHTML = engineers.length
+      ? engineers.map(p => `<option value="${p.id}" ${p.id === activeProfileId ? 'selected' : ''}>${esc(p.name || p.type)}</option>`).join('')
+      : '<option value="">No ENGINEER profile yet</option>';
+  }
+  if (!document.getElementById('onboard-name').value && user.username) {
+    document.getElementById('onboard-name').value = user.username;
+  }
+}
+
+async function createEngineerProfile() {
+  const name = document.getElementById('onboard-name').value.trim() || user.username || 'Engineer';
+  const rate = parseFloat(document.getElementById('rateInput').value) || 20;
+  const created = await api('/api/profiles', {
+    method: 'POST',
+    body: JSON.stringify({ type: 'ENGINEER', name })
+  });
+  if (!created?.id) return;
+  activeProfileId = created.id;
+  localStorage.setItem(PROFILE_KEY, activeProfileId);
+  await api('/api/users/me/settings', { method: 'PATCH', body: JSON.stringify({ defaultHourlyRate: rate }) });
+  await loadProfiles();
+  await loadJobs();
+  toast('ENGINEER profile created');
+}
+
+function switchProfile(id) {
+  if (!id) return;
+  activeProfileId = id;
+  localStorage.setItem(PROFILE_KEY, id);
+  renderProfileUi();
+  loadJobs();
+}
+
+async function saveVenmo() {
+  const raw = document.getElementById('venmo-input').value.trim();
+  const updated = await api('/api/users/me/settings', {
+    method: 'PATCH',
+    body: JSON.stringify({ venmoHandle: raw || null })
+  });
+  if (!updated) return;
+  user.venmoHandle = updated.venmoHandle || raw;
+  toast('Venmo saved');
+}
+
+async function saveTaxRate() {
+  const raw = document.getElementById('tax-rate-input').value;
+  const pct = raw === '' ? 0 : Number(raw);
+  if (isNaN(pct) || pct < 0 || pct > 100) {
+    toast('Tax rate must be between 0 and 100');
+    return;
+  }
+  const updated = await api('/api/users/me/settings', {
+    method: 'PATCH',
+    body: JSON.stringify({ defaultTaxRatePercent: pct })
+  });
+  if (!updated) return;
+  user.defaultTaxRatePercent = updated.defaultTaxRatePercent;
+  user.defaultTaxRate = updated.defaultTaxRate;
+  toast('Tax rate saved (' + pct + '%)');
+}
+
+async function addClient() {
+  const firstName = document.getElementById('c-first').value.trim();
+  const lastName = document.getElementById('c-last').value.trim();
+  const phoneRaw = document.getElementById('c-phone').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const phone = normalizePhoneInput(phoneRaw);
+  if (!firstName || !lastName || !phone) {
+    toast('First name, last name, and a valid US phone (10–11 digits) are required');
+    return;
+  }
+  const btn = document.getElementById('add-client-btn');
+  btn.disabled = true;
+  const created = await api('/api/clients', {
+    method: 'POST',
+    body: JSON.stringify({ firstName, lastName, phone, email: email || null })
+  });
+  btn.disabled = false;
+  if (!created?.id) return;
+  document.getElementById('c-first').value = '';
+  document.getElementById('c-last').value = '';
+  document.getElementById('c-phone').value = '';
+  document.getElementById('c-email').value = '';
+  toast('Client added');
+  await loadClients();
 }
 document.getElementById('rateInput').addEventListener('change', async function() {
   const v = parseFloat(this.value);
@@ -227,12 +569,16 @@ document.getElementById('rateInput').addEventListener('change', async function()
 
 function go(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + id).classList.add('active');
-  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view === id));
+  const view = document.getElementById('view-' + id);
+  if (view) view.classList.add('active');
+  document.querySelectorAll('.nav button, .bottom-nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === id);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function loadJobs() {
-  const data = await api('/api/rides?page=0&size=50');
+  const data = await api('/api/rides?page=0&size=50' + (activeProfileId ? '&profileId=' + encodeURIComponent(activeProfileId) : ''));
   jobs = unwrapPage(data);
   activeJobId = jobs.find(j => j.status === 'IN_PROGRESS' || j.status === 'PAUSED')?.id || null;
   if (activeJobId) await syncTimer(activeJobId);
@@ -250,9 +596,21 @@ function badgeClass(s) {
   return 'scheduled';
 }
 
+function scheduledCompleteHtml(id) {
+  return `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <label style="margin:0;font-size:.78rem">Bill hours:</label>
+    <input type="number" class="hours-input" id="hours-${id}" value="10" min="0.25" step="0.25" inputmode="decimal">
+    <button class="btn btn-sm" onclick="completeJob('${id}')">Complete &amp; invoice</button>
+    <button class="btn-outline btn-sm" onclick="startJob('${id}')">Start timer instead</button>
+  </div>`;
+}
+
 function timerHtml(j, isActive) {
   if (!isActive) {
-    if (j.status === 'SCHEDULED' || j.status === 'ASSIGNED') {
+    if (j.status === 'SCHEDULED') {
+      return scheduledCompleteHtml(j.id);
+    }
+    if (j.status === 'ASSIGNED') {
       return `<button class="btn" onclick="startJob('${j.id}')">Start timer</button>`;
     }
     if (j.status === 'COMPLETED') {
@@ -292,7 +650,7 @@ function renderDashTimer() {
   const inner = document.getElementById('dash-timer-inner');
   const j = jobs.find(x => x.id === activeJobId);
   if (!j) {
-    const scheduled = jobs.filter(x => x.status === 'SCHEDULED' || x.status === 'ASSIGNED');
+    const scheduled = jobs.filter(x => x.status === 'SCHEDULED');
     if (scheduled.length) {
       inner.className = '';
       inner.innerHTML = `<p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">${scheduled.length} job(s) ready — press <strong>Start timer</strong> below when you begin.</p>` +
@@ -300,7 +658,7 @@ function renderDashTimer() {
           <div class="job-head"><div><h4 style="font-size:.9rem">${jobLabel(s)}</h4>
           <p>${fmtMoney(s.hourlyRate || user.defaultHourlyRate || 20)}/hr</p></div>
           <span class="badge scheduled">${s.status.replace('_',' ')}</span></div>
-          <button class="btn btn-sm" style="margin-top:10px" onclick="startJob('${s.id}')">Start timer</button>
+          ${scheduledCompleteHtml(s.id)}
         </div>`).join('') +
         `<button class="btn-outline btn-sm" style="margin-top:4px" onclick="go('jobs')">View all jobs →</button>`;
       return;
@@ -382,8 +740,17 @@ async function resumeJob(id) {
   await loadJobs();
 }
 async function completeJob(id) {
-  if (!confirm('Complete this job for today and calculate billable amount?')) return;
-  const done = await api('/api/rides/' + id + '/complete', { method: 'POST', body: '{}' });
+  const job = jobs.find(j => j.id === id);
+  let body = {};
+  if (job && (job.status === 'SCHEDULED' || job.status === 'ASSIGNED')) {
+    const hoursEl = document.getElementById('hours-' + id);
+    const hours = hoursEl ? parseFloat(hoursEl.value) : NaN;
+    if (!hours || hours <= 0) { toast('Enter billable hours (e.g. 10)'); return; }
+    body.billableHours = hours;
+  } else if (!confirm('Complete this job and calculate billable amount?')) {
+    return;
+  }
+  const done = await api('/api/rides/' + id + '/complete', { method: 'POST', body: JSON.stringify(body) });
   if (!done) return;
   const inv = await api('/api/invoices', { method: 'POST', body: JSON.stringify({ rideId: id }) });
   activeJobId = null; timer.running = false;
@@ -398,6 +765,7 @@ async function bookJob() {
   const title = document.getElementById('book-title').value.trim();
   const notes = document.getElementById('book-notes').value.trim();
   const when = document.getElementById('book-when').value;
+  if (!activeProfileId) { toast('Create an ENGINEER profile on the dashboard first'); go('dash'); return; }
   if (!clientId || !title || !when) { toast('Client, title, and date required'); return; }
   const rate = parseFloat(document.getElementById('rateInput').value) || 20;
   const body = {
@@ -408,7 +776,7 @@ async function bookJob() {
   };
   const btn = document.getElementById('book-btn');
   btn.disabled = true;
-  const created = await api('/api/rides', { method: 'POST', body: JSON.stringify(body) });
+  const created = await api('/api/rides' + profileQs(), { method: 'POST', body: JSON.stringify(body) });
   btn.disabled = false;
   if (created?.id) {
     toast('Job booked — press Start timer on the right');
@@ -423,32 +791,55 @@ async function loadClients() {
   const sel = document.getElementById('book-client');
   sel.innerHTML = '<option value="">Select client…</option>' + list.map(c =>
     `<option value="${c.id}">${c.firstName} ${c.lastName}</option>`).join('');
-  document.getElementById('client-list').innerHTML = list.length ? list.map(c =>
-    `<div class="row"><strong>${c.firstName} ${c.lastName}</strong><span>${c.phone || ''}</span></div>`).join('')
-    : '<div class="empty">Add a client in Chauffeur ops or via API first.</div>';
+  document.getElementById('client-list').innerHTML = list.length
+    ? '<h3>Your clients</h3>' + list.map(c =>
+      `<div class="row"><strong>${esc(c.firstName)} ${esc(c.lastName)}</strong><span>${esc(c.phone || '')}</span></div>`).join('')
+    : '<div class="empty">No clients yet — add one on the left.</div>';
+}
+
+function invoiceLineDetail(i) {
+  const parts = [];
+  if (i.durationMinutes && i.hourlyRate) {
+    const hrs = (Number(i.durationMinutes) / 60).toFixed(2).replace(/\.?0+$/, '');
+    parts.push(hrs + 'h × ' + fmtMoney(i.hourlyRate));
+  }
+  parts.push('subtotal ' + fmtMoney(i.baseCharge || 0));
+  parts.push('tax ' + fmtMoney(i.tax || 0));
+  parts.push('total ' + fmtMoney(i.total || 0));
+  return parts.join(' · ');
 }
 async function markPaid(invoiceId) {
+  const btn = document.activeElement;
+  if (btn && btn.tagName === 'BUTTON') btn.disabled = true;
   const updated = await api('/api/invoices/' + invoiceId + '/mark-paid', { method: 'POST' });
-  if (!updated) return;
+  if (!updated) {
+    if (btn && btn.tagName === 'BUTTON') btn.disabled = false;
+    return;
+  }
   toast('Invoice marked ' + updated.status.toLowerCase());
+  if (btn && btn.blur) btn.blur();
   await loadInvoices();
   await renderDashStats();
+  if (btn && btn.tagName === 'BUTTON') btn.disabled = false;
 }
 async function loadInvoices() {
   const list = unwrapPage(await api('/api/invoices?page=0&size=50'));
   document.getElementById('invoice-list').innerHTML = list.length ? list.map(i => {
-    const detail = (i.clientName || '') + (i.durationMinutes ? ' · ' + fmtDuration(i.durationMinutes*60) : '') +
-      (i.hourlyRate ? ' × ' + fmtMoney(i.hourlyRate) : '');
     const st = i.status === 'PAID' ? 'done' : 'scheduled';
     const btnLabel = i.status === 'OUTSTANDING' ? 'Mark paid' : 'Mark unpaid';
     const btnStyle = i.status === 'OUTSTANDING'
       ? 'background:#f0fff4;color:#15803d;border-color:#86efac'
       : 'background:#fff5f5;color:#b45309;border-color:#fca5a5';
-    return `<div class="row" style="gap:12px;flex-wrap:wrap">
-      <div style="flex:1;min-width:160px"><strong>${i.invoiceNumber}</strong><br>
-        <span style="font-size:.8rem;color:var(--muted)">${detail}</span></div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span class="badge ${st}">${i.status} · ${fmtMoney(i.total)}</span>
+    const venmo = i.venmoHandle ? `<div class="invoice-detail">Pay via Venmo: ${esc(i.venmoHandle)}</div>` : '';
+    return `<div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:180px">
+        <strong>${esc(i.invoiceNumber)}</strong> · ${esc(i.clientName || '')}
+        <div class="invoice-detail">${invoiceLineDetail(i)}</div>
+        ${venmo}
+      </div>
+      <div class="invoice-actions">
+        <span class="badge ${st}">${i.status}</span>
+        <a class="btn-outline btn-sm" href="/api/invoices/${i.id}/pdf" target="_blank" rel="noopener">PDF</a>
         <button class="btn-outline btn-sm" style="${btnStyle}" onclick="markPaid('${i.id}')">${btnLabel}</button>
       </div></div>`;
   }).join('') : '<div class="empty">Complete a job to generate an invoice.</div>';
@@ -461,6 +852,7 @@ async function doLogout() {
 (async function init() {
   document.getElementById('book-when').value = defaultBookWhen();
   await loadUser();
+  await loadProfiles();
   await loadClients();
   await loadJobs();
   await loadInvoices();

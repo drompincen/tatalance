@@ -26,6 +26,7 @@ public class Invoice {
     private String pricingMode;
     private BigDecimal hourlyRate;
     private Long durationMinutes;
+    private String venmoHandle;
     private InvoiceStatus status = InvoiceStatus.OUTSTANDING;
     private List<Payment> payments = new ArrayList<>();
     private Instant createdAt;
@@ -56,6 +57,8 @@ public class Invoice {
     public void setHourlyRate(BigDecimal hourlyRate) { this.hourlyRate = hourlyRate; }
     public Long getDurationMinutes() { return durationMinutes; }
     public void setDurationMinutes(Long durationMinutes) { this.durationMinutes = durationMinutes; }
+    public String getVenmoHandle() { return venmoHandle; }
+    public void setVenmoHandle(String venmoHandle) { this.venmoHandle = venmoHandle; }
     public InvoiceStatus getStatus() { return status; }
     public void setStatus(InvoiceStatus status) { this.status = status; }
     public List<Payment> getPayments() { return payments; }

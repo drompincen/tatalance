@@ -69,7 +69,7 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     await expect(card.locator('[data-test="start-btn"]')).toBeVisible();
     await card.locator('[data-test="start-btn"]').click();
 
-    await expect(card.locator('[data-test="status-badge"]')).toContainText('IN_PROGRESS', { timeout: 8000 });
+    await expect(card.locator('[data-test="status-badge"]')).toContainText(/in progress/i, { timeout: 8000 });
     await expect(card.locator('[data-test="complete-btn"]')).toBeVisible();
     await expect(card.locator('.job-timer')).toBeVisible();
   });
@@ -111,7 +111,7 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
 
     await card.locator('[data-test="complete-btn"]').click();
 
-    await expect(card.locator('[data-test="status-badge"]')).toContainText('COMPLETED', { timeout: 12000 });
+    await expect(card.locator('[data-test="status-badge"]')).toContainText(/completed/i, { timeout: 12000 });
 
     const fetched = await (await request.get(`/api/rides/${job.id}`)).json();
     expect(fetched.status).toBe('COMPLETED');

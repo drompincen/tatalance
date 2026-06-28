@@ -1,5 +1,6 @@
 package com.tatalance.driver;
 
+import com.tatalance.client.PhoneNormalizer;
 import com.tatalance.ride.JobRepository;
 import com.tatalance.ride.RideRepository;
 import com.tatalance.ride.RideStatus;
@@ -63,7 +64,7 @@ public class DriverController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
         }
-        var rides = rideRepository.findByAssignedDriverId(id);
+        var rides = rideRepository.findByUserIdAndAssignedDriverId(authHelper.getCurrentUserId(), id);
         long totalRides = rides.size();
         long completedRides = rides.stream().filter(r -> r.getStatus() == RideStatus.COMPLETED).count();
         BigDecimal totalEarned = rides.stream()
@@ -92,6 +93,7 @@ public class DriverController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Driver create(@Valid @RequestBody Driver driver) {
+        driver.setPhone(requireNormalizedPhone(driver.getPhone()));
         driver.setUserId(authHelper.getCurrentUserId());
         driver.setCreatedAt(Instant.now());
         return repository.save(driver);
@@ -102,6 +104,7 @@ public class DriverController {
     @ApiResponse(responseCode = "404", description = "Driver not found")
     @PutMapping("/{id}")
     public Driver update(@PathVariable String id, @Valid @RequestBody Driver updates) {
+        updates.setPhone(requireNormalizedPhone(updates.getPhone()));
         Driver existing = repository.findByIdAndUserId(id, authHelper.getCurrentUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
         existing.setFirstName(updates.getFirstName());
@@ -124,8 +127,9 @@ public class DriverController {
         if (!repository.existsByIdAndUserId(id, authHelper.getCurrentUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found");
         }
-        var activeRides = rideRepository.findByAssignedDriverIdAndStatusIn(id,
-                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS)); // uses ride-specific query (post #93)
+        var activeRides = rideRepository.findByUserIdAndAssignedDriverIdAndStatusIn(
+                authHelper.getCurrentUserId(), id,
+                List.of(RideStatus.ASSIGNED, RideStatus.IN_PROGRESS));
         if (!activeRides.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot delete driver with active rides (" + activeRides.size() + " active)");
@@ -151,5 +155,13 @@ public class DriverController {
                     "Invalid availability. Must be one of: AVAILABLE, ON_TRIP, OFF_DUTY");
         }
         return repository.save(driver);
+    }
+
+    private static String requireNormalizedPhone(String raw) {
+        try {
+            return PhoneNormalizer.normalize(raw);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 }
