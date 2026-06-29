@@ -1218,7 +1218,30 @@
         });
     }
 
-    /* Auth check moved to the main block below; early guard removed to avoid any redirect timing or blank issues on mobile. */
+    /* Early auth guard — redirect fast on phone/desktop before painting data or doing other fetches.
+       Prevents "hanging" or flash of empty UI when not authenticated (esp. real iOS hitting the cloud link). */
+    (function earlyAuthGuard() {
+        document.documentElement.style.visibility = 'hidden';
+        fetch('/api/users/me', { credentials: 'same-origin' })
+            .then(r => {
+                if (!r.ok) {
+                    window.location.href = '/login.html';
+                    return null;
+                }
+                return r.json();
+            })
+            .then(data => {
+                if (data) {
+                    // reveal when we have user; full loads and username set happen in the main block below
+                    document.documentElement.style.visibility = '';
+                }
+            })
+            .catch(() => {
+                if (!location.pathname.includes('login')) {
+                    window.location.href = '/login.html';
+                }
+            });
+    })();
 
     /* ── Sort state ── */
     const sortState = {};
