@@ -93,7 +93,7 @@
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
 
         /* ── Tabs in header ── */
-        nav { margin-left: auto; display: flex; gap: 2px; }
+        #main-nav { margin-left: auto; display: flex; gap: 2px; }
         .tab-btn {
             background: transparent;
             border: none;
@@ -582,24 +582,29 @@
             .account-menu-panel.open { display: block !important; }
             #link-google-btn { display: none !important; }
             .status-footer { display: none; }
-            nav {
+            #main-nav {
                 display: none; position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 88vw);
                 background: #1a1a2e; flex-direction: column; padding: 12px 0 20px; z-index: 100;
                 gap: 0; margin-left: 0; overflow-y: auto; padding-top: calc(12px + env(safe-area-inset-top));
             }
-            nav.open { display: flex; }
+            #main-nav.open { display: flex; }
             .nav-mode-switch, .nav-section-label { display: block; }
-            nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; min-height: 44px; }
-            nav .tab-btn.active { background: rgba(255,255,255,.12); }
-            nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
-            nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            #main-nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; min-height: 44px; }
+            #main-nav .tab-btn.active { background: rgba(255,255,255,.12); }
+            #main-nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            #main-nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
+            #main-nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             .user-menu { margin-left: auto; }
             .mobile-logout-only { display: none; }
             .search-box { display: none; }
             .nav-drawer-only { display: none; }
             header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            nav #custom-tab-buttons { display: contents; }
+            #main-nav #custom-tab-buttons { display: contents; }
+            nav.bottom-nav {
+                display: block; position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+                width: auto; height: auto; flex-direction: row; background: #fff;
+                padding: 0 0 env(safe-area-inset-bottom); margin-left: 0; overflow: visible;
+            }
             .page { margin: 16px auto; padding: 0 12px; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
             .dash-grid { grid-template-columns: 1fr; gap: 12px; }
             .dash-detail-row { grid-template-columns: 1fr !important; gap: 16px; margin-top: 16px; }
@@ -1461,8 +1466,12 @@
                 body.force-mobile .tables-sub-bar.open { display: flex !important; }
                 body.force-mobile .header-mode-switch { display: none !important; }
                 body.force-mobile .account-trigger { display: none !important; }
-                body.force-mobile nav { display: none; }
-                body.force-mobile nav.open { display: flex !important; }
+                body.force-mobile #main-nav { display: none; }
+                body.force-mobile #main-nav.open { display: flex !important; }
+                body.force-mobile nav.bottom-nav {
+                    display: block !important; position: fixed !important; left: 0 !important; right: 0 !important;
+                    bottom: 0 !important; top: auto !important; width: auto !important; height: auto !important;
+                }
                 body.force-mobile .nav-overlay.open { display: block !important; }
                 body.force-mobile .account-trigger { display: none !important; }
                 body.force-mobile .nav-mode-switch, body.force-mobile .nav-section-label { display: block !important; }
