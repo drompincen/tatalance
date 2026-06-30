@@ -403,42 +403,13 @@
             background: rgba(255,255,255,.06); cursor: pointer;
         }
         .account-trigger:hover { background: rgba(255,255,255,.12); color: #fff; }
-        .account-menu-panel {
-            display: none; position: fixed; right: 24px; min-width: 220px;
-            background: #fff; color: #1a1a2e; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
-            padding: 10px 0; z-index: 200;
-        }
-        .account-menu-panel.open { display: block; }
-        .account-menu-label {
-            display: block; padding: 6px 14px 4px; font-size: 0.68rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: .04em; color: #64748b;
-        }
-        .account-menu-panel select {
-            display: block; width: calc(100% - 28px); margin: 0 14px 8px;
-            padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.82rem;
-            background: #fff; color: #1a1a2e;
-        }
-        .account-menu-panel select option {
-            background: #fff;
-            color: #1a1a2e;
-        }
-        .account-menu-panel a,
-        .account-menu-panel button.menu-item {
-            display: block; width: 100%; text-align: left; padding: 9px 14px; font-size: 0.85rem;
-            border: none; background: none; color: #1a1a2e; cursor: pointer; text-decoration: none;
-        }
-        .account-menu-panel a:hover,
-        .account-menu-panel button.menu-item:hover { background: #f1f5f9; }
-        .account-menu-panel .menu-item-danger { color: #b91c1c; }
-        .account-menu-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
-        .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
-        .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+
         .search-box input {
             padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25);
             background: rgba(255,255,255,.1); color: white; font-size: .82rem; width: 160px;
         }
         .search-box input::placeholder { color: rgba(255,255,255,.45); }
-        .mobile-logout-only { display: none; }
+
         .nav-drawer-only { display: none; text-decoration: none; }
         .nav-mode-switch {
             display: none; margin: 8px 16px 12px; padding: 14px 16px; border-radius: 12px;
@@ -452,23 +423,17 @@
             text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.45);
         }
         .menu-item-freelance { font-weight: 700; color: #4f46e5 !important; }
-        .account-menu-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 104;
+        #tab-settings .account-tax-row {
+            display: flex; gap: 6px; align-items: center;
         }
-        .account-menu-overlay.open { display: block; }
-        .account-menu-panel .account-tax-row {
-            display: flex; gap: 6px; align-items: center; padding: 0 14px 10px;
-        }
-        .account-menu-panel .account-tax-row input {
+        #tab-settings .account-tax-row input {
             flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;
         }
-        .account-menu-panel .account-venmo-row {
-            padding: 0 14px 10px;
-        }
-        .account-menu-panel .account-venmo-row input {
+        #tab-settings .account-venmo-row input {
             width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;
             margin-bottom: 6px;
         }
+        #tab-settings .settings-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
         .bottom-nav {
             display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
             background: #fff; border-top: 1px solid #e5e7eb;
@@ -611,13 +576,7 @@
             .header-nav-row { display: none; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
-            .account-menu-overlay.open { z-index: 126; }
-            .account-menu-panel {
-                position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0;
-                max-height: 78vh; overflow-y: auto; z-index: 130;
-                padding-bottom: calc(12px + env(safe-area-inset-bottom));
-            }
-            .account-menu-panel.open { display: block !important; }
+
             #link-google-btn { display: none !important; }
             .status-footer { display: none; }
             #main-nav {
@@ -632,7 +591,7 @@
             #main-nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             #main-nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             #main-nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            .mobile-logout-only { display: none; }
+
             .search-box { display: none; }
             .nav-drawer-only { display: none; }
             #main-nav #custom-tab-buttons { display: contents; }
@@ -702,11 +661,10 @@
                 <div id="search-results" style="display:none;position:absolute;top:100%;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
             </div>
             <div class="user-menu">
-                <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="toggleAccountMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel" aria-label="Account settings">
+                <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="openAccountSettings(event)" aria-label="Account settings">
                     <span id="username-display">Account</span> ▾
                 </button>
             </div>
-            <button class="logout-btn mobile-logout-only" onclick="doLogout()" data-i18n-aria="account.logout" aria-label="Logout" data-i18n="account.logout">Logout</button>
         </div>
     </div>
     <div class="header-nav-row">
@@ -727,32 +685,6 @@
     </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
-<div class="account-menu-overlay" id="account-menu-overlay" onclick="closeAccountMenu()"></div>
-<div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
-    <span class="account-menu-label" data-i18n="account.profile">Profile</span>
-    <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
-        <option value="" data-i18n="account.allProfiles">All (account)</option>
-    </select>
-    <div class="account-menu-divider"></div>
-    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem" data-i18n="account.manageProfiles">Manage profiles</button>
-    <span class="account-menu-label" data-i18n="account.payment">Payment</span>
-    <div class="account-venmo-row">
-        <input type="text" id="account-venmo-handle" placeholder="@luchi" autocomplete="off" data-i18n-placeholder="account.venmoPlaceholder" aria-label="Venmo handle" data-test="account-venmo-input">
-        <p style="font-size:.75rem;color:#64748b;margin:0 0 8px" data-i18n="account.venmoHint">Shown on invoice PDFs for clients to pay you.</p>
-        <button type="button" class="btn-sm" onclick="saveAccountVenmo()" style="width:100%;min-height:44px" data-test="account-venmo-save" data-i18n="account.saveVenmo">Save Venmo</button>
-    </div>
-    <div class="account-menu-divider"></div>
-    <span class="account-menu-label" data-i18n="invoice.tax">Tax</span>
-    <div class="account-tax-row">
-        <input type="number" id="account-tax-rate" min="0" max="100" step="0.01" value="8" aria-label="Invoice tax percent">
-        <span style="font-size:.8rem;color:#64748b">%</span>
-        <button type="button" class="btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
-    </div>
-    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
-    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
-    <div class="account-menu-divider"></div>
-    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
-</div>
 
 <div id="tables-sub-bar" class="tables-sub-bar" aria-label="Table navigation">
     <button class="active" data-sub="clients" onclick="showTableSub('clients')">👥 <span data-i18n="nav.clients">Clients</span></button>
@@ -1099,6 +1031,39 @@
             </div>
             <div id="invoice-list"></div>
             <div class="refresh-ts" id="invoice-ts"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Settings tab ── -->
+<div id="tab-settings" class="tab-pane" data-test="account-settings-tab">
+    <div class="page">
+        <h2 style="font-size:1.35rem;font-weight:800;margin-bottom:20px;letter-spacing:-.02em" data-i18n="nav.settings">Settings</h2>
+        <div class="card" style="max-width:420px">
+            <div class="card-title" data-i18n="account.profile">Profile</div>
+            <div class="field">
+                <label data-i18n="account.activeProfile">Active profile</label>
+                <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
+                    <option value="" data-i18n="account.allProfiles">All (account)</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-sm" onclick="showProfileManager()" data-i18n="account.manageProfiles">Manage profiles</button>
+            <div class="card-title" style="margin-top:20px" data-i18n="account.payment">Payment</div>
+            <div class="account-venmo-row">
+                <input type="text" id="account-venmo-handle" placeholder="@luchi" autocomplete="off" data-i18n-placeholder="account.venmoPlaceholder" aria-label="Venmo handle" data-test="account-venmo-input">
+                <p style="font-size:.75rem;color:#64748b;margin:0 0 8px" data-i18n="account.venmoHint">Shown on invoice PDFs for clients to pay you.</p>
+                <button type="button" class="btn btn-sm" onclick="saveAccountVenmo()" style="width:100%;min-height:44px" data-test="account-venmo-save" data-i18n="account.saveVenmo">Save Venmo</button>
+            </div>
+            <div class="card-title" style="margin-top:20px" data-i18n="invoice.tax">Tax</div>
+            <div class="account-tax-row">
+                <input type="number" id="account-tax-rate" min="0" max="100" step="0.01" value="8" aria-label="Invoice tax percent">
+                <span style="font-size:.8rem;color:#64748b">%</span>
+                <button type="button" class="btn btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
+            </div>
+            <div class="settings-actions">
+                <button type="button" class="btn btn-outline btn-sm" id="link-google-btn" onclick="linkGoogle()" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="openChangePassword()" data-i18n="account.changePassword">Change password</button>
+            </div>
         </div>
     </div>
 </div>
@@ -1521,7 +1486,7 @@
                 body.force-mobile .nav-overlay.open { display: block !important; }
                 body.force-mobile .account-trigger { display: none !important; }
                 body.force-mobile .nav-mode-switch, body.force-mobile .nav-section-label { display: block !important; }
-                body.force-mobile .account-menu-panel.open { display: block !important; }
+
                 body.force-mobile .header-top {
                     justify-content: space-between !important; gap: 12px !important; flex-wrap: wrap !important;
                     padding: 12px 16px !important; padding-top: calc(12px + env(safe-area-inset-top)) !important;
@@ -1547,7 +1512,6 @@
     })();
 
     function toggleNav() {
-        closeAccountMenu();
         document.getElementById('main-nav').classList.toggle('open');
         document.getElementById('nav-overlay').classList.toggle('open');
     }
@@ -1556,7 +1520,7 @@
         document.getElementById('nav-overlay').classList.remove('open');
     }
     const TABLE_TABS = new Set(['clients', 'drivers', 'rides', 'jobs']);
-    const SETTINGS_TABS = new Set(['activity', 'api']);
+    const SETTINGS_TABS = new Set(['activity', 'api', 'settings']);
 
     function syncBottomNav(tabName) {
         let activeBtn = 'dashboard';
@@ -1577,7 +1541,6 @@
     }
     function toggleTablesMoreSheet() {
         closeMoreSheet();
-        closeAccountMenu();
         const sheet = document.getElementById('tables-more-sheet');
         const overlay = document.getElementById('tables-more-overlay');
         if (!sheet) return;
@@ -1618,7 +1581,6 @@
     }
     function toggleMoreSheet(ev) {
         if (ev && ev.stopPropagation) ev.stopPropagation();
-        closeAccountMenu();
         closeTablesMoreSheet();
         const sheet = document.getElementById('more-sheet');
         const overlay = document.getElementById('more-overlay');
@@ -1665,53 +1627,18 @@
         });
         syncBottomNav('custom-' + tableId);
     }
-    let accountMenuOpening = false;
+    function openAccountSettings(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        closeNav();
+        closeMoreSheet();
+        closeTablesMoreSheet();
+        showTab('settings');
+    }
     function openAccountFromMore(ev) {
         if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        accountMenuOpening = true;
         closeMoreSheet();
-        setTimeout(() => {
-            toggleAccountMenu();
-            setTimeout(() => { accountMenuOpening = false; }, 0);
-        }, 0);
+        showTab('settings');
     }
-    function toggleAccountMenu(ev) {
-        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        const panel = document.getElementById('account-menu-panel');
-        const overlay = document.getElementById('account-menu-overlay');
-        const btn = document.getElementById('account-menu-btn');
-        if (!panel) return;
-        const open = !panel.classList.contains('open');
-        if (open) { closeNav(); closeMoreSheet(); closeTablesMoreSheet(); }
-        if (open && window.innerWidth > 768) {
-            const rect = btn.getBoundingClientRect();
-            panel.style.top = (rect.bottom + 6) + 'px';
-            panel.style.right = (window.innerWidth - rect.right) + 'px';
-        } else if (open) {
-            panel.style.top = '';
-            panel.style.right = '';
-            panel.style.left = '';
-            panel.style.bottom = '';
-        }
-        panel.classList.toggle('open', open);
-        if (overlay) overlay.classList.toggle('open', open);
-        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    }
-    function closeAccountMenu() {
-        const panel = document.getElementById('account-menu-panel');
-        const overlay = document.getElementById('account-menu-overlay');
-        const btn = document.getElementById('account-menu-btn');
-        if (panel) panel.classList.remove('open');
-        if (overlay) overlay.classList.remove('open');
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-    }
-    document.addEventListener('click', e => {
-        if (accountMenuOpening) return;
-        if (e.target.closest('#more-sheet') || e.target.closest('#more-overlay')) return;
-        if (!e.target.closest('.user-menu') && !e.target.closest('#account-menu-panel') && !e.target.closest('#account-menu-overlay')) {
-            closeAccountMenu();
-        }
-    });
 
     /* ── Tab switching ── */
     function showTab(name) {

@@ -41,6 +41,26 @@ class InvoicePdfServiceTest {
         assertTrue(text.contains("contact sender for payment details"));
     }
 
+    @Test
+    void render_usesLiveVenmoWhenInvoiceSnapshotMissing() throws Exception {
+        Invoice invoice = sampleInvoice();
+        invoice.setVenmoHandle(null);
+
+        String text = extractText(InvoicePdfService.render(invoice, "@luchi"));
+
+        assertTrue(text.contains("Pay via Venmo: @luchi"));
+    }
+
+    @Test
+    void render_prefersLiveVenmoOverStaleInvoiceSnapshot() throws Exception {
+        Invoice invoice = sampleInvoice();
+        invoice.setVenmoHandle("@old-handle");
+
+        String text = extractText(InvoicePdfService.render(invoice, "@luchi"));
+
+        assertTrue(text.contains("Pay via Venmo: @luchi"));
+    }
+
     private static Invoice sampleInvoice() {
         Invoice invoice = new Invoice();
         invoice.setInvoiceNumber("INV-001");

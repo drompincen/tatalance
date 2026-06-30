@@ -26,6 +26,10 @@ public final class InvoicePdfService {
     private InvoicePdfService() {}
 
     public static byte[] render(Invoice invoice) {
+        return render(invoice, null);
+    }
+
+    public static byte[] render(Invoice invoice, String liveVenmoHandle) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Document doc = new Document();
             PdfWriter.getInstance(doc, out);
@@ -53,8 +57,9 @@ public final class InvoicePdfService {
             doc.add(new Paragraph("Total: $" + money(invoice.getTotal()), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12)));
             doc.add(new Paragraph("Status: " + (invoice.getStatus() != null ? invoice.getStatus() : ""), BODY));
             doc.add(new Paragraph(" "));
-            if (invoice.getVenmoHandle() != null && !invoice.getVenmoHandle().isBlank()) {
-                doc.add(new Paragraph("Pay via Venmo: " + formatVenmo(invoice.getVenmoHandle()), BODY));
+            String venmoHandle = resolveVenmoHandle(invoice, liveVenmoHandle);
+            if (venmoHandle != null && !venmoHandle.isBlank()) {
+                doc.add(new Paragraph("Pay via Venmo: " + formatVenmo(venmoHandle), BODY));
             } else {
                 doc.add(new Paragraph("Payment: contact sender for payment details.", MUTED));
             }
@@ -79,6 +84,13 @@ public final class InvoicePdfService {
                     BODY);
         }
         return new Paragraph("Service charge: $" + money(invoice.getBaseCharge()), BODY);
+    }
+
+    static String resolveVenmoHandle(Invoice invoice, String liveVenmoHandle) {
+        if (liveVenmoHandle != null && !liveVenmoHandle.isBlank()) {
+            return liveVenmoHandle;
+        }
+        return invoice != null ? invoice.getVenmoHandle() : null;
     }
 
     private static String formatVenmo(String handle) {

@@ -40,7 +40,7 @@ export class MobilePage {
   async openAccountMenu() {
     await this.page.locator('[data-test="bottom-nav-settings"]').click();
     await this.page.locator('[data-test="more-nav-account"]').click();
-    await expect(this.page.locator('#account-menu-panel.open')).toBeVisible();
+    await expect(this.page.locator('#tab-settings.active')).toBeVisible();
   }
 
   async assertNoHorizontalScroll() {
