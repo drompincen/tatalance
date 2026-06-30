@@ -99,6 +99,30 @@ jobs:
             sleep 15
           done
 
+      - name: Inject MongoDB URI from secret (keeps DB password out of the JAR)
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          if [ -z "$MONGODB_URI" ]; then
+            echo "::warning::MONGODB_URI secret is empty for environment '${{ env.TARGET_ENV }}'; leaving SPRING_DATA_MONGODB_URI unchanged."
+            exit 0
+          fi
+          CURRENT=$(aws elasticbeanstalk describe-configuration-settings \
+            --application-name tatalance \
+            --environment-name tatalance-${{ env.TARGET_ENV }} \
+            --query "ConfigurationSettings[0].OptionSettings[?OptionName=='SPRING_DATA_MONGODB_URI'].Value | [0]" \
+            --output text)
+          if [ "$CURRENT" = "$MONGODB_URI" ]; then
+            echo "SPRING_DATA_MONGODB_URI already matches the secret; no env update needed."
+          else
+            echo "Setting SPRING_DATA_MONGODB_URI on tatalance-${{ env.TARGET_ENV }} from secret..."
+            aws elasticbeanstalk update-environment \
+              --environment-name tatalance-${{ env.TARGET_ENV }} \
+              --option-settings "Namespace=aws:elasticbeanstalk:application:environment,OptionName=SPRING_DATA_MONGODB_URI,Value=$MONGODB_URI"
+            aws elasticbeanstalk wait environment-updated --environment-name tatalance-${{ env.TARGET_ENV }}
+            echo "Done; environment updated with DB URI from secret."
+          fi
+
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
         with:
