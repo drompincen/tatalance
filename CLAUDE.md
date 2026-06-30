@@ -40,6 +40,11 @@ At the start of every session:
 **Before every push (mandatory — no exceptions):**
 Run `mvn clean verify` (via Windows Maven) and confirm all tests pass **before** running `git push`. If tests fail, fix them before pushing. Never push code that hasn't passed the full test suite locally — broken pushes block deploys silently.
 
+**Prod branch (mandatory — no exceptions):**
+- **Never push, merge into, or otherwise modify `prod`** unless there is **confirmable product**: issue acceptance criteria met, `mvn clean verify` green locally, smoke-tested on a personal sandbox (`tatalance-luciano` or `tatalance-drom`), and explicit approval from drom or the user.
+- Do all feature work on `luciano` or `drom`. Promote to `prod` only after confirmable product — not for experiments, infra debugging, or unverified fixes.
+- If `prod` has commits to absorb, merge **`prod` → `luciano`** (or open a PR to `main`); do not push unverified work to `prod` to “try it live.”
+
 **After shipping any story (mandatory — same session as the commit/PR):**
 1. Mark the story **completed** in `tatalance-v1.md` (roadmap table + epic section)
 2. Reference the issue in the commit message: `feat: … (#N)`
@@ -80,12 +85,13 @@ mvn -version   # must show "Maven home: C:\..."
 ```
 If not, follow `docs/luciano-setup.md` Step 2.
 
-**3. Work on luciano branch only:**
+**3. Work on luciano branch only (never push to `prod` without confirmable product — see Workflow Rules):**
 - Branch: `luciano`
 - EB env: `http://tatalance-luciano.eba-7u2dj39y.us-east-1.elasticbeanstalk.com/index.html`
 - MongoDB: `tatalance-luciano` database on Atlas
 - Logs: `aws logs get-log-events ... --profile luciano-dev` (see `docs/troubleshooting.md`)
 - When ready to merge: `gh pr create --base main`
+- To pick up `prod` history: `git merge origin/prod` on `luciano` — never merge unverified work into `prod`
 - Full setup guide: `docs/luciano-setup.md`
 - Team workflow: `docs/how-we-work.md`
 
