@@ -2913,8 +2913,6 @@
         }
     };
 
-    loadClientDropdown();
-    loadAvailableDrivers();
     function toDatetimeLocalValue(d) {
         const pad = n => String(n).padStart(2, '0');
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -2935,14 +2933,6 @@
         d.setHours(d.getHours() + 1);
         el.value = toDatetimeLocalValue(d);
     }
-    defaultPickupDateTime();
-    loadRides();
-    setInterval(loadRides, 10000);
-    // load profiles for switcher (business owner multi-profile)
-    loadProfiles().then(updateTabVisibility);
-    setInterval(loadClientDropdown, 10000);
-    setInterval(loadAvailableDrivers, 10000);
-
     /* ── Jobs (Category B desktop UI — cards, live timer via driver-queue pattern, $20/hr hourly, start/complete via /start + /complete, est/scope via notes hack, title via pickupLocation) ── */
     let allJobsCache = [];
     let jobStatusFilter = 'ALL';
@@ -3902,9 +3892,17 @@
             if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = 'block';
 
             // Only load data after confirmed auth — prevents extra fetches + partial UI that can look like hang on mobile
+            defaultPickupDateTime();
+            loadClientDropdown();
+            loadAvailableDrivers();
+            loadRides();
+            loadProfiles().then(updateTabVisibility);
             loadCustomTables();
-            setInterval(loadCustomTables, 15000);
             loadDashboard();
+            setInterval(loadRides, 10000);
+            setInterval(loadClientDropdown, 10000);
+            setInterval(loadAvailableDrivers, 10000);
+            setInterval(loadCustomTables, 15000);
         })
         .catch(() => {
             // On any error (incl network/auth), go to login
