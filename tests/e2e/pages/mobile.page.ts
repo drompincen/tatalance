@@ -1,20 +1,41 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 
+/** Legacy header tab button ids → mobile bottom nav / More sheet targets. */
+const TAB_TARGETS: Record<string, { kind: 'bottom'; testId: string } | { kind: 'more'; testId: string }> = {
+  'btn-dashboard': { kind: 'bottom', testId: 'bottom-nav-dashboard' },
+  'btn-clients': { kind: 'bottom', testId: 'bottom-nav-clients' },
+  'btn-rides': { kind: 'bottom', testId: 'bottom-nav-rides' },
+  'btn-invoices': { kind: 'bottom', testId: 'bottom-nav-invoices' },
+  'btn-drivers': { kind: 'more', testId: 'more-nav-drivers' },
+  'btn-jobs': { kind: 'more', testId: 'more-nav-jobs' },
+  'btn-activity': { kind: 'more', testId: 'more-nav-activity' },
+  'btn-api': { kind: 'more', testId: 'more-nav-api' },
+};
+
 export class MobilePage {
   constructor(readonly page: Page) {}
 
   async gotoApp() {
     await this.page.goto('/');
-    await expect(this.page.locator('#hamburger')).toBeVisible();
+    await expect(this.page.locator('[data-test="chauffeur-bottom-nav"]')).toBeVisible();
   }
 
   async openTab(buttonId: string) {
-    await this.page.locator('#hamburger').click();
-    await this.page.locator(`#${buttonId}`).click();
+    const target = TAB_TARGETS[buttonId];
+    if (!target) {
+      throw new Error(`Unknown mobile tab button: ${buttonId}`);
+    }
+    if (target.kind === 'bottom') {
+      await this.page.locator(`[data-test="${target.testId}"]`).click();
+      return;
+    }
+    await this.page.locator('[data-test="bottom-nav-more"]').click();
+    await this.page.locator(`[data-test="${target.testId}"]`).click();
   }
 
   async openAccountMenu() {
-    await this.page.locator('#account-menu-btn').click();
+    await this.page.locator('[data-test="bottom-nav-more"]').click();
+    await this.page.locator('[data-test="more-nav-account"]').click();
     await expect(this.page.locator('#account-menu-panel.open')).toBeVisible();
   }
 
