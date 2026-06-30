@@ -24,6 +24,9 @@ import java.util.*;
 
 @Component
 @Order(3)
+// Demo data is seeded only in non-prod environments (dev/qa/sandbox). Never in production,
+// so the real prod DB (tatalance-app) is not polluted with fake clients/drivers/rides.
+@org.springframework.context.annotation.Profile("!prod")
 public class DemoDataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DemoDataSeeder.class);
