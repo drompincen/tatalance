@@ -57,6 +57,19 @@
       background: rgba(255,255,255,.06); cursor: pointer;
     }
     .account-trigger:hover { background: rgba(255,255,255,.12); color: #fff; }
+    .account-dropdown {
+      display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 200px;
+      background: #fff; color: var(--text); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      padding: 6px 0; z-index: 210;
+    }
+    .account-dropdown.open { display: block; }
+    .account-dropdown button {
+      display: block; width: 100%; text-align: left; padding: 10px 14px; font-size: 0.85rem;
+      border: none; background: none; color: var(--text); cursor: pointer; min-height: 44px;
+    }
+    .account-dropdown button:hover { background: #f1f5f9; }
+    .account-dropdown .menu-item-danger { color: var(--danger); font-weight: 600; }
+    .account-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
     .more-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 105;
@@ -234,9 +247,14 @@
         <span class="lang-slider"></span>
       </div>
       <div class="user-menu">
-        <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="openAccountSettings(event)" aria-label="Account settings">
+        <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="toggleAccountDropdown(event)" aria-haspopup="true" aria-expanded="false" aria-controls="account-dropdown" aria-label="Account menu">
           <span id="username-display">Account</span> ▾
         </button>
+        <div id="account-dropdown" class="account-dropdown" role="menu" aria-label="Account menu">
+          <button type="button" class="menu-item" data-test="account-dropdown-settings" onclick="openAccountSettingsFromDropdown(event)" role="menuitem" data-i18n="account.settings">Account &amp; settings</button>
+          <div class="account-dropdown-divider"></div>
+          <button type="button" class="menu-item menu-item-danger" data-test="account-dropdown-logout" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
+        </div>
       </div>
     </div>
   </div>
@@ -608,14 +626,42 @@ function toggleMoreSheet(ev) {
     });
   }
 }
+function closeAccountDropdown() {
+  const dropdown = document.getElementById('account-dropdown');
+  const btn = document.getElementById('account-menu-btn');
+  if (dropdown) dropdown.classList.remove('open');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+function toggleAccountDropdown(ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  const dropdown = document.getElementById('account-dropdown');
+  if (!dropdown) return;
+  const open = !dropdown.classList.contains('open');
+  closeAccountDropdown();
+  closeMoreSheet();
+  if (open) {
+    dropdown.classList.add('open');
+    const btn = document.getElementById('account-menu-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+  }
+}
+function openAccountSettingsFromDropdown(ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  closeAccountDropdown();
+  openAccountSettings();
+}
 function openAccountSettings(ev) {
   if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  closeAccountDropdown();
   closeMoreSheet();
   go('settings');
 }
 function openSettingsFromMore(ev) {
   openAccountSettings(ev);
 }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.user-menu')) closeAccountDropdown();
+});
 function go(id) {
   closeMoreSheet();
   currentView = id;

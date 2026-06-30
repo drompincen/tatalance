@@ -1,6 +1,24 @@
 import { test, expect } from '@playwright/test';
 import { MobilePage } from './pages/mobile.page';
 
+test.describe('Chauffeur account dropdown (desktop)', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('Account trigger opens dropdown with settings and logout', async ({ page }) => {
+    const mobile = new MobilePage(page);
+    await mobile.gotoApp();
+
+    await page.locator('[data-test="mobile-account-btn"]').click();
+    await expect(page.locator('#account-dropdown.open')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('[data-test="account-dropdown-settings"]')).toBeVisible();
+    await expect(page.locator('[data-test="account-dropdown-logout"]')).toBeVisible();
+
+    await page.locator('[data-test="account-dropdown-settings"]').click();
+    await expect(page.locator('#account-dropdown.open')).toHaveCount(0);
+    await expect(page.locator('#tab-settings.active')).toBeVisible();
+  });
+});
+
 test.describe('Chauffeur settings and account sheet', () => {
   test('Settings opens sheet and Account opens settings page', async ({ page }) => {
     const mobile = new MobilePage(page);
