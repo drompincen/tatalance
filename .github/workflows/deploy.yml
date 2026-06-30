@@ -145,6 +145,9 @@ jobs:
     # E2E can be flaky on fresh deploys (cold JVM + EB startup). Do not fail the overall pipeline status.
     # Deploy success is what matters for feature branches like drom.
     continue-on-error: true
+    # NEVER run e2e against production: the tests create/mutate records and would pollute the real
+    # prod database (tatalance-app). Skip the whole job when the target environment is prod.
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'qa' || github.ref_name)) != 'prod' }}
     env:
       E2E_BASE_URL: http://tatalance-${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'qa' || github.ref_name) }}.eba-7u2dj39y.us-east-1.elasticbeanstalk.com
     steps:
