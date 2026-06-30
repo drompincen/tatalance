@@ -534,7 +534,7 @@
             display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 110;
             background: #fff; color: #1a1a2e; border-radius: 16px 16px 0 0;
             max-height: 78vh; overflow-y: auto;
-            padding: 16px 0 calc(12px + env(safe-area-inset-bottom));
+            padding: 16px 0 calc(68px + env(safe-area-inset-bottom));
             box-shadow: 0 -8px 32px rgba(0,0,0,.15);
         }
         .more-sheet.open { display: block; }
@@ -602,10 +602,10 @@
             .header-nav-row { display: none; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
-            .account-menu-overlay.open { z-index: 116; }
+            .account-menu-overlay.open { z-index: 126; }
             .account-menu-panel {
                 position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0;
-                max-height: 78vh; overflow-y: auto; z-index: 120;
+                max-height: 78vh; overflow-y: auto; z-index: 130;
                 padding-bottom: calc(12px + env(safe-area-inset-bottom));
             }
             .account-menu-panel.open { display: block !important; }
@@ -1601,7 +1601,8 @@
         if (sheet) sheet.classList.remove('open');
         if (overlay) overlay.classList.remove('open');
     }
-    function toggleMoreSheet() {
+    function toggleMoreSheet(ev) {
+        if (ev && ev.stopPropagation) ev.stopPropagation();
         closeAccountMenu();
         closeTablesMoreSheet();
         const sheet = document.getElementById('more-sheet');
@@ -1649,15 +1650,17 @@
         });
         syncBottomNav('custom-' + tableId);
     }
-    function openAccountFromMore() {
+    function openAccountFromMore(ev) {
+        if (ev && ev.stopPropagation) ev.stopPropagation();
         closeMoreSheet();
         toggleAccountMenu();
     }
-    function toggleAccountMenu() {
+    function toggleAccountMenu(ev) {
+        if (ev && ev.stopPropagation) ev.stopPropagation();
         const panel = document.getElementById('account-menu-panel');
         const overlay = document.getElementById('account-menu-overlay');
         const btn = document.getElementById('account-menu-btn');
-        if (!panel || !btn) return;
+        if (!panel) return;
         const open = !panel.classList.contains('open');
         if (open) { closeNav(); closeMoreSheet(); closeTablesMoreSheet(); }
         if (open && window.innerWidth > 768) {
@@ -1672,7 +1675,7 @@
         }
         panel.classList.toggle('open', open);
         if (overlay) overlay.classList.toggle('open', open);
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
     function closeAccountMenu() {
         const panel = document.getElementById('account-menu-panel');
@@ -1683,7 +1686,10 @@
         if (btn) btn.setAttribute('aria-expanded', 'false');
     }
     document.addEventListener('click', e => {
-        if (!e.target.closest('.user-menu') && !e.target.closest('#account-menu-panel')) closeAccountMenu();
+        if (e.target.closest('#more-sheet') || e.target.closest('#more-overlay')) return;
+        if (!e.target.closest('.user-menu') && !e.target.closest('#account-menu-panel') && !e.target.closest('#account-menu-overlay')) {
+            closeAccountMenu();
+        }
     });
 
     /* ── Tab switching ── */
@@ -4392,7 +4398,7 @@
         <button type="button" class="active" data-tab="dashboard" data-test="bottom-nav-dashboard" onclick="bottomNavGo('dashboard')"><span class="ico" aria-hidden="true">🏠</span><span data-i18n="nav.home">Home</span></button>
         <button type="button" data-tab="tables" data-test="bottom-nav-tables" onclick="bottomNavGo('tables')"><span class="ico" aria-hidden="true">📊</span><span data-i18n="nav.tables">Tables</span></button>
         <button type="button" data-tab="invoices" data-test="bottom-nav-invoices" onclick="bottomNavGo('invoices')"><span class="ico" aria-hidden="true">🧾</span><span data-i18n="nav.invoices">Invoices</span></button>
-        <button type="button" data-tab="settings" data-test="bottom-nav-settings" onclick="toggleMoreSheet()"><span class="ico" aria-hidden="true">⚙️</span><span data-i18n="nav.settings">Settings</span></button>
+        <button type="button" data-tab="settings" data-test="bottom-nav-settings" onclick="toggleMoreSheet(event)"><span class="ico" aria-hidden="true">⚙️</span><span data-i18n="nav.settings">Settings</span></button>
     </div>
 </nav>
 <div class="more-overlay" id="more-overlay" onclick="closeMoreSheet()"></div>
@@ -4402,7 +4408,7 @@
     <button type="button" data-test="more-nav-api" onclick="showTabFromMore('api')">🔌 <span data-i18n="nav.api">API Spec</span></button>
     <button type="button" onclick="openHelp(); closeMoreSheet();">❓ <span data-i18n="nav.help">Help</span></button>
     <div class="more-sheet-divider"></div>
-    <button type="button" data-test="more-nav-account" onclick="openAccountFromMore()">👤 <span data-i18n="account.settings">Account &amp; settings</span></button>
+    <button type="button" data-test="more-nav-account" onclick="openAccountFromMore(event)">👤 <span data-i18n="account.settings">Account &amp; settings</span></button>
     <div class="more-sheet-divider"></div>
     <button type="button" class="menu-item-danger" onclick="doLogout()" data-i18n="account.logout">Logout</button>
 </div>
