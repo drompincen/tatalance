@@ -1650,13 +1650,18 @@
         });
         syncBottomNav('custom-' + tableId);
     }
+    let accountMenuOpening = false;
     function openAccountFromMore(ev) {
-        if (ev && ev.stopPropagation) ev.stopPropagation();
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        accountMenuOpening = true;
         closeMoreSheet();
-        toggleAccountMenu();
+        setTimeout(() => {
+            toggleAccountMenu();
+            setTimeout(() => { accountMenuOpening = false; }, 0);
+        }, 0);
     }
     function toggleAccountMenu(ev) {
-        if (ev && ev.stopPropagation) ev.stopPropagation();
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         const panel = document.getElementById('account-menu-panel');
         const overlay = document.getElementById('account-menu-overlay');
         const btn = document.getElementById('account-menu-btn');
@@ -1686,6 +1691,7 @@
         if (btn) btn.setAttribute('aria-expanded', 'false');
     }
     document.addEventListener('click', e => {
+        if (accountMenuOpening) return;
         if (e.target.closest('#more-sheet') || e.target.closest('#more-overlay')) return;
         if (!e.target.closest('.user-menu') && !e.target.closest('#account-menu-panel') && !e.target.closest('#account-menu-overlay')) {
             closeAccountMenu();
