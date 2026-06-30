@@ -134,10 +134,14 @@
         .btn:disabled { opacity: .5; cursor: not-allowed; }
         .btn-cancel { width: auto; display: inline-block; background: #666; margin-left: 8px; padding: 10px 18px; }
         .btn-cancel:hover { background: #888; }
-        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; font-weight: 500; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; color: #1a1a2e; cursor: pointer; font-weight: 500; }
         .btn-sm:hover { background: #f0f0f0; }
+        .btn.btn-sm { background: #fff; color: #1a1a2e; border: 1px solid #ddd; }
+        .btn.btn-outline { background: transparent; border: 1.5px solid #e2e8f0; color: #1a1a2e; }
+        .btn.btn-outline:hover { background: #f8fafc; }
         .btn-danger { color: #e53e3e; border-color: #e53e3e; }
         .btn-danger:hover { background: #fff5f5; }
+        .menu-item-danger { color: #b91c1c; font-weight: 600; }
         .filter-btn { padding: 4px 12px; font-size: 0.78rem; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; cursor: pointer; color: #6b7280; font-weight: 500; transition: all .15s; }
         .filter-btn:hover { background: #f7fafc; border-color: #cbd5e0; }
         .filter-btn.active { background: #2d3748; color: #fff; border-color: #2d3748; }
@@ -623,7 +627,8 @@
             .api-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; border-radius: 10px; }
             input, select, textarea { font-size: 16px !important; }
-            .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
+            .btn:not(.btn-sm):not(.btn-outline) { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
+            .btn.btn-sm, .btn.btn-outline { position: static; box-shadow: none; width: auto; }
             .btn-cancel { width: auto; position: static; box-shadow: none; }
             /* Jobs tab action buttons (Category C mobile) */
             #job-list .btn-sm { min-height: 44px; min-width: 44px; padding: 8px 12px; font-size: 0.85rem; }
