@@ -1276,27 +1276,41 @@
     }
 
     /* Early auth guard — redirect fast on phone/desktop before painting data or doing other fetches.
-       Prevents "hanging" or flash of empty UI when not authenticated (esp. real iOS hitting the cloud link). */
+       Prevents "hanging" or flash of empty UI when not authenticated (esp. real iOS hitting the cloud link).
+       Fail-safe: the page is NEVER left blank — it always reveals within REVEAL_MS even if /api/users/me
+       is slow or unreachable, and the auth fetch is aborted after FETCH_MS so a stalled request can't hang it. */
     (function earlyAuthGuard() {
+        const REVEAL_MS = 3000;   // hard cap: reveal no matter what after this
+        const FETCH_MS = 2500;    // abort the auth probe if the network stalls
         document.documentElement.style.visibility = 'hidden';
-        fetch('/api/users/me', { credentials: 'same-origin' })
+        let settled = false;
+        const reveal = () => {
+            if (settled) return;
+            settled = true;
+            document.documentElement.style.visibility = '';
+        };
+        const goLogin = () => {
+            if (settled) return;
+            settled = true;
+            if (!location.pathname.includes('login')) window.location.href = '/login.html';
+            else document.documentElement.style.visibility = '';
+        };
+        // Belt-and-suspenders: always reveal so a slow/hung probe can never leave a blank screen.
+        const revealTimer = setTimeout(reveal, REVEAL_MS);
+        const ctrl = ('AbortController' in window) ? new AbortController() : null;
+        const fetchTimer = ctrl ? setTimeout(() => ctrl.abort(), FETCH_MS) : null;
+        fetch('/api/users/me', { credentials: 'same-origin', signal: ctrl ? ctrl.signal : undefined })
             .then(r => {
-                if (!r.ok) {
-                    window.location.href = '/login.html';
-                    return null;
-                }
+                clearTimeout(fetchTimer);
+                if (!r.ok) { clearTimeout(revealTimer); goLogin(); return null; }
                 return r.json();
             })
-            .then(data => {
-                if (data) {
-                    // reveal when we have user; full loads and username set happen in the main block below
-                    document.documentElement.style.visibility = '';
-                }
-            })
+            .then(data => { if (data) { clearTimeout(revealTimer); reveal(); } })
             .catch(() => {
-                if (!location.pathname.includes('login')) {
-                    window.location.href = '/login.html';
-                }
+                clearTimeout(fetchTimer);
+                // On abort/network error, don't trap the user on a blank page — just reveal what we have.
+                clearTimeout(revealTimer);
+                reveal();
             });
     })();
 
