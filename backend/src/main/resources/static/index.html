@@ -166,8 +166,9 @@
         .form-feedback.fail { color: #e53e3e; }
 
         /* ── Dashboard ── */
-        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-        .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; min-width: 0; }
+        .dash-detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; min-width: 0; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); min-width: 0; }
         .stat-card .stat-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 8px; }
         .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; }
         .stat-card .stat-sub { font-size: 0.78rem; color: #6b7280; margin-top: 4px; }
@@ -176,14 +177,14 @@
         .stat-card.accent-orange { border-left: 4px solid #f59e0b; }
         .stat-card.accent-purple { border-left: 4px solid #8b5cf6; }
         .stat-card.accent-red { border-left: 4px solid #ef4444; }
-        .status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .status-bar-label { font-size: 0.82rem; width: 110px; text-align: right; color: #374151; font-weight: 500; }
-        .status-bar-track { flex: 1; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden; }
-        .status-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 0.72rem; font-weight: 600; color: white; min-width: fit-content; transition: width .4s ease; }
-        .revenue-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; min-width: 0; }
+        .status-bar-label { font-size: 0.82rem; width: 110px; flex-shrink: 0; text-align: right; color: #374151; font-weight: 500; }
+        .status-bar-track { flex: 1; min-width: 0; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden; }
+        .status-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 0.72rem; font-weight: 600; color: white; min-width: 0; overflow: hidden; transition: width .4s ease; }
+        .revenue-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; min-width: 0; }
         .revenue-line:last-child { border-bottom: none; }
-        .revenue-label { color: #374151; font-weight: 500; }
-        .revenue-value { font-weight: 700; color: #1a1a2e; }
+        .revenue-label { color: #374151; font-weight: 500; min-width: 0; }
+        .revenue-value { font-weight: 700; color: #1a1a2e; flex-shrink: 0; }
         .revenue-value.green { color: #10b981; }
         .revenue-value.red { color: #ef4444; }
 
@@ -569,7 +570,7 @@
             .header-mode-switch { display: none !important; }
             .header-top { padding: 0 12px; padding-top: env(safe-area-inset-top); height: auto; min-height: 48px; }
             header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .header-nav-row { display: block; position: absolute; width: 0; height: 0; overflow: visible; }
+            .header-nav-row { display: none; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
             .account-menu-overlay.open { z-index: 116; }
@@ -599,7 +600,12 @@
             .nav-drawer-only { display: none; }
             header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             nav #custom-tab-buttons { display: contents; }
-            .page { margin: 16px auto; padding: 0 12px; }
+            .page { margin: 16px auto; padding: 0 12px; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+            .dash-grid { grid-template-columns: 1fr; gap: 12px; }
+            .dash-detail-row { grid-template-columns: 1fr !important; gap: 16px; margin-top: 16px; }
+            .stat-card { padding: 16px; }
+            .stat-card .stat-value { font-size: 1.45rem; overflow-wrap: anywhere; }
+            .status-bar-label { width: auto; min-width: 72px; max-width: 42%; font-size: 0.75rem; }
             .grid-2 { grid-template-columns: 1fr; gap: 16px; }
             .api-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; border-radius: 10px; }
@@ -609,7 +615,6 @@
             /* Jobs tab action buttons (Category C mobile) */
             #job-list .btn-sm { min-height: 44px; min-width: 44px; padding: 8px 12px; font-size: 0.85rem; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
-            #dash-detail-row { grid-template-columns: 1fr !important; }
         }
 
         @media (max-width: 640px) {
@@ -730,7 +735,7 @@
             <div class="stat-card accent-purple"><div class="stat-label" data-i18n="dashboard.drivers">Drivers</div><div class="stat-value">...</div></div>
             <div class="stat-card accent-orange"><div class="stat-label" data-i18n="dashboard.activeJobs">Active Jobs</div><div class="stat-value">...</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px" id="dash-detail-row">
+        <div class="dash-detail-row" id="dash-detail-row">
             <div class="card">
                 <div class="card-title" data-i18n="dashboard.ridesByStatus">Rides by status</div>
                 <div id="dash-status-bars"><p class="muted" data-i18n="dashboard.loadingStatus">Loading status…</p></div>
@@ -1463,7 +1468,11 @@
                 body.force-mobile .nav-mode-switch, body.force-mobile .nav-section-label { display: block !important; }
                 body.force-mobile .account-menu-panel.open { display: block !important; }
                 body.force-mobile header { padding: 0 12px !important; }
-                body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; }
+                body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; overflow-x: hidden !important; }
+                body.force-mobile .header-nav-row { display: none !important; }
+                body.force-mobile .dash-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+                body.force-mobile .dash-detail-row { grid-template-columns: 1fr !important; gap: 16px !important; margin-top: 16px !important; }
+                body.force-mobile .stat-card .stat-value { font-size: 1.45rem !important; overflow-wrap: anywhere !important; }
                 /* Full mobile simulation for flag testing (dvh, fonts, btns, jobs etc) */
                 body.force-mobile input, body.force-mobile select, body.force-mobile textarea { font-size: 16px !important; }
                 body.force-mobile .btn { width: 100% !important; padding: 12px !important; min-height: 44px !important; font-size: 1rem !important; }
