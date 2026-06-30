@@ -475,7 +475,7 @@
             box-shadow: 0 -4px 16px rgba(0,0,0,.08);
         }
         .bottom-nav-inner {
-            display: grid; grid-template-columns: repeat(5, 1fr); max-width: 1020px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(4, 1fr); max-width: 1020px; margin: 0 auto;
         }
         .bottom-nav button {
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -484,6 +484,17 @@
         }
         .bottom-nav button .ico { font-size: 1.1rem; line-height: 1; }
         .bottom-nav button.active { color: #6366f1; background: #eef2ff; }
+        .tables-sub-bar {
+            display: none; position: sticky; top: 48px; z-index: 40;
+            background: #f8f9fc; border-bottom: 1px solid #e5e7eb;
+            padding: 6px 12px; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        }
+        .tables-sub-bar button {
+            flex: 1; min-width: 0; padding: 8px 12px; border: none; border-radius: 8px;
+            background: transparent; font-size: .78rem; font-weight: 600; color: #6b7280;
+            cursor: pointer; white-space: nowrap;
+        }
+        .tables-sub-bar button.active { background: #6366f1; color: #fff; }
         .more-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 105;
         }
@@ -641,10 +652,6 @@
     </div>
     <div class="header-nav-row">
         <nav id="main-nav" aria-label="Main navigation">
-            <a href="/freelance.html" class="nav-mode-switch" id="link-freelance-mobile" data-test="nav-freelance-mode">
-                <strong data-i18n="account.freelanceMode">Freelance mode</strong>
-                <small>Jobs, timer, ENGINEER profile &amp; invoicing</small>
-            </a>
             <div class="nav-section-label" data-i18n="nav.chauffeurOps">Chauffeur ops</div>
             <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')" data-i18n="nav.dashboard">Dashboard</button>
             <button class="tab-btn" id="btn-clients" onclick="showTab('clients')" data-i18n="nav.clients">Clients</button>
@@ -683,7 +690,6 @@
         <button type="button" class="btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
     </div>
     <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
-    <a href="/freelance.html" class="menu-item menu-item-freelance" role="menuitem" data-test="account-freelance-link" data-i18n="account.freelanceMode">Freelance mode</a>
     <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
     <div class="account-menu-divider"></div>
     <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
@@ -1456,16 +1462,33 @@
         document.getElementById('main-nav').classList.remove('open');
         document.getElementById('nav-overlay').classList.remove('open');
     }
-    const BOTTOM_PRIMARY_TABS = new Set(['dashboard', 'clients', 'rides', 'invoices']);
-    const MORE_TABS = new Set(['drivers', 'jobs', 'activity', 'api']);
+    const TABLE_TABS = new Set(['clients', 'drivers', 'rides', 'jobs']);
+    const SETTINGS_TABS = new Set(['activity', 'api']);
 
     function syncBottomNav(tabName) {
+        let activeBtn = 'dashboard';
+        if (TABLE_TABS.has(tabName)) activeBtn = 'tables';
+        else if (tabName === 'invoices') activeBtn = 'invoices';
+        else if (SETTINGS_TABS.has(tabName)) activeBtn = 'settings';
         document.querySelectorAll('.bottom-nav button[data-tab]').forEach(btn => {
-            const t = btn.dataset.tab;
-            const active = BOTTOM_PRIMARY_TABS.has(tabName) ? t === tabName
-                : MORE_TABS.has(tabName) ? t === 'more' : false;
-            btn.classList.toggle('active', active);
+            btn.classList.toggle('active', btn.dataset.tab === activeBtn);
         });
+    }
+
+    let lastTableTab = 'clients';
+    function showTableSub(name) {
+        lastTableTab = name;
+        showTab(name);
+        document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+            b.classList.toggle('active', b.dataset.sub === name);
+        });
+        syncBottomNav(name);
+    }
+    function showTablesBar() {
+        document.getElementById('tables-sub-bar').style.display = 'flex';
+    }
+    function hideTablesBar() {
+        document.getElementById('tables-sub-bar').style.display = 'none';
     }
     function closeMoreSheet() {
         const sheet = document.getElementById('more-sheet');
@@ -1492,11 +1515,23 @@
     }
     function bottomNavGo(name) {
         closeMoreSheet();
-        showTab(name);
+        if (name === 'tables') {
+            showTablesBar();
+            showTableSub(lastTableTab);
+        } else {
+            hideTablesBar();
+            showTab(name);
+        }
     }
     function showTabFromMore(name) {
         closeMoreSheet();
-        showTab(name);
+        if (TABLE_TABS.has(name)) {
+            showTablesBar();
+            showTableSub(name);
+        } else {
+            hideTablesBar();
+            showTab(name);
+        }
     }
     function openAccountFromMore() {
         closeMoreSheet();
@@ -1546,6 +1581,15 @@
         if (name === 'activity') loadActivity();
         closeNav();
         closeMoreSheet();
+        if (TABLE_TABS.has(name)) {
+            showTablesBar();
+            document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+                b.classList.toggle('active', b.dataset.sub === name);
+            });
+            lastTableTab = name;
+        } else {
+            hideTablesBar();
+        }
         syncBottomNav(name);
         updateTabVisibility();
     }
@@ -4208,28 +4252,31 @@
     });
 </script>
 
+<div id="tables-sub-bar" class="tables-sub-bar" aria-label="Table navigation">
+    <button class="active" data-sub="clients" onclick="showTableSub('clients')">👥 <span data-i18n="nav.clients">Clients</span></button>
+    <button data-sub="drivers" onclick="showTableSub('drivers')">🚕 <span data-i18n="nav.drivers">Drivers</span></button>
+    <button data-sub="rides" onclick="showTableSub('rides')">🚗 <span data-i18n="nav.rides">Rides</span></button>
+    <button data-sub="jobs" onclick="showTableSub('jobs')">💼 <span data-i18n="nav.jobs">Jobs</span></button>
+</div>
 <nav class="bottom-nav" aria-label="Chauffeur navigation" data-test="chauffeur-bottom-nav">
     <div class="bottom-nav-inner">
         <button type="button" class="active" data-tab="dashboard" data-test="bottom-nav-dashboard" onclick="bottomNavGo('dashboard')"><span class="ico" aria-hidden="true">🏠</span><span data-i18n="nav.home">Home</span></button>
-        <button type="button" data-tab="clients" data-test="bottom-nav-clients" onclick="bottomNavGo('clients')"><span class="ico" aria-hidden="true">👥</span><span data-i18n="nav.clients">Clients</span></button>
-        <button type="button" data-tab="rides" data-test="bottom-nav-rides" onclick="bottomNavGo('rides')"><span class="ico" aria-hidden="true">🚗</span><span data-i18n="nav.rides">Rides</span></button>
+        <button type="button" data-tab="tables" data-test="bottom-nav-tables" onclick="bottomNavGo('tables')"><span class="ico" aria-hidden="true">📊</span><span>Tables</span></button>
         <button type="button" data-tab="invoices" data-test="bottom-nav-invoices" onclick="bottomNavGo('invoices')"><span class="ico" aria-hidden="true">🧾</span><span data-i18n="nav.invoices">Invoices</span></button>
-        <button type="button" data-tab="more" data-test="bottom-nav-more" onclick="toggleMoreSheet()"><span class="ico" aria-hidden="true">⚙️</span><span data-i18n="nav.more">More</span></button>
+        <button type="button" data-tab="settings" data-test="bottom-nav-settings" onclick="toggleMoreSheet()"><span class="ico" aria-hidden="true">⚙️</span><span>Settings</span></button>
     </div>
 </nav>
 <div class="more-overlay" id="more-overlay" onclick="closeMoreSheet()"></div>
-<div id="more-sheet" class="more-sheet" role="menu" aria-label="More navigation">
-    <h3 data-i18n="nav.more">More</h3>
-    <a href="/freelance.html" class="menu-item-freelance" data-test="more-freelance-mode" data-i18n="account.freelanceMode">Freelance mode</a>
-    <div class="more-sheet-divider"></div>
-    <button type="button" data-test="more-nav-drivers" onclick="showTabFromMore('drivers')">🚕 <span data-i18n="nav.drivers">Drivers</span></button>
-    <button type="button" data-test="more-nav-jobs" onclick="showTabFromMore('jobs')">💼 <span data-i18n="nav.jobs">Jobs</span></button>
+<div id="more-sheet" class="more-sheet" role="menu" aria-label="Settings">
+    <h3>Settings</h3>
     <button type="button" data-test="more-nav-activity" onclick="showTabFromMore('activity')">📋 <span data-i18n="nav.activity">Activity</span></button>
     <button type="button" data-test="more-nav-api" onclick="showTabFromMore('api')">🔌 <span data-i18n="nav.api">API Spec</span></button>
     <button type="button" onclick="openCreateTableModal(); closeMoreSheet();">➕ <span data-i18n="common.createCustomTable">New table</span></button>
     <button type="button" onclick="openHelp(); closeMoreSheet();">❓ <span data-i18n="nav.help">Help</span></button>
     <div class="more-sheet-divider"></div>
-    <button type="button" data-test="more-nav-account" onclick="openAccountFromMore()">⚙️ <span data-i18n="account.settings">Account &amp; settings</span></button>
+    <button type="button" data-test="more-nav-account" onclick="openAccountFromMore()">👤 <span data-i18n="account.settings">Account &amp; settings</span></button>
+    <a href="/freelance.html" data-test="more-freelance-mode">💼 <span data-i18n="account.freelanceMode">Switch to Freelance mode</span></a>
+    <div class="more-sheet-divider"></div>
     <button type="button" class="menu-item-danger" onclick="doLogout()" data-i18n="account.logout">Logout</button>
 </div>
 

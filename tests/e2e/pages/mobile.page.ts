@@ -1,15 +1,12 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 
-/** Legacy header tab button ids → mobile bottom nav / More sheet targets. */
-const TAB_TARGETS: Record<string, { kind: 'bottom'; testId: string } | { kind: 'more'; testId: string }> = {
+/** Header tab button ids → mobile bottom nav / tables sub-bar / settings sheet targets. */
+const TABLE_SUBS = new Set(['btn-clients', 'btn-drivers', 'btn-rides', 'btn-jobs']);
+const TAB_TARGETS: Record<string, { kind: 'bottom'; testId: string } | { kind: 'settings'; testId: string }> = {
   'btn-dashboard': { kind: 'bottom', testId: 'bottom-nav-dashboard' },
-  'btn-clients': { kind: 'bottom', testId: 'bottom-nav-clients' },
-  'btn-rides': { kind: 'bottom', testId: 'bottom-nav-rides' },
   'btn-invoices': { kind: 'bottom', testId: 'bottom-nav-invoices' },
-  'btn-drivers': { kind: 'more', testId: 'more-nav-drivers' },
-  'btn-jobs': { kind: 'more', testId: 'more-nav-jobs' },
-  'btn-activity': { kind: 'more', testId: 'more-nav-activity' },
-  'btn-api': { kind: 'more', testId: 'more-nav-api' },
+  'btn-activity': { kind: 'settings', testId: 'more-nav-activity' },
+  'btn-api': { kind: 'settings', testId: 'more-nav-api' },
 };
 
 export class MobilePage {
@@ -21,6 +18,13 @@ export class MobilePage {
   }
 
   async openTab(buttonId: string) {
+    // Table tabs: tap Tables bottom nav, then the sub-bar button
+    if (TABLE_SUBS.has(buttonId)) {
+      await this.page.locator('[data-test="bottom-nav-tables"]').click();
+      const sub = buttonId.replace('btn-', '');
+      await this.page.locator(`#tables-sub-bar button[data-sub="${sub}"]`).click();
+      return;
+    }
     const target = TAB_TARGETS[buttonId];
     if (!target) {
       throw new Error(`Unknown mobile tab button: ${buttonId}`);
@@ -29,12 +33,12 @@ export class MobilePage {
       await this.page.locator(`[data-test="${target.testId}"]`).click();
       return;
     }
-    await this.page.locator('[data-test="bottom-nav-more"]').click();
+    await this.page.locator('[data-test="bottom-nav-settings"]').click();
     await this.page.locator(`[data-test="${target.testId}"]`).click();
   }
 
   async openAccountMenu() {
-    await this.page.locator('[data-test="bottom-nav-more"]').click();
+    await this.page.locator('[data-test="bottom-nav-settings"]').click();
     await this.page.locator('[data-test="more-nav-account"]').click();
     await expect(this.page.locator('#account-menu-panel.open')).toBeVisible();
   }

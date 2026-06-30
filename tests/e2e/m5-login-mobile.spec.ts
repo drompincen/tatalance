@@ -54,7 +54,7 @@ test.describe('M5 — Login on iPhone Safari', () => {
     // FREELANCE users redirect to freelance.html; CHAUFFEUR users land on index.html
     // with the unified bottom nav on mobile.
     const chauffeurShell = page.locator('[data-test="chauffeur-bottom-nav"]');
-    const freelanceShell = page.locator('[data-test="bottom-nav-jobs"]');
+    const freelanceShell = page.locator('[data-test="bottom-nav-tables"]');
     await expect(chauffeurShell.or(freelanceShell)).toBeVisible();
   });
 });

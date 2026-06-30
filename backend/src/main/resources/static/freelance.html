@@ -17,23 +17,24 @@
       display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
       padding: 12px 16px; background: #1a1a2e; color: #fff; position: sticky; top: 0; z-index: 50;
     }
-    .chauffeur-switch {
-      display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #1a1a2e;
-      background: #fff; border: 2px solid #fbbf24; border-radius: 12px; padding: 10px 16px;
-      min-height: 48px; box-shadow: 0 2px 10px rgba(0,0,0,.25); transition: transform .15s, box-shadow .15s;
-      flex-shrink: 0;
+    .sub-tabs {
+      display: flex; gap: 4px; margin-bottom: 20px; background: var(--bg); border-radius: 10px;
+      padding: 4px; border: 1px solid var(--border);
     }
-    .chauffeur-switch:hover {
-      transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    .sub-tabs button {
+      flex: 1; padding: 8px 12px; border: none; border-radius: 8px; background: transparent;
+      font-size: .82rem; font-weight: 600; color: var(--muted); cursor: pointer;
     }
-    .chauffeur-switch:active { transform: translateY(0); }
-    .chauffeur-switch-icon {
-      font-size: 1.35rem; line-height: 1; width: 36px; height: 36px; border-radius: 10px;
-      background: #fef3c7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    .sub-tabs button.active { background: var(--primary); color: #fff; }
+    .sub-view { display: none; }
+    .sub-view.active { display: block; }
+    .mode-link {
+      display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
+      padding: 14px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border);
+      margin-top: 20px; transition: background .15s;
     }
-    .chauffeur-switch-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
-    .chauffeur-switch-label { font-size: .95rem; font-weight: 800; letter-spacing: -.02em; }
-    .chauffeur-switch-hint { font-size: .72rem; font-weight: 500; color: #64748b; }
+    .mode-link:hover { background: #eef2ff; }
+    .mode-link-icon { font-size: 1.2rem; }
     .top-bar-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
     .mode-pill {
       font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
@@ -78,33 +79,6 @@
       border-radius: 10px; font-size: .88rem; cursor: pointer; color: var(--muted);
     }
     .nav button.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
-    .mode-switch-card {
-      display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 14px;
-      border-radius: var(--radius); text-decoration: none; color: #fff;
-      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
-      border: 2px solid #fbbf24; box-shadow: 0 4px 12px rgba(15,52,96,.25);
-      transition: transform .15s, box-shadow .15s;
-    }
-    .mode-switch-card:hover {
-      transform: translateY(-1px); box-shadow: 0 6px 16px rgba(15,52,96,.35);
-    }
-    .mode-switch-card-icon {
-      font-size: 1.5rem; width: 44px; height: 44px; border-radius: 12px;
-      background: rgba(251,191,36,.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .mode-switch-card-body { flex: 1; min-width: 0; }
-    .mode-switch-card-title { font-size: .92rem; font-weight: 800; letter-spacing: -.02em; }
-    .mode-switch-card-hint { font-size: .72rem; opacity: .8; margin-top: 3px; }
-    .mode-switch-card-arrow { font-size: 1.1rem; font-weight: 700; opacity: .9; flex-shrink: 0; }
-    .mode-switch-bar {
-      display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
-      align-items: center; justify-content: center; gap: 10px; padding: 12px 16px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
-      background: #1a1a2e; border-top: 2px solid #fbbf24;
-      text-decoration: none; color: #fff; font-weight: 800; font-size: 1rem;
-      box-shadow: 0 -4px 20px rgba(0,0,0,.2);
-    }
-    .mode-switch-bar-icon { font-size: 1.25rem; }
 
     .main { flex: 1; padding: 24px; overflow: auto; min-width: 0; }
     .view { display: none; }
@@ -175,7 +149,7 @@
       box-shadow: 0 -4px 16px rgba(0,0,0,.08);
     }
     .bottom-nav-inner {
-      display: grid; grid-template-columns: repeat(5, 1fr); max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr); max-width: 1200px; margin: 0 auto;
     }
     .bottom-nav button {
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -195,11 +169,7 @@
       .side .rate-badge { margin-top: 8px; }
       .side h1 { font-size: 1rem; }
       .side > p { display: none; }
-      .mode-switch-card { display: none; }
       .mode-pill { display: none; }
-      .chauffeur-switch-hint { display: none; }
-      .chauffeur-switch { padding: 8px 12px; font-size: .82rem; }
-      .mode-switch-bar { display: none; }
       .bottom-nav { display: block; }
       .main { padding: 16px 12px 12px; }
       .toast { bottom: calc(64px + env(safe-area-inset-bottom)); left: 12px; right: 12px; }
@@ -210,13 +180,7 @@
 </head>
 <body>
 <header class="top-bar">
-  <a href="/index.html" class="chauffeur-switch" data-test="back-to-chauffeur" aria-label="Switch to Chauffeur ops">
-    <span class="chauffeur-switch-icon" aria-hidden="true">🚘</span>
-    <span class="chauffeur-switch-text">
-      <span class="chauffeur-switch-label" data-i18n="nav.switchToChauffeur">Switch to Chauffeur ops</span>
-      <span class="chauffeur-switch-hint" data-i18n="nav.chauffeurOpsHint">Rides, drivers &amp; dispatch</span>
-    </span>
-  </a>
+  <h1 style="font-size:1.15rem;font-weight:700;letter-spacing:-.5px">Tatalance</h1>
   <div class="top-bar-actions">
     <span class="mode-pill" data-i18n="account.freelanceMode">Freelance mode</span>
     <div class="lang-toggle" id="langToggle" onclick="toggleLang()" data-i18n-title="lang.switch" title="Switch language / Cambiar idioma">
@@ -231,14 +195,6 @@
   <aside class="side">
     <h1>Tatalance</h1>
     <p style="font-size:.78rem;color:var(--muted);margin-top:4px" data-i18n="account.freelanceMode">Freelance mode</p>
-    <a href="/index.html" class="mode-switch-card" data-test="nav-chauffeur-ops" aria-label="Switch to Chauffeur ops">
-      <span class="mode-switch-card-icon" aria-hidden="true">🚘</span>
-      <span class="mode-switch-card-body">
-        <div class="mode-switch-card-title" data-i18n="nav.switchToChauffeur">Switch to Chauffeur ops</div>
-        <div class="mode-switch-card-hint" data-i18n="nav.chauffeurOpsHint">Rides, drivers &amp; dispatch</div>
-      </span>
-      <span class="mode-switch-card-arrow" aria-hidden="true">→</span>
-    </a>
     <div class="rate-badge">
       <div class="lbl">Your hourly rate</div>
       <div class="amt">$<span id="rateDisplay">20</span>/hr</div>
@@ -247,8 +203,7 @@
     </div>
     <nav class="nav" aria-label="Freelance navigation">
       <button class="active" data-view="dash" onclick="go('dash')" data-i18n="nav.dashboard">Dashboard</button>
-      <button data-view="jobs" onclick="go('jobs')" data-i18n="nav.jobs">Jobs</button>
-      <button data-view="clients" onclick="go('clients')" data-i18n="nav.clients">Clients</button>
+      <button data-view="tables" onclick="go('tables')">Tables</button>
       <button data-view="invoices" onclick="go('invoices')" data-i18n="nav.invoices">Invoices</button>
       <button data-view="settings" onclick="go('settings')">Settings</button>
     </nav>
@@ -270,44 +225,49 @@
         <div id="dash-timer-inner" class="empty">No timer running — go to <strong>Jobs</strong> and press <strong>Start timer</strong> on your booked job.</div>
       </div>
     </section>
-    <section class="view" id="view-jobs">
-      <h2>Jobs</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Book a job</h3>
-          <label>Client</label>
-          <select id="book-client"></select>
-          <label>Job title</label>
-          <input id="book-title" placeholder="e.g. Tatalance UI redesign">
-          <label>Scope / notes</label>
-          <textarea id="book-notes" rows="2" placeholder="What you're delivering…"></textarea>
-          <label>Date &amp; time</label>
-          <input type="datetime-local" id="book-when">
-          <button class="btn" id="book-btn" onclick="bookJob()">Book job</button>
-        </div>
-        <div class="card" id="job-list-wrap">
-          <h3>Your jobs</h3>
-          <p style="font-size:.8rem;color:var(--muted);margin:-8px 0 14px">Booked jobs appear here. Press <strong>Start timer</strong> when you begin work.</p>
-          <div id="job-list"></div>
+    <section class="view" id="view-tables">
+      <h2>Tables</h2>
+      <div class="sub-tabs" id="tables-sub-tabs">
+        <button class="active" data-sub="jobs" onclick="showSub('jobs')">💼 Jobs</button>
+        <button data-sub="clients" onclick="showSub('clients')">👥 Clients</button>
+      </div>
+      <div class="sub-view active" id="sub-jobs">
+        <div class="grid">
+          <div class="card">
+            <h3>Book a job</h3>
+            <label>Client</label>
+            <select id="book-client"></select>
+            <label>Job title</label>
+            <input id="book-title" placeholder="e.g. Tatalance UI redesign">
+            <label>Scope / notes</label>
+            <textarea id="book-notes" rows="2" placeholder="What you're delivering…"></textarea>
+            <label>Date &amp; time</label>
+            <input type="datetime-local" id="book-when">
+            <button class="btn" id="book-btn" onclick="bookJob()">Book job</button>
+          </div>
+          <div class="card" id="job-list-wrap">
+            <h3>Your jobs</h3>
+            <p style="font-size:.8rem;color:var(--muted);margin:-8px 0 14px">Booked jobs appear here. Press <strong>Start timer</strong> when you begin work.</p>
+            <div id="job-list"></div>
+          </div>
         </div>
       </div>
-    </section>
-    <section class="view" id="view-clients">
-      <h2>Clients</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Add client</h3>
-          <label>First name</label>
-          <input type="text" id="c-first" placeholder="David" autocomplete="given-name">
-          <label>Last name</label>
-          <input type="text" id="c-last" placeholder="Smith" autocomplete="family-name">
-          <label>Phone (E.164)</label>
-          <input type="tel" id="c-phone" placeholder="(555) 123-4567 or +15551234567" inputmode="tel" autocomplete="tel">
-          <label>Email (optional)</label>
-          <input type="email" id="c-email" placeholder="client@example.com" autocomplete="email">
-          <button class="btn" id="add-client-btn" onclick="addClient()">Save client</button>
+      <div class="sub-view" id="sub-clients">
+        <div class="grid">
+          <div class="card">
+            <h3>Add client</h3>
+            <label>First name</label>
+            <input type="text" id="c-first" placeholder="David" autocomplete="given-name">
+            <label>Last name</label>
+            <input type="text" id="c-last" placeholder="Smith" autocomplete="family-name">
+            <label>Phone (E.164)</label>
+            <input type="tel" id="c-phone" placeholder="(555) 123-4567 or +15551234567" inputmode="tel" autocomplete="tel">
+            <label>Email (optional)</label>
+            <input type="email" id="c-email" placeholder="client@example.com" autocomplete="email">
+            <button class="btn" id="add-client-btn" onclick="addClient()">Save client</button>
+          </div>
+          <div class="card" id="client-list"><div class="empty">Loading…</div></div>
         </div>
-        <div class="card" id="client-list"><div class="empty">Loading…</div></div>
       </div>
     </section>
     <section class="view" id="view-settings">
@@ -327,6 +287,10 @@
         <label>Active ENGINEER profile</label>
         <select id="profile-select" onchange="switchProfile(this.value)"></select>
       </div>
+      <a href="/index.html" class="mode-link" data-test="settings-chauffeur-link">
+        <span class="mode-link-icon" aria-hidden="true">🚘</span>
+        <span><strong data-i18n="nav.switchToChauffeur">Switch to Chauffeur ops</strong><br><small style="color:var(--muted)" data-i18n="nav.chauffeurOpsHint">Rides, drivers &amp; dispatch</small></span>
+      </a>
     </section>
     <section class="view" id="view-invoices">
       <h2>Invoices</h2>
@@ -334,15 +298,10 @@
     </section>
   </main>
 </div>
-<a href="/index.html" class="mode-switch-bar" data-test="mobile-chauffeur-switch" aria-label="Switch to Chauffeur ops">
-  <span class="mode-switch-bar-icon" aria-hidden="true">🚘</span>
-  <span data-i18n="nav.switchToChauffeur">Switch to Chauffeur ops</span>
-</a>
 <nav class="bottom-nav" aria-label="Freelance navigation">
   <div class="bottom-nav-inner">
     <button type="button" class="active" data-view="dash" data-test="bottom-nav-dash" onclick="go('dash')"><span class="ico" aria-hidden="true">🏠</span><span>Home</span></button>
-    <button type="button" data-view="jobs" data-test="bottom-nav-jobs" onclick="go('jobs')"><span class="ico" aria-hidden="true">💼</span><span>Jobs</span></button>
-    <button type="button" data-view="clients" data-test="bottom-nav-clients" onclick="go('clients')"><span class="ico" aria-hidden="true">👥</span><span>Clients</span></button>
+    <button type="button" data-view="tables" data-test="bottom-nav-tables" onclick="go('tables')"><span class="ico" aria-hidden="true">📊</span><span>Tables</span></button>
     <button type="button" data-view="invoices" data-test="bottom-nav-invoices" onclick="go('invoices')"><span class="ico" aria-hidden="true">🧾</span><span>Invoices</span></button>
     <button type="button" data-view="settings" data-test="bottom-nav-settings" onclick="go('settings')"><span class="ico" aria-hidden="true">⚙️</span><span>Settings</span></button>
   </div>
@@ -575,6 +534,14 @@ function go(id) {
     b.classList.toggle('active', b.dataset.view === id);
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function showSub(id) {
+  document.querySelectorAll('#view-tables .sub-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('#tables-sub-tabs button').forEach(b => b.classList.remove('active'));
+  const sub = document.getElementById('sub-' + id);
+  const btn = document.querySelector('#tables-sub-tabs button[data-sub="' + id + '"]');
+  if (sub) sub.classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 async function loadJobs() {

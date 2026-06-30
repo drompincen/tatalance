@@ -29,10 +29,9 @@ test.describe('M1 — Responsive shell on iPhone SE', () => {
 
   test('account menu and freelance mode are reachable on mobile', async ({ page }) => {
     await mobile.openAccountMenu();
-    await expect(page.locator('[data-test="account-freelance-link"]')).toBeVisible();
     await expect(page.locator('[data-test="account-venmo-input"]')).toBeVisible();
     await page.locator('#account-menu-overlay').click();
-    await page.locator('[data-test="bottom-nav-more"]').click();
+    await page.locator('[data-test="bottom-nav-settings"]').click();
     await expect(page.locator('[data-test="more-freelance-mode"]')).toBeVisible();
   });
 
