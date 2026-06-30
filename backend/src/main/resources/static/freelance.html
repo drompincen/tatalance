@@ -35,6 +35,13 @@
     }
     .mode-link:hover { background: #eef2ff; }
     .mode-link-icon { font-size: 1.2rem; }
+    .header-mode-switch {
+      font-size: .72rem; font-weight: 700; color: rgba(255,255,255,.7);
+      text-decoration: none; padding: 5px 10px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.2); background: rgba(251,191,36,.15);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .header-mode-switch:hover { background: rgba(251,191,36,.3); color: #fff; }
     .top-bar-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
     .mode-pill {
       font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
@@ -181,6 +188,7 @@
 <body>
 <header class="top-bar">
   <h1 style="font-size:1.15rem;font-weight:700;letter-spacing:-.5px">Tatalance</h1>
+  <a href="/index.html" class="header-mode-switch" data-test="header-chauffeur-link" aria-label="Switch to Chauffeur ops">🚘 Chauffeur</a>
   <div class="top-bar-actions">
     <span class="mode-pill" data-i18n="account.freelanceMode">Freelance mode</span>
     <div class="lang-toggle" id="langToggle" onclick="toggleLang()" data-i18n-title="lang.switch" title="Switch language / Cambiar idioma">
