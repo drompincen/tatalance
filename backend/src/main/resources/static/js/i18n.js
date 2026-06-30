@@ -476,6 +476,7 @@
         falseLabel: 'False label',
         deleteColumn: 'Delete Column',
         noRows: 'No rows yet',
+        noTablesYet: 'No custom tables yet',
         addColumnTitle: 'Add column',
       },
       search: {
@@ -1154,6 +1155,7 @@
         falseLabel: 'Etiqueta falso',
         deleteColumn: 'Eliminar columna',
         noRows: 'Aún no hay filas',
+        noTablesYet: 'Aún no hay tablas personalizadas',
         addColumnTitle: 'Agregar columna',
       },
       search: {

@@ -498,6 +498,34 @@
             cursor: pointer; white-space: nowrap;
         }
         .tables-sub-bar button.active { background: #6366f1; color: #fff; }
+        .tables-more-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 104;
+        }
+        .tables-more-overlay.open { display: block; }
+        .tables-more-sheet {
+            display: none; position: fixed; left: 12px; right: 12px; z-index: 108;
+            top: calc(48px + env(safe-area-inset-top) + 44px);
+            background: #fff; color: #1a1a2e; border-radius: 12px;
+            max-height: min(60vh, 420px); overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,.18);
+            border: 1px solid #e5e7eb;
+        }
+        .tables-more-sheet.open { display: block; }
+        .tables-more-sheet h3 {
+            padding: 12px 14px 8px; font-size: .82rem; font-weight: 800; margin: 0;
+            text-transform: uppercase; letter-spacing: .04em; color: #64748b;
+        }
+        .tables-more-sheet button {
+            display: block; width: 100%; text-align: left; padding: 12px 14px; font-size: .9rem;
+            border: none; background: none; color: #1a1a2e; cursor: pointer; min-height: 44px;
+        }
+        .tables-more-sheet button:hover { background: #f1f5f9; }
+        .tables-more-sheet .tables-custom-empty {
+            padding: 12px 14px 14px; font-size: .82rem; color: #6b7280; margin: 0;
+        }
+        .header-brand {
+            display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+        }
         .more-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 105;
         }
@@ -567,9 +595,10 @@
             .tables-sub-bar.open { display: flex !important; }
             .hamburger { display: none !important; }
             .account-trigger { display: none !important; }
-            .header-mode-switch { display: none !important; }
             .header-top { padding: 0 12px; padding-top: env(safe-area-inset-top); height: auto; min-height: 48px; }
-            header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .header-brand { flex: 1; min-width: 0; }
+            header h1 { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .header-mode-switch { font-size: .65rem; padding: 4px 8px; }
             .header-nav-row { display: none; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
@@ -649,8 +678,10 @@
 <header>
     <div class="header-top">
         <button class="hamburger" id="hamburger" onclick="toggleNav()" data-i18n-aria="account.openMenu" aria-label="Open menu">&#9776;</button>
-        <h1>Tatalance</h1>
-        <a href="/freelance.html" class="header-mode-switch" data-test="header-freelance-link" aria-label="Switch to Freelance mode">💼 Freelance</a>
+        <div class="header-brand">
+            <h1>Tatalance</h1>
+            <a href="/freelance.html" class="header-mode-switch" data-test="header-freelance-link" aria-label="Switch to Freelance mode">💼 <span data-i18n="nav.freelance">Freelance</span></a>
+        </div>
         <div class="header-spacer"></div>
         <div class="header-actions">
             <div class="lang-toggle" id="langToggle" onclick="toggleLang()" data-i18n-title="lang.switch" title="Switch language / Cambiar idioma">
@@ -721,6 +752,14 @@
     <button data-sub="drivers" onclick="showTableSub('drivers')">🚕 <span data-i18n="nav.drivers">Drivers</span></button>
     <button data-sub="rides" onclick="showTableSub('rides')">🚗 <span data-i18n="nav.rides">Rides</span></button>
     <button data-sub="jobs" onclick="showTableSub('jobs')">💼 <span data-i18n="nav.jobs">Jobs</span></button>
+    <button data-sub="more" data-test="tables-sub-more" onclick="showTableSub('more')">⋯ <span data-i18n="nav.more">More</span></button>
+</div>
+<div class="tables-more-overlay" id="tables-more-overlay" onclick="closeTablesMoreSheet()"></div>
+<div id="tables-more-sheet" class="tables-more-sheet" role="menu" aria-label="More tables">
+    <h3 data-i18n="nav.more">More</h3>
+    <button type="button" data-test="tables-more-new" onclick="openCreateTableModal(); closeTablesMoreSheet();">➕ <span data-i18n="common.createCustomTable">New table</span></button>
+    <div id="tables-custom-nav"></div>
+    <p id="tables-custom-empty" class="tables-custom-empty" style="display:none" data-i18n="customTable.noTablesYet">No custom tables yet</p>
 </div>
 
 <!-- ── Dashboard tab ── -->
@@ -1464,7 +1503,7 @@
                 body.force-mobile .hamburger { display: none !important; }
                 body.force-mobile .bottom-nav { display: block !important; }
                 body.force-mobile .tables-sub-bar.open { display: flex !important; }
-                body.force-mobile .header-mode-switch { display: none !important; }
+
                 body.force-mobile .account-trigger { display: none !important; }
                 body.force-mobile #main-nav { display: none; }
                 body.force-mobile #main-nav.open { display: flex !important; }
@@ -1506,16 +1545,43 @@
 
     function syncBottomNav(tabName) {
         let activeBtn = 'dashboard';
-        if (TABLE_TABS.has(tabName)) activeBtn = 'tables';
+        if (TABLE_TABS.has(tabName) || tabName === 'tables-more' || (tabName && tabName.startsWith('custom-'))) activeBtn = 'tables';
         else if (tabName === 'invoices') activeBtn = 'invoices';
-        else if (SETTINGS_TABS.has(tabName) || (tabName && tabName.startsWith('custom-'))) activeBtn = 'settings';
+        else if (SETTINGS_TABS.has(tabName)) activeBtn = 'settings';
         document.querySelectorAll('.bottom-nav button[data-tab]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === activeBtn);
         });
     }
 
     let lastTableTab = 'clients';
+    function closeTablesMoreSheet() {
+        const sheet = document.getElementById('tables-more-sheet');
+        const overlay = document.getElementById('tables-more-overlay');
+        if (sheet) sheet.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
+    }
+    function toggleTablesMoreSheet() {
+        closeMoreSheet();
+        closeAccountMenu();
+        const sheet = document.getElementById('tables-more-sheet');
+        const overlay = document.getElementById('tables-more-overlay');
+        if (!sheet) return;
+        const open = !sheet.classList.contains('open');
+        sheet.classList.toggle('open', open);
+        if (overlay) overlay.classList.toggle('open', open);
+        document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+            b.classList.toggle('active', b.dataset.sub === 'more');
+        });
+        syncBottomNav('tables-more');
+    }
     function showTableSub(name) {
+        if (name === 'more') {
+            showTablesBar();
+            toggleTablesMoreSheet();
+            syncBottomNav('tables-more');
+            return;
+        }
+        closeTablesMoreSheet();
         lastTableTab = name;
         showTab(name);
         document.querySelectorAll('#tables-sub-bar button').forEach(b => {
@@ -1537,6 +1603,7 @@
     }
     function toggleMoreSheet() {
         closeAccountMenu();
+        closeTablesMoreSheet();
         const sheet = document.getElementById('more-sheet');
         const overlay = document.getElementById('more-overlay');
         if (!sheet) return;
@@ -1554,6 +1621,7 @@
     }
     function bottomNavGo(name) {
         closeMoreSheet();
+        closeTablesMoreSheet();
         if (name === 'tables') {
             showTablesBar();
             showTableSub(lastTableTab);
@@ -1572,8 +1640,14 @@
             showTab(name);
         }
     }
-    function openCustomTabFromMore(tableId) {
-        showTabFromMore('custom-' + tableId);
+    function openCustomTableTab(tableId) {
+        closeTablesMoreSheet();
+        showTablesBar();
+        showTab('custom-' + tableId);
+        document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+            b.classList.toggle('active', b.dataset.sub === 'more');
+        });
+        syncBottomNav('custom-' + tableId);
     }
     function openAccountFromMore() {
         closeMoreSheet();
@@ -1585,7 +1659,7 @@
         const btn = document.getElementById('account-menu-btn');
         if (!panel || !btn) return;
         const open = !panel.classList.contains('open');
-        if (open) { closeNav(); closeMoreSheet(); }
+        if (open) { closeNav(); closeMoreSheet(); closeTablesMoreSheet(); }
         if (open && window.innerWidth > 768) {
             const rect = btn.getBoundingClientRect();
             panel.style.top = (rect.bottom + 6) + 'px';
@@ -1628,7 +1702,13 @@
         if (name === 'activity') loadActivity();
         closeNav();
         closeMoreSheet();
-        if (TABLE_TABS.has(name)) {
+        closeTablesMoreSheet();
+        if (name && name.startsWith('custom-')) {
+            showTablesBar();
+            document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+                b.classList.toggle('active', b.dataset.sub === 'more');
+            });
+        } else if (TABLE_TABS.has(name)) {
             showTablesBar();
             document.querySelectorAll('#tables-sub-bar button').forEach(b => {
                 b.classList.toggle('active', b.dataset.sub === name);
@@ -3564,12 +3644,14 @@
                 <span class="del-tab" onclick="event.stopPropagation();deleteCustomTable('${t.id}','${esc(t.name)}')">&times;</span>
             </button>`
         ).join('');
-        const mobileNav = document.getElementById('custom-mobile-nav');
-        if (mobileNav) {
-            mobileNav.innerHTML = customTables.map(t =>
-                `<button type="button" data-test="more-nav-custom-${t.id}" onclick="openCustomTabFromMore('${t.id}')">📎 ${esc(t.name)}</button>`
+        const tablesNav = document.getElementById('tables-custom-nav');
+        const tablesEmpty = document.getElementById('tables-custom-empty');
+        if (tablesNav) {
+            tablesNav.innerHTML = customTables.map(t =>
+                `<button type="button" data-test="tables-more-custom-${t.id}" onclick="openCustomTableTab('${t.id}')">📎 ${esc(t.name)}</button>`
             ).join('');
         }
+        if (tablesEmpty) tablesEmpty.style.display = customTables.length ? 'none' : 'block';
     }
 
     function linkedRowSummary(linkedTableId, rowId) {
@@ -4318,12 +4400,9 @@
     <h3 data-i18n="nav.settings">Settings</h3>
     <button type="button" data-test="more-nav-activity" onclick="showTabFromMore('activity')">📋 <span data-i18n="nav.activity">Activity</span></button>
     <button type="button" data-test="more-nav-api" onclick="showTabFromMore('api')">🔌 <span data-i18n="nav.api">API Spec</span></button>
-    <button type="button" onclick="openCreateTableModal(); closeMoreSheet();">➕ <span data-i18n="common.createCustomTable">New table</span></button>
-    <div id="custom-mobile-nav"></div>
     <button type="button" onclick="openHelp(); closeMoreSheet();">❓ <span data-i18n="nav.help">Help</span></button>
     <div class="more-sheet-divider"></div>
     <button type="button" data-test="more-nav-account" onclick="openAccountFromMore()">👤 <span data-i18n="account.settings">Account &amp; settings</span></button>
-    <a href="/freelance.html" class="menu-item-freelance" data-test="more-freelance-mode" onclick="closeMoreSheet()">💼 <span data-i18n="account.freelanceMode">Switch to Freelance mode</span></a>
     <div class="more-sheet-divider"></div>
     <button type="button" class="menu-item-danger" onclick="doLogout()" data-i18n="account.logout">Logout</button>
 </div>
