@@ -524,7 +524,7 @@
             padding: 12px 14px 14px; font-size: .82rem; color: #6b7280; margin: 0;
         }
         .header-brand {
-            display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
         }
         .more-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 105;
@@ -595,10 +595,19 @@
             .tables-sub-bar.open { display: flex !important; }
             .hamburger { display: none !important; }
             .account-trigger { display: none !important; }
-            .header-top { padding: 0 12px; padding-top: env(safe-area-inset-top); height: auto; min-height: 48px; }
-            .header-brand { flex: 1; min-width: 0; }
-            header h1 { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .header-mode-switch { font-size: .65rem; padding: 4px 8px; }
+            .header-top {
+                justify-content: space-between; gap: 12px; flex-wrap: wrap;
+                padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top));
+                height: auto; min-height: 48px;
+            }
+            .header-spacer { display: none; }
+            .header-brand { flex-shrink: 0; }
+            header h1 {
+                flex-shrink: 0; font-size: 1.15rem; letter-spacing: -0.5px;
+                overflow: visible; text-overflow: unset; white-space: nowrap;
+            }
+            .header-mode-switch { font-size: .72rem; padding: 5px 10px; flex-shrink: 0; }
+            .header-actions { margin-left: auto; flex-shrink: 0; }
             .header-nav-row { display: none; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
@@ -623,11 +632,9 @@
             #main-nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             #main-nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             #main-nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            .user-menu { margin-left: auto; }
             .mobile-logout-only { display: none; }
             .search-box { display: none; }
             .nav-drawer-only { display: none; }
-            header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             #main-nav #custom-tab-buttons { display: contents; }
             nav.bottom-nav {
                 display: block; position: fixed; left: 0; right: 0; bottom: 0; top: auto;
@@ -1515,7 +1522,15 @@
                 body.force-mobile .account-trigger { display: none !important; }
                 body.force-mobile .nav-mode-switch, body.force-mobile .nav-section-label { display: block !important; }
                 body.force-mobile .account-menu-panel.open { display: block !important; }
-                body.force-mobile header { padding: 0 12px !important; }
+                body.force-mobile .header-top {
+                    justify-content: space-between !important; gap: 12px !important; flex-wrap: wrap !important;
+                    padding: 12px 16px !important; padding-top: calc(12px + env(safe-area-inset-top)) !important;
+                }
+                body.force-mobile .header-spacer { display: none !important; }
+                body.force-mobile header h1 {
+                    flex-shrink: 0 !important; overflow: visible !important; text-overflow: unset !important;
+                }
+                body.force-mobile .header-actions { margin-left: auto !important; flex-shrink: 0 !important; }
                 body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; overflow-x: hidden !important; }
                 body.force-mobile .header-nav-row { display: none !important; }
                 body.force-mobile .dash-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
