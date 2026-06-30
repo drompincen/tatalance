@@ -485,9 +485,11 @@
         .bottom-nav button .ico { font-size: 1.1rem; line-height: 1; }
         .bottom-nav button.active { color: #6366f1; background: #eef2ff; }
         .tables-sub-bar {
-            display: none !important; position: sticky; top: 48px; z-index: 40;
+            display: none !important; position: sticky;
+            top: calc(48px + env(safe-area-inset-top)); z-index: 95;
             background: #f8f9fc; border-bottom: 1px solid #e5e7eb;
             padding: 6px 12px; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            box-shadow: 0 2px 6px rgba(0,0,0,.06);
         }
         .tables-sub-bar button {
             flex: 1; min-width: 0; padding: 8px 12px; border: none; border-radius: 8px;
@@ -564,14 +566,16 @@
             .tables-sub-bar.open { display: flex !important; }
             .hamburger { display: none !important; }
             .account-trigger { display: none !important; }
+            .header-mode-switch { display: none !important; }
             .header-top { padding: 0 12px; padding-top: env(safe-area-inset-top); height: auto; min-height: 48px; }
             header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .header-nav-row { display: block; position: absolute; width: 0; height: 0; overflow: visible; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
+            .account-menu-overlay.open { z-index: 116; }
             .account-menu-panel {
                 position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0;
-                max-height: 78vh; overflow-y: auto; z-index: 110;
+                max-height: 78vh; overflow-y: auto; z-index: 120;
                 padding-bottom: calc(12px + env(safe-area-inset-bottom));
             }
             .account-menu-panel.open { display: block !important; }
@@ -590,10 +594,6 @@
             nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
             nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
             .user-menu { margin-left: auto; }
-            .account-trigger {
-                display: inline-flex !important; align-items: center; justify-content: center;
-                min-width: 44px; min-height: 44px; padding: 6px 10px; font-size: 0.72rem;
-            }
             .mobile-logout-only { display: none; }
             .search-box { display: none; }
             .nav-drawer-only { display: none; }
@@ -704,6 +704,13 @@
     <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
     <div class="account-menu-divider"></div>
     <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
+</div>
+
+<div id="tables-sub-bar" class="tables-sub-bar" aria-label="Table navigation">
+    <button class="active" data-sub="clients" onclick="showTableSub('clients')">👥 <span data-i18n="nav.clients">Clients</span></button>
+    <button data-sub="drivers" onclick="showTableSub('drivers')">🚕 <span data-i18n="nav.drivers">Drivers</span></button>
+    <button data-sub="rides" onclick="showTableSub('rides')">🚗 <span data-i18n="nav.rides">Rides</span></button>
+    <button data-sub="jobs" onclick="showTableSub('jobs')">💼 <span data-i18n="nav.jobs">Jobs</span></button>
 </div>
 
 <!-- ── Dashboard tab ── -->
@@ -1446,6 +1453,9 @@
             style.textContent = `
                 body.force-mobile .hamburger { display: none !important; }
                 body.force-mobile .bottom-nav { display: block !important; }
+                body.force-mobile .tables-sub-bar.open { display: flex !important; }
+                body.force-mobile .header-mode-switch { display: none !important; }
+                body.force-mobile .account-trigger { display: none !important; }
                 body.force-mobile nav { display: none; }
                 body.force-mobile nav.open { display: flex !important; }
                 body.force-mobile .nav-overlay.open { display: block !important; }
@@ -1480,7 +1490,7 @@
         let activeBtn = 'dashboard';
         if (TABLE_TABS.has(tabName)) activeBtn = 'tables';
         else if (tabName === 'invoices') activeBtn = 'invoices';
-        else if (SETTINGS_TABS.has(tabName)) activeBtn = 'settings';
+        else if (SETTINGS_TABS.has(tabName) || (tabName && tabName.startsWith('custom-'))) activeBtn = 'settings';
         document.querySelectorAll('.bottom-nav button[data-tab]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === activeBtn);
         });
@@ -1517,7 +1527,7 @@
         if (overlay) overlay.classList.toggle('open', open);
         if (open) {
             document.querySelectorAll('.bottom-nav button[data-tab]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === 'more');
+                btn.classList.toggle('active', btn.dataset.tab === 'settings');
             });
         } else {
             const activePane = document.querySelector('.tab-pane.active');
@@ -1544,6 +1554,9 @@
             showTab(name);
         }
     }
+    function openCustomTabFromMore(tableId) {
+        showTabFromMore('custom-' + tableId);
+    }
     function openAccountFromMore() {
         closeMoreSheet();
         toggleAccountMenu();
@@ -1554,11 +1567,16 @@
         const btn = document.getElementById('account-menu-btn');
         if (!panel || !btn) return;
         const open = !panel.classList.contains('open');
-        if (open) closeNav();
+        if (open) { closeNav(); closeMoreSheet(); }
         if (open && window.innerWidth > 768) {
             const rect = btn.getBoundingClientRect();
             panel.style.top = (rect.bottom + 6) + 'px';
             panel.style.right = (window.innerWidth - rect.right) + 'px';
+        } else if (open) {
+            panel.style.top = '';
+            panel.style.right = '';
+            panel.style.left = '';
+            panel.style.bottom = '';
         }
         panel.classList.toggle('open', open);
         if (overlay) overlay.classList.toggle('open', open);
@@ -3528,6 +3546,12 @@
                 <span class="del-tab" onclick="event.stopPropagation();deleteCustomTable('${t.id}','${esc(t.name)}')">&times;</span>
             </button>`
         ).join('');
+        const mobileNav = document.getElementById('custom-mobile-nav');
+        if (mobileNav) {
+            mobileNav.innerHTML = customTables.map(t =>
+                `<button type="button" data-test="more-nav-custom-${t.id}" onclick="openCustomTabFromMore('${t.id}')">📎 ${esc(t.name)}</button>`
+            ).join('');
+        }
     }
 
     function linkedRowSummary(linkedTableId, rowId) {
@@ -4263,30 +4287,25 @@
     });
 </script>
 
-<div id="tables-sub-bar" class="tables-sub-bar" aria-label="Table navigation">
-    <button class="active" data-sub="clients" onclick="showTableSub('clients')">👥 <span data-i18n="nav.clients">Clients</span></button>
-    <button data-sub="drivers" onclick="showTableSub('drivers')">🚕 <span data-i18n="nav.drivers">Drivers</span></button>
-    <button data-sub="rides" onclick="showTableSub('rides')">🚗 <span data-i18n="nav.rides">Rides</span></button>
-    <button data-sub="jobs" onclick="showTableSub('jobs')">💼 <span data-i18n="nav.jobs">Jobs</span></button>
-</div>
 <nav class="bottom-nav" aria-label="Chauffeur navigation" data-test="chauffeur-bottom-nav">
     <div class="bottom-nav-inner">
         <button type="button" class="active" data-tab="dashboard" data-test="bottom-nav-dashboard" onclick="bottomNavGo('dashboard')"><span class="ico" aria-hidden="true">🏠</span><span data-i18n="nav.home">Home</span></button>
-        <button type="button" data-tab="tables" data-test="bottom-nav-tables" onclick="bottomNavGo('tables')"><span class="ico" aria-hidden="true">📊</span><span>Tables</span></button>
+        <button type="button" data-tab="tables" data-test="bottom-nav-tables" onclick="bottomNavGo('tables')"><span class="ico" aria-hidden="true">📊</span><span data-i18n="nav.tables">Tables</span></button>
         <button type="button" data-tab="invoices" data-test="bottom-nav-invoices" onclick="bottomNavGo('invoices')"><span class="ico" aria-hidden="true">🧾</span><span data-i18n="nav.invoices">Invoices</span></button>
-        <button type="button" data-tab="settings" data-test="bottom-nav-settings" onclick="toggleMoreSheet()"><span class="ico" aria-hidden="true">⚙️</span><span>Settings</span></button>
+        <button type="button" data-tab="settings" data-test="bottom-nav-settings" onclick="toggleMoreSheet()"><span class="ico" aria-hidden="true">⚙️</span><span data-i18n="nav.settings">Settings</span></button>
     </div>
 </nav>
 <div class="more-overlay" id="more-overlay" onclick="closeMoreSheet()"></div>
 <div id="more-sheet" class="more-sheet" role="menu" aria-label="Settings">
-    <h3>Settings</h3>
+    <h3 data-i18n="nav.settings">Settings</h3>
     <button type="button" data-test="more-nav-activity" onclick="showTabFromMore('activity')">📋 <span data-i18n="nav.activity">Activity</span></button>
     <button type="button" data-test="more-nav-api" onclick="showTabFromMore('api')">🔌 <span data-i18n="nav.api">API Spec</span></button>
     <button type="button" onclick="openCreateTableModal(); closeMoreSheet();">➕ <span data-i18n="common.createCustomTable">New table</span></button>
+    <div id="custom-mobile-nav"></div>
     <button type="button" onclick="openHelp(); closeMoreSheet();">❓ <span data-i18n="nav.help">Help</span></button>
     <div class="more-sheet-divider"></div>
     <button type="button" data-test="more-nav-account" onclick="openAccountFromMore()">👤 <span data-i18n="account.settings">Account &amp; settings</span></button>
-    <a href="/freelance.html" data-test="more-freelance-mode">💼 <span data-i18n="account.freelanceMode">Switch to Freelance mode</span></a>
+    <a href="/freelance.html" class="menu-item-freelance" data-test="more-freelance-mode" onclick="closeMoreSheet()">💼 <span data-i18n="account.freelanceMode">Switch to Freelance mode</span></a>
     <div class="more-sheet-divider"></div>
     <button type="button" class="menu-item-danger" onclick="doLogout()" data-i18n="account.logout">Logout</button>
 </div>

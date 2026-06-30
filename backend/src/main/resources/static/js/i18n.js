@@ -26,6 +26,8 @@
         help: 'Help',
         home: 'Home',
         more: 'More',
+        tables: 'Tables',
+        settings: 'Settings',
       },
       account: {
         label: 'Account',
@@ -702,6 +704,8 @@
         help: 'Ayuda',
         home: 'Inicio',
         more: 'Más',
+        tables: 'Tablas',
+        settings: 'Ajustes',
       },
       account: {
         label: 'Cuenta',
