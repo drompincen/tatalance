@@ -135,6 +135,9 @@ jobs:
           version_label: ${{ github.sha }}-${{ env.TARGET_ENV }}
           deployment_package: tatalance-0.0.1-SNAPSHOT.jar
           wait_for_environment_recovery: 120
+          # Allow re-deploying the same commit (e.g. workflow_dispatch re-runs): reuse the
+          # existing application version instead of failing on a duplicate version label.
+          use_existing_version_if_available: true
 
   e2e:
     needs: deploy
