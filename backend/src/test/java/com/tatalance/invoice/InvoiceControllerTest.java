@@ -1,5 +1,7 @@
 package com.tatalance.invoice;
 
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
 import com.tatalance.SecurityConfig;
 import com.tatalance.activity.ActivityLogger;
 import com.tatalance.profile.ProfileRepository;
@@ -355,5 +357,40 @@ class InvoiceControllerTest {
         mockMvc.perform(get("/api/invoices?page=0&size=10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)));
+    }
+
+    @Test
+    void should_downloadPdf_withLiveVenmoOnPreexistingInvoice() throws Exception {
+        var invoice = sampleInvoice();
+        invoice.setVenmoHandle(null);
+        AppUser user = new AppUser();
+        user.setId(TEST_USER_ID);
+        user.setVenmoHandle("@luchi");
+        when(invoiceRepository.findByIdAndUserId("inv001", TEST_USER_ID)).thenReturn(Optional.of(invoice));
+        when(appUserRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
+
+        byte[] pdf = mockMvc.perform(get("/api/invoices/inv001/pdf"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"))
+                .andReturn()
+                .getResponse()
+                .getContentAsByteArray();
+
+        String text = extractPdfText(pdf);
+        org.junit.jupiter.api.Assertions.assertTrue(text.contains("Pay via Venmo: @luchi"));
+    }
+
+    private static String extractPdfText(byte[] pdf) throws Exception {
+        PdfReader reader = new PdfReader(pdf);
+        try {
+            PdfTextExtractor extractor = new PdfTextExtractor(reader);
+            StringBuilder sb = new StringBuilder();
+            for (int page = 1; page <= reader.getNumberOfPages(); page++) {
+                sb.append(extractor.getTextFromPage(page));
+            }
+            return sb.toString();
+        } finally {
+            reader.close();
+        }
     }
 }

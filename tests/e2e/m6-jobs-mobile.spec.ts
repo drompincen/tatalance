@@ -8,10 +8,10 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
   test.beforeEach(async ({ page }) => {
     mobile = new MobilePage(page);
     await useAccountWideProfileScope(page);
-    await expect(page.locator('#hamburger')).toBeVisible();
+    await expect(page.locator('[data-test="chauffeur-bottom-nav"]')).toBeVisible();
   });
 
-  test('Jobs tab reachable in two taps from dashboard via hamburger', async ({ page }) => {
+  test('Jobs tab reachable in two taps from dashboard via Tables sub-bar', async ({ page }) => {
     await expect(page.locator('#tab-dashboard.active')).toBeVisible();
     await mobile.openTab('btn-jobs');
     await expect(page.locator('#tab-jobs.active')).toBeVisible();

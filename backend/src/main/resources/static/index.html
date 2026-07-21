@@ -6,7 +6,12 @@
     <title>Tatalance — POC</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+        :root {
+            --bg: #f8f9fc; --surface: #fff; --text: #1a1a2e; --muted: #4b5563;
+            --border: #e5e7eb; --primary: #6366f1; --primary-soft: #eef2ff;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); }
 
         /* ── Header ── */
         header {
@@ -93,7 +98,7 @@
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
 
         /* ── Tabs in header ── */
-        nav { margin-left: auto; display: flex; gap: 2px; }
+        #main-nav { margin-left: auto; display: flex; gap: 2px; }
         .tab-btn {
             background: transparent;
             border: none;
@@ -134,10 +139,14 @@
         .btn:disabled { opacity: .5; cursor: not-allowed; }
         .btn-cancel { width: auto; display: inline-block; background: #666; margin-left: 8px; padding: 10px 18px; }
         .btn-cancel:hover { background: #888; }
-        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; font-weight: 500; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; color: #1a1a2e; cursor: pointer; font-weight: 500; }
         .btn-sm:hover { background: #f0f0f0; }
+        .btn.btn-sm { background: #fff; color: #1a1a2e; border: 1px solid #ddd; }
+        .btn.btn-outline { background: transparent; border: 1.5px solid #e2e8f0; color: #1a1a2e; }
+        .btn.btn-outline:hover { background: #f8fafc; }
         .btn-danger { color: #e53e3e; border-color: #e53e3e; }
         .btn-danger:hover { background: #fff5f5; }
+        .menu-item-danger { color: #b91c1c; font-weight: 600; }
         .filter-btn { padding: 4px 12px; font-size: 0.78rem; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; cursor: pointer; color: #6b7280; font-weight: 500; transition: all .15s; }
         .filter-btn:hover { background: #f7fafc; border-color: #cbd5e0; }
         .filter-btn.active { background: #2d3748; color: #fff; border-color: #2d3748; }
@@ -166,8 +175,9 @@
         .form-feedback.fail { color: #e53e3e; }
 
         /* ── Dashboard ── */
-        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-        .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; min-width: 0; }
+        .dash-detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; min-width: 0; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); min-width: 0; }
         .stat-card .stat-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 8px; }
         .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; }
         .stat-card .stat-sub { font-size: 0.78rem; color: #6b7280; margin-top: 4px; }
@@ -176,14 +186,14 @@
         .stat-card.accent-orange { border-left: 4px solid #f59e0b; }
         .stat-card.accent-purple { border-left: 4px solid #8b5cf6; }
         .stat-card.accent-red { border-left: 4px solid #ef4444; }
-        .status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .status-bar-label { font-size: 0.82rem; width: 110px; text-align: right; color: #374151; font-weight: 500; }
-        .status-bar-track { flex: 1; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden; }
-        .status-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 0.72rem; font-weight: 600; color: white; min-width: fit-content; transition: width .4s ease; }
-        .revenue-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; min-width: 0; }
+        .status-bar-label { font-size: 0.82rem; width: 110px; flex-shrink: 0; text-align: right; color: #374151; font-weight: 500; }
+        .status-bar-track { flex: 1; min-width: 0; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden; }
+        .status-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 0.72rem; font-weight: 600; color: white; min-width: 0; overflow: hidden; transition: width .4s ease; }
+        .revenue-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; min-width: 0; }
         .revenue-line:last-child { border-bottom: none; }
-        .revenue-label { color: #374151; font-weight: 500; }
-        .revenue-value { font-weight: 700; color: #1a1a2e; }
+        .revenue-label { color: #374151; font-weight: 500; min-width: 0; }
+        .revenue-value { font-weight: 700; color: #1a1a2e; flex-shrink: 0; }
         .revenue-value.green { color: #10b981; }
         .revenue-value.red { color: #ef4444; }
 
@@ -402,42 +412,26 @@
             background: rgba(255,255,255,.06); cursor: pointer;
         }
         .account-trigger:hover { background: rgba(255,255,255,.12); color: #fff; }
-        .account-menu-panel {
-            display: none; position: fixed; right: 24px; min-width: 220px;
+        .account-dropdown {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 200px;
             background: #fff; color: #1a1a2e; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
-            padding: 10px 0; z-index: 200;
+            padding: 6px 0; z-index: 210;
         }
-        .account-menu-panel.open { display: block; }
-        .account-menu-label {
-            display: block; padding: 6px 14px 4px; font-size: 0.68rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: .04em; color: #64748b;
+        .account-dropdown.open { display: block; }
+        .account-dropdown button {
+            display: block; width: 100%; text-align: left; padding: 10px 14px; font-size: 0.85rem;
+            border: none; background: none; color: #1a1a2e; cursor: pointer; min-height: 44px;
         }
-        .account-menu-panel select {
-            display: block; width: calc(100% - 28px); margin: 0 14px 8px;
-            padding: 6px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.82rem;
-            background: #fff; color: #1a1a2e;
-        }
-        .account-menu-panel select option {
-            background: #fff;
-            color: #1a1a2e;
-        }
-        .account-menu-panel a,
-        .account-menu-panel button.menu-item {
-            display: block; width: 100%; text-align: left; padding: 9px 14px; font-size: 0.85rem;
-            border: none; background: none; color: #1a1a2e; cursor: pointer; text-decoration: none;
-        }
-        .account-menu-panel a:hover,
-        .account-menu-panel button.menu-item:hover { background: #f1f5f9; }
-        .account-menu-panel .menu-item-danger { color: #b91c1c; }
-        .account-menu-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
-        .user-menu .logout-btn { font-size: 0.78rem; padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: rgba(255,255,255,.7); cursor: pointer; font-weight: 500; transition: all .15s; }
-        .user-menu .logout-btn:hover { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.5); }
+        .account-dropdown button:hover { background: #f1f5f9; }
+        .account-dropdown .menu-item-danger { color: #b91c1c; font-weight: 600; }
+        .account-dropdown-divider { height: 1px; background: #e2e8f0; margin: 4px 0; }
+
         .search-box input {
             padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25);
             background: rgba(255,255,255,.1); color: white; font-size: .82rem; width: 160px;
         }
         .search-box input::placeholder { color: rgba(255,255,255,.45); }
-        .mobile-logout-only { display: none; }
+
         .nav-drawer-only { display: none; text-decoration: none; }
         .nav-mode-switch {
             display: none; margin: 8px 16px 12px; padding: 14px 16px; border-radius: 12px;
@@ -451,16 +445,98 @@
             text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.45);
         }
         .menu-item-freelance { font-weight: 700; color: #4f46e5 !important; }
-        .account-menu-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 104;
+        #tab-settings .account-tax-row {
+            display: flex; gap: 6px; align-items: center;
         }
-        .account-menu-overlay.open { display: block; }
-        .account-menu-panel .account-tax-row {
-            display: flex; gap: 6px; align-items: center; padding: 0 14px 10px;
-        }
-        .account-menu-panel .account-tax-row input {
+        #tab-settings .account-tax-row input {
             flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;
         }
+        #tab-settings .account-venmo-row input {
+            width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;
+            margin-bottom: 6px;
+        }
+        #tab-settings .settings-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .bottom-nav {
+            display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+            background: #fff; border-top: 1px solid #e5e7eb;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+        }
+        .bottom-nav-inner {
+            display: grid; grid-template-columns: repeat(4, 1fr); max-width: 1020px; margin: 0 auto;
+        }
+        .bottom-nav button {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+            min-height: 56px; padding: 8px 4px; border: none; background: transparent;
+            font-size: .75rem; font-weight: 700; color: var(--muted); cursor: pointer;
+        }
+        .bottom-nav button .ico { font-size: 1.1rem; line-height: 1; }
+        .bottom-nav button.active { color: var(--primary); background: var(--primary-soft); }
+        .tables-sub-bar {
+            display: none !important; position: sticky;
+            top: calc(48px + env(safe-area-inset-top)); z-index: 95;
+            background: #f8f9fc; border-bottom: 1px solid #e5e7eb;
+            padding: 6px 12px; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            box-shadow: 0 2px 6px rgba(0,0,0,.06);
+        }
+        .tables-sub-bar button {
+            flex: 1; min-width: 0; padding: 8px 12px; border: none; border-radius: 8px;
+            background: transparent; font-size: .78rem; font-weight: 600; color: var(--muted);
+            cursor: pointer; white-space: nowrap;
+        }
+        .tables-sub-bar button.active { background: #6366f1; color: #fff; }
+        .tables-more-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 104;
+        }
+        .tables-more-overlay.open { display: block; }
+        .tables-more-sheet {
+            display: none; position: fixed; left: 12px; right: 12px; z-index: 108;
+            top: calc(48px + env(safe-area-inset-top) + 44px);
+            background: #fff; color: #1a1a2e; border-radius: 12px;
+            max-height: min(60vh, 420px); overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,.18);
+            border: 1px solid #e5e7eb;
+        }
+        .tables-more-sheet.open { display: block; }
+        .tables-more-sheet h3 {
+            padding: 12px 14px 8px; font-size: .82rem; font-weight: 800; margin: 0;
+            text-transform: uppercase; letter-spacing: .04em; color: #64748b;
+        }
+        .tables-more-sheet button {
+            display: block; width: 100%; text-align: left; padding: 12px 14px; font-size: .9rem;
+            border: none; background: none; color: #1a1a2e; cursor: pointer; min-height: 44px;
+        }
+        .tables-more-sheet button:hover { background: #f1f5f9; }
+        .tables-more-sheet .tables-custom-empty {
+            padding: 12px 14px 14px; font-size: .82rem; color: #6b7280; margin: 0;
+        }
+        .header-brand {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        .more-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 105;
+        }
+        .more-overlay.open { display: block; }
+        .more-sheet {
+            display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 110;
+            background: #fff; color: #1a1a2e; border-radius: 16px 16px 0 0;
+            max-height: 78vh; overflow-y: auto;
+            padding: 16px 0 calc(68px + env(safe-area-inset-bottom));
+            box-shadow: 0 -8px 32px rgba(0,0,0,.15);
+        }
+        .more-sheet.open { display: block; }
+        .more-sheet h3 {
+            padding: 0 16px 12px; font-size: 1rem; font-weight: 800; margin: 0;
+        }
+        .more-sheet button,
+        .more-sheet a {
+            display: block; width: 100%; text-align: left; padding: 12px 16px; font-size: .9rem;
+            border: none; background: none; color: #1a1a2e; cursor: pointer; text-decoration: none;
+            min-height: 44px;
+        }
+        .more-sheet button:hover,
+        .more-sheet a:hover { background: #f1f5f9; }
+        .more-sheet-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
         .jobs-freelance-banner {
             margin-bottom: 16px; padding: 14px 16px; border-radius: 10px;
             background: linear-gradient(135deg, #eef2ff, #fff); border: 2px solid #c7d2fe;
@@ -476,6 +552,15 @@
         .jobs-freelance-banner .banner-primary { background: #6366f1; color: #fff; }
         .jobs-freelance-banner .banner-secondary { background: #fff; color: #4338ca; border: 1.5px solid #c7d2fe !important; }
 
+        /* ── Mode switch in header ── */
+        .header-mode-switch {
+            font-size: .72rem; font-weight: 700; color: rgba(255,255,255,.7);
+            text-decoration: none; padding: 5px 10px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.2); background: rgba(99,102,241,.2);
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .header-mode-switch:hover { background: rgba(99,102,241,.35); color: #fff; }
+
         /* ── Hamburger menu ── */
         .hamburger { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; line-height: 1; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
         .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
@@ -490,55 +575,69 @@
                 min-height: 100dvh !important; 
                 min-height: -webkit-fill-available !important; 
                 padding-top: env(safe-area-inset-top); 
-                padding-bottom: env(safe-area-inset-bottom); 
+                padding-bottom: calc(56px + env(safe-area-inset-bottom)); 
             }
-            .header-top { padding: 0 12px; padding-top: env(safe-area-inset-top); height: auto; min-height: 48px; }
-            header h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .header-nav-row { display: block; position: absolute; width: 0; height: 0; overflow: visible; }
+            body.has-status-footer { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+            .bottom-nav { display: block; }
+            .tables-sub-bar.open { display: flex !important; }
+            .hamburger { display: none !important; }
+            .account-trigger { display: none !important; }
+            .header-top {
+                justify-content: space-between; gap: 12px; flex-wrap: wrap;
+                padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top));
+                height: auto; min-height: 48px;
+            }
+            .header-spacer { display: none; }
+            .header-brand { flex-shrink: 0; }
+            header h1 {
+                flex-shrink: 0; font-size: 1.15rem; letter-spacing: -0.5px;
+                overflow: visible; text-overflow: unset; white-space: nowrap;
+            }
+            .header-mode-switch { font-size: .72rem; padding: 5px 10px; flex-shrink: 0; }
+            .header-actions { margin-left: auto; flex-shrink: 0; }
+            .header-nav-row { display: none; }
             .user-menu { flex-shrink: 0; }
             .account-trigger { padding: 4px 10px; font-size: 0.75rem; }
-            .account-menu-panel {
-                position: fixed; top: auto; bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0;
-                max-height: 78vh; overflow-y: auto; z-index: 110;
-                padding-bottom: calc(12px + env(safe-area-inset-bottom));
-            }
-            .account-menu-panel.open { display: block !important; }
+
             #link-google-btn { display: none !important; }
-            .hamburger { display: flex; align-items: center; }
             .status-footer { display: none; }
-            nav {
+            #main-nav {
                 display: none; position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 88vw);
                 background: #1a1a2e; flex-direction: column; padding: 12px 0 20px; z-index: 100;
                 gap: 0; margin-left: 0; overflow-y: auto; padding-top: calc(12px + env(safe-area-inset-top));
             }
-            nav.open { display: flex; }
+            #main-nav.open { display: flex; }
             .nav-mode-switch, .nav-section-label { display: block; }
-            nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; min-height: 44px; }
-            nav .tab-btn.active { background: rgba(255,255,255,.12); }
-            nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
-            nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
-            .user-menu { margin-left: auto; }
-            .account-trigger {
-                display: inline-flex !important; align-items: center; justify-content: center;
-                min-width: 44px; min-height: 44px; padding: 6px 10px; font-size: 0.72rem;
-            }
-            .mobile-logout-only { display: none; }
+            #main-nav .tab-btn { text-align: left; padding: 12px 24px; border-radius: 0; font-size: 0.95rem; min-height: 44px; }
+            #main-nav .tab-btn.active { background: rgba(255,255,255,.12); }
+            #main-nav .add-table-btn { margin: 12px 24px; width: auto; justify-content: flex-start; gap: 8px; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+            #main-nav .add-table-btn::after { content: ' New Table'; font-size: .85rem; }
+            #main-nav .help-btn { margin: 4px 24px; width: auto; justify-content: flex-start; padding: 10px 24px; border-radius: 0; font-size: .95rem; }
+
             .search-box { display: none; }
             .nav-drawer-only { display: none; }
-            header h1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            nav #custom-tab-buttons { display: contents; }
-            .page { margin: 16px auto; padding: 0 12px; }
+            #main-nav #custom-tab-buttons { display: contents; }
+            nav.bottom-nav {
+                display: block; position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+                width: auto; height: auto; flex-direction: row; background: #fff;
+                padding: 0 0 env(safe-area-inset-bottom); margin-left: 0; overflow: visible;
+            }
+            .page { margin: 16px auto; padding: 0 12px; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+            .dash-grid { grid-template-columns: 1fr; gap: 12px; }
+            .dash-detail-row { grid-template-columns: 1fr !important; gap: 16px; margin-top: 16px; }
+            .stat-card { padding: 16px; }
+            .stat-card .stat-value { font-size: 1.45rem; overflow-wrap: anywhere; }
+            .status-bar-label { width: auto; min-width: 72px; max-width: 42%; font-size: 0.75rem; }
             .grid-2 { grid-template-columns: 1fr; gap: 16px; }
             .api-grid { grid-template-columns: 1fr; }
             .card { padding: 16px; border-radius: 10px; }
             input, select, textarea { font-size: 16px !important; }
-            .btn { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
+            .btn:not(.btn-sm):not(.btn-outline) { width: 100%; padding: 12px; min-height: 44px; font-size: 1rem; position: sticky; bottom: 12px; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,.1); }
+            .btn.btn-sm, .btn.btn-outline { position: static; box-shadow: none; width: auto; }
             .btn-cancel { width: auto; position: static; box-shadow: none; }
             /* Jobs tab action buttons (Category C mobile) */
             #job-list .btn-sm { min-height: 44px; min-width: 44px; padding: 8px 12px; font-size: 0.85rem; }
             .complete-panel .field-row { flex-direction: column; gap: 8px; }
-            #dash-detail-row { grid-template-columns: 1fr !important; }
         }
 
         @media (max-width: 640px) {
@@ -568,7 +667,10 @@
 <header>
     <div class="header-top">
         <button class="hamburger" id="hamburger" onclick="toggleNav()" data-i18n-aria="account.openMenu" aria-label="Open menu">&#9776;</button>
-        <h1>Tatalance</h1>
+        <div class="header-brand">
+            <h1>Tatalance</h1>
+            <a href="/freelance.html" class="header-mode-switch" data-test="header-freelance-link" aria-label="Switch to Freelance mode">💼 <span data-i18n="nav.freelance">Freelance</span></a>
+        </div>
         <div class="header-spacer"></div>
         <div class="header-actions">
             <div class="lang-toggle" id="langToggle" onclick="toggleLang()" data-i18n-title="lang.switch" title="Switch language / Cambiar idioma">
@@ -582,19 +684,19 @@
                 <div id="search-results" style="display:none;position:absolute;top:100%;right:0;min-width:300px;background:white;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:4px;z-index:200;max-height:400px;overflow-y:auto;"></div>
             </div>
             <div class="user-menu">
-                <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="toggleAccountMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu-panel" aria-label="Account settings">
+                <button type="button" class="account-trigger" id="account-menu-btn" data-test="mobile-account-btn" onclick="toggleAccountDropdown(event)" aria-haspopup="true" aria-expanded="false" aria-controls="account-dropdown" aria-label="Account menu">
                     <span id="username-display">Account</span> ▾
                 </button>
+                <div id="account-dropdown" class="account-dropdown" role="menu" aria-label="Account menu">
+                    <button type="button" class="menu-item" data-test="account-dropdown-settings" onclick="openAccountSettingsFromDropdown(event)" role="menuitem" data-i18n="account.settings">Account &amp; settings</button>
+                    <div class="account-dropdown-divider"></div>
+                    <button type="button" class="menu-item menu-item-danger" data-test="account-dropdown-logout" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
+                </div>
             </div>
-            <button class="logout-btn mobile-logout-only" onclick="doLogout()" data-i18n-aria="account.logout" aria-label="Logout" data-i18n="account.logout">Logout</button>
         </div>
     </div>
     <div class="header-nav-row">
         <nav id="main-nav" aria-label="Main navigation">
-            <a href="/freelance.html" class="nav-mode-switch" id="link-freelance-mobile" data-test="nav-freelance-mode">
-                <strong data-i18n="account.freelanceMode">Freelance mode</strong>
-                <small>Jobs, timer, ENGINEER profile &amp; invoicing</small>
-            </a>
             <div class="nav-section-label" data-i18n="nav.chauffeurOps">Chauffeur ops</div>
             <button class="tab-btn active" id="btn-dashboard" onclick="showTab('dashboard')" data-i18n="nav.dashboard">Dashboard</button>
             <button class="tab-btn" id="btn-clients" onclick="showTab('clients')" data-i18n="nav.clients">Clients</button>
@@ -611,25 +713,20 @@
     </div>
 </header>
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
-<div class="account-menu-overlay" id="account-menu-overlay" onclick="closeAccountMenu()"></div>
-<div id="account-menu-panel" class="account-menu-panel" role="menu" aria-label="Account menu">
-    <span class="account-menu-label" data-i18n="account.profile">Profile</span>
-    <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
-        <option value="" data-i18n="account.allProfiles">All (account)</option>
-    </select>
-    <div class="account-menu-divider"></div>
-    <button type="button" class="menu-item" onclick="showProfileManager(); closeAccountMenu();" role="menuitem" data-i18n="account.manageProfiles">Manage profiles</button>
-    <span class="account-menu-label" data-i18n="invoice.tax">Tax</span>
-    <div class="account-tax-row">
-        <input type="number" id="account-tax-rate" min="0" max="100" step="0.01" value="8" aria-label="Invoice tax percent">
-        <span style="font-size:.8rem;color:#64748b">%</span>
-        <button type="button" class="btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
-    </div>
-    <button type="button" class="menu-item" id="link-google-btn" onclick="linkGoogle(); closeAccountMenu();" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
-    <a href="/freelance.html" class="menu-item menu-item-freelance" role="menuitem" data-test="account-freelance-link" data-i18n="account.freelanceMode">Freelance mode</a>
-    <button type="button" class="menu-item" onclick="openChangePassword(); closeAccountMenu();" role="menuitem" data-i18n="account.changePassword">Change password</button>
-    <div class="account-menu-divider"></div>
-    <button type="button" class="menu-item menu-item-danger" onclick="doLogout()" role="menuitem" data-i18n="account.logout">Logout</button>
+
+<div id="tables-sub-bar" class="tables-sub-bar" aria-label="Table navigation">
+    <button class="active" data-sub="clients" onclick="showTableSub('clients')">👥 <span data-i18n="nav.clients">Clients</span></button>
+    <button data-sub="drivers" onclick="showTableSub('drivers')">🚕 <span data-i18n="nav.drivers">Drivers</span></button>
+    <button data-sub="rides" onclick="showTableSub('rides')">🚗 <span data-i18n="nav.rides">Rides</span></button>
+    <button data-sub="jobs" onclick="showTableSub('jobs')">💼 <span data-i18n="nav.jobs">Jobs</span></button>
+    <button data-sub="more" data-test="tables-sub-more" onclick="showTableSub('more')">⋯ <span data-i18n="nav.more">More</span></button>
+</div>
+<div class="tables-more-overlay" id="tables-more-overlay" onclick="closeTablesMoreSheet()"></div>
+<div id="tables-more-sheet" class="tables-more-sheet" role="menu" aria-label="More tables">
+    <h3 data-i18n="nav.more">More</h3>
+    <button type="button" data-test="tables-more-new" onclick="openCreateTableModal(); closeTablesMoreSheet();">➕ <span data-i18n="common.createCustomTable">New table</span></button>
+    <div id="tables-custom-nav"></div>
+    <p id="tables-custom-empty" class="tables-custom-empty" style="display:none" data-i18n="customTable.noTablesYet">No custom tables yet</p>
 </div>
 
 <!-- ── Dashboard tab ── -->
@@ -649,7 +746,7 @@
             <div class="stat-card accent-purple"><div class="stat-label" data-i18n="dashboard.drivers">Drivers</div><div class="stat-value">...</div></div>
             <div class="stat-card accent-orange"><div class="stat-label" data-i18n="dashboard.activeJobs">Active Jobs</div><div class="stat-value">...</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px" id="dash-detail-row">
+        <div class="dash-detail-row" id="dash-detail-row">
             <div class="card">
                 <div class="card-title" data-i18n="dashboard.ridesByStatus">Rides by status</div>
                 <div id="dash-status-bars"><p class="muted" data-i18n="dashboard.loadingStatus">Loading status…</p></div>
@@ -962,6 +1059,39 @@
             </div>
             <div id="invoice-list"></div>
             <div class="refresh-ts" id="invoice-ts"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Settings tab ── -->
+<div id="tab-settings" class="tab-pane" data-test="account-settings-tab">
+    <div class="page">
+        <h2 style="font-size:1.35rem;font-weight:800;margin-bottom:20px;letter-spacing:-.02em" data-i18n="nav.settings">Settings</h2>
+        <div class="card" style="max-width:420px">
+            <div class="card-title" data-i18n="account.profile">Profile</div>
+            <div class="field">
+                <label data-i18n="account.activeProfile">Active profile</label>
+                <select id="profile-switcher" onchange="switchProfile(this.value)" aria-label="Switch profile">
+                    <option value="" data-i18n="account.allProfiles">All (account)</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-sm" onclick="showProfileManager()" data-i18n="account.manageProfiles">Manage profiles</button>
+            <div class="card-title" style="margin-top:20px" data-i18n="account.payment">Payment</div>
+            <div class="account-venmo-row">
+                <input type="text" id="account-venmo-handle" placeholder="@luchi" autocomplete="off" data-i18n-placeholder="account.venmoPlaceholder" aria-label="Venmo handle" data-test="account-venmo-input">
+                <p style="font-size:.75rem;color:#64748b;margin:0 0 8px" data-i18n="account.venmoHint">Shown on invoice PDFs for clients to pay you.</p>
+                <button type="button" class="btn btn-sm" onclick="saveAccountVenmo()" style="width:100%;min-height:44px" data-test="account-venmo-save" data-i18n="account.saveVenmo">Save Venmo</button>
+            </div>
+            <div class="card-title" style="margin-top:20px" data-i18n="invoice.tax">Tax</div>
+            <div class="account-tax-row">
+                <input type="number" id="account-tax-rate" min="0" max="100" step="0.01" value="8" aria-label="Invoice tax percent">
+                <span style="font-size:.8rem;color:#64748b">%</span>
+                <button type="button" class="btn btn-sm" onclick="saveAccountTaxRate()" style="white-space:nowrap;min-height:44px">Save</button>
+            </div>
+            <div class="settings-actions">
+                <button type="button" class="btn btn-outline btn-sm" id="link-google-btn" onclick="linkGoogle()" style="display:none" data-i18n="account.linkGoogle">Link Google account</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="openChangePassword()" data-i18n="account.changePassword">Change password</button>
+            </div>
         </div>
     </div>
 </div>
@@ -1370,15 +1500,35 @@
             // Also ensure mobile nav elements are visible by forcing some styles
             const style = document.createElement('style');
             style.textContent = `
-                body.force-mobile .hamburger { display: flex !important; }
-                body.force-mobile nav { display: none; }
-                body.force-mobile nav.open { display: flex !important; }
+                body.force-mobile .hamburger { display: none !important; }
+                body.force-mobile .bottom-nav { display: block !important; }
+                body.force-mobile .tables-sub-bar.open { display: flex !important; }
+
+                body.force-mobile .account-trigger { display: none !important; }
+                body.force-mobile #main-nav { display: none; }
+                body.force-mobile #main-nav.open { display: flex !important; }
+                body.force-mobile nav.bottom-nav {
+                    display: block !important; position: fixed !important; left: 0 !important; right: 0 !important;
+                    bottom: 0 !important; top: auto !important; width: auto !important; height: auto !important;
+                }
                 body.force-mobile .nav-overlay.open { display: block !important; }
-                body.force-mobile .account-trigger { display: inline-flex !important; }
+                body.force-mobile .account-trigger { display: none !important; }
                 body.force-mobile .nav-mode-switch, body.force-mobile .nav-section-label { display: block !important; }
-                body.force-mobile .account-menu-panel.open { display: block !important; }
-                body.force-mobile header { padding: 0 12px !important; }
-                body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; }
+
+                body.force-mobile .header-top {
+                    justify-content: space-between !important; gap: 12px !important; flex-wrap: wrap !important;
+                    padding: 12px 16px !important; padding-top: calc(12px + env(safe-area-inset-top)) !important;
+                }
+                body.force-mobile .header-spacer { display: none !important; }
+                body.force-mobile header h1 {
+                    flex-shrink: 0 !important; overflow: visible !important; text-overflow: unset !important;
+                }
+                body.force-mobile .header-actions { margin-left: auto !important; flex-shrink: 0 !important; }
+                body.force-mobile .page { margin: 8px auto !important; padding: 0 8px !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; overflow-x: hidden !important; }
+                body.force-mobile .header-nav-row { display: none !important; }
+                body.force-mobile .dash-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+                body.force-mobile .dash-detail-row { grid-template-columns: 1fr !important; gap: 16px !important; margin-top: 16px !important; }
+                body.force-mobile .stat-card .stat-value { font-size: 1.45rem !important; overflow-wrap: anywhere !important; }
                 /* Full mobile simulation for flag testing (dvh, fonts, btns, jobs etc) */
                 body.force-mobile input, body.force-mobile select, body.force-mobile textarea { font-size: 16px !important; }
                 body.force-mobile .btn { width: 100% !important; padding: 12px !important; min-height: 44px !important; font-size: 1rem !important; }
@@ -1389,8 +1539,12 @@
         }
     })();
 
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.user-menu')) closeAccountDropdown();
+    });
+
     function toggleNav() {
-        closeAccountMenu();
+        closeAccountDropdown();
         document.getElementById('main-nav').classList.toggle('open');
         document.getElementById('nav-overlay').classList.toggle('open');
     }
@@ -1398,33 +1552,153 @@
         document.getElementById('main-nav').classList.remove('open');
         document.getElementById('nav-overlay').classList.remove('open');
     }
-    function toggleAccountMenu() {
-        const panel = document.getElementById('account-menu-panel');
-        const overlay = document.getElementById('account-menu-overlay');
-        const btn = document.getElementById('account-menu-btn');
-        if (!panel || !btn) return;
-        const open = !panel.classList.contains('open');
-        if (open) closeNav();
-        if (open && window.innerWidth > 768) {
-            const rect = btn.getBoundingClientRect();
-            panel.style.top = (rect.bottom + 6) + 'px';
-            panel.style.right = (window.innerWidth - rect.right) + 'px';
-        }
-        panel.classList.toggle('open', open);
-        if (overlay) overlay.classList.toggle('open', open);
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    const TABLE_TABS = new Set(['clients', 'drivers', 'rides', 'jobs']);
+    const SETTINGS_TABS = new Set(['activity', 'api', 'settings']);
+
+    function syncBottomNav(tabName) {
+        let activeBtn = 'dashboard';
+        if (TABLE_TABS.has(tabName) || tabName === 'tables-more' || (tabName && tabName.startsWith('custom-'))) activeBtn = 'tables';
+        else if (tabName === 'invoices') activeBtn = 'invoices';
+        else if (SETTINGS_TABS.has(tabName)) activeBtn = 'settings';
+        document.querySelectorAll('.bottom-nav button[data-tab]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === activeBtn);
+        });
     }
-    function closeAccountMenu() {
-        const panel = document.getElementById('account-menu-panel');
-        const overlay = document.getElementById('account-menu-overlay');
-        const btn = document.getElementById('account-menu-btn');
-        if (panel) panel.classList.remove('open');
+
+    let lastTableTab = 'clients';
+    function closeTablesMoreSheet() {
+        const sheet = document.getElementById('tables-more-sheet');
+        const overlay = document.getElementById('tables-more-overlay');
+        if (sheet) sheet.classList.remove('open');
         if (overlay) overlay.classList.remove('open');
+    }
+    function toggleTablesMoreSheet() {
+        closeMoreSheet();
+        const sheet = document.getElementById('tables-more-sheet');
+        const overlay = document.getElementById('tables-more-overlay');
+        if (!sheet) return;
+        const open = !sheet.classList.contains('open');
+        sheet.classList.toggle('open', open);
+        if (overlay) overlay.classList.toggle('open', open);
+        document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+            b.classList.toggle('active', b.dataset.sub === 'more');
+        });
+        syncBottomNav('tables-more');
+    }
+    function showTableSub(name) {
+        if (name === 'more') {
+            showTablesBar();
+            toggleTablesMoreSheet();
+            syncBottomNav('tables-more');
+            return;
+        }
+        closeTablesMoreSheet();
+        lastTableTab = name;
+        showTab(name);
+        document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+            b.classList.toggle('active', b.dataset.sub === name);
+        });
+        syncBottomNav(name);
+    }
+    function showTablesBar() {
+        document.getElementById('tables-sub-bar').classList.add('open');
+    }
+    function hideTablesBar() {
+        document.getElementById('tables-sub-bar').classList.remove('open');
+    }
+    function closeMoreSheet() {
+        const sheet = document.getElementById('more-sheet');
+        const overlay = document.getElementById('more-overlay');
+        if (sheet) sheet.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
+    }
+    function toggleMoreSheet(ev) {
+        if (ev && ev.stopPropagation) ev.stopPropagation();
+        closeTablesMoreSheet();
+        const sheet = document.getElementById('more-sheet');
+        const overlay = document.getElementById('more-overlay');
+        if (!sheet) return;
+        const open = !sheet.classList.contains('open');
+        sheet.classList.toggle('open', open);
+        if (overlay) overlay.classList.toggle('open', open);
+        if (open) {
+            document.querySelectorAll('.bottom-nav button[data-tab]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === 'settings');
+            });
+        } else {
+            const activePane = document.querySelector('.tab-pane.active');
+            if (activePane) syncBottomNav(activePane.id.replace('tab-', ''));
+        }
+    }
+    function bottomNavGo(name) {
+        closeMoreSheet();
+        closeTablesMoreSheet();
+        if (name === 'tables') {
+            showTablesBar();
+            showTableSub(lastTableTab);
+        } else {
+            hideTablesBar();
+            showTab(name);
+        }
+    }
+    function showTabFromMore(name) {
+        closeMoreSheet();
+        if (TABLE_TABS.has(name)) {
+            showTablesBar();
+            showTableSub(name);
+        } else {
+            hideTablesBar();
+            showTab(name);
+        }
+    }
+    function openCustomTableTab(tableId) {
+        closeTablesMoreSheet();
+        showTablesBar();
+        showTab('custom-' + tableId);
+        document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+            b.classList.toggle('active', b.dataset.sub === 'more');
+        });
+        syncBottomNav('custom-' + tableId);
+    }
+    function closeAccountDropdown() {
+        const dropdown = document.getElementById('account-dropdown');
+        const btn = document.getElementById('account-menu-btn');
+        if (dropdown) dropdown.classList.remove('open');
         if (btn) btn.setAttribute('aria-expanded', 'false');
     }
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.user-menu') && !e.target.closest('#account-menu-panel')) closeAccountMenu();
-    });
+    function toggleAccountDropdown(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        const dropdown = document.getElementById('account-dropdown');
+        if (!dropdown) return;
+        const open = !dropdown.classList.contains('open');
+        closeAccountDropdown();
+        closeNav();
+        closeMoreSheet();
+        closeTablesMoreSheet();
+        if (open) {
+            dropdown.classList.add('open');
+            const btn = document.getElementById('account-menu-btn');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+        }
+    }
+    function openAccountSettingsFromDropdown(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        closeAccountDropdown();
+        openAccountSettings();
+    }
+    function openAccountSettings(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        closeAccountDropdown();
+        closeNav();
+        closeMoreSheet();
+        closeTablesMoreSheet();
+        showTab('settings');
+    }
+    function openAccountFromMore(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        closeMoreSheet();
+        showTab('settings');
+    }
 
     /* ── Tab switching ── */
     function showTab(name) {
@@ -1441,6 +1715,23 @@
         if (name === 'dashboard') loadDashboard();
         if (name === 'activity') loadActivity();
         closeNav();
+        closeMoreSheet();
+        closeTablesMoreSheet();
+        if (name && name.startsWith('custom-')) {
+            showTablesBar();
+            document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+                b.classList.toggle('active', b.dataset.sub === 'more');
+            });
+        } else if (TABLE_TABS.has(name)) {
+            showTablesBar();
+            document.querySelectorAll('#tables-sub-bar button').forEach(b => {
+                b.classList.toggle('active', b.dataset.sub === name);
+            });
+            lastTableTab = name;
+        } else {
+            hideTablesBar();
+        }
+        syncBottomNav(name);
         updateTabVisibility();
     }
 
@@ -2475,6 +2766,25 @@
         }
     };
 
+    window.saveAccountVenmo = async function() {
+        const input = document.getElementById('account-venmo-handle');
+        if (!input) return;
+        const raw = input.value.trim();
+        try {
+            const r = await fetch('/api/users/me/settings', {
+                method: 'PATCH',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ venmoHandle: raw || null })
+            });
+            if (!r.ok) throw new Error(await apiErrorFromResponse(r));
+            const updated = await r.json();
+            input.value = updated.venmoHandle || raw;
+        } catch (e) {
+            alert(tf('messages.failed', { message: resolveError(e, 'messages.requestFailed') }));
+        }
+    };
+
     let editingProfileId = null;
 
     function showProfileManager() {
@@ -2788,8 +3098,6 @@
         }
     };
 
-    loadClientDropdown();
-    loadAvailableDrivers();
     function toDatetimeLocalValue(d) {
         const pad = n => String(n).padStart(2, '0');
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -2810,14 +3118,6 @@
         d.setHours(d.getHours() + 1);
         el.value = toDatetimeLocalValue(d);
     }
-    defaultPickupDateTime();
-    loadRides();
-    setInterval(loadRides, 10000);
-    // load profiles for switcher (business owner multi-profile)
-    loadProfiles().then(updateTabVisibility);
-    setInterval(loadClientDropdown, 10000);
-    setInterval(loadAvailableDrivers, 10000);
-
     /* ── Jobs (Category B desktop UI — cards, live timer via driver-queue pattern, $20/hr hourly, start/complete via /start + /complete, est/scope via notes hack, title via pickupLocation) ── */
     let allJobsCache = [];
     let jobStatusFilter = 'ALL';
@@ -3231,9 +3531,12 @@
                 <td data-label="${esc(tf('invoice.table.tax'))}">$${i.tax}</td>
                 <td style="font-weight:700">$${i.total}</td>
                 <td><span style="font-size:.75rem;font-weight:600;color:${invStatusColors[i.status] || '#555'}">${statusLabel(i.status)}</span></td>
-                <td class="row-actions">${i.status === 'OUTSTANDING' ?
+                <td class="row-actions">
+                    <a href="/api/invoices/${i.id}/pdf" class="btn-sm" target="_blank" rel="noopener" data-test="invoice-pdf-link">${tf('invoice.actions.pdf')}</a>
+                    ${i.status === 'OUTSTANDING' ?
                     `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#f0fff4;color:#38a169;border-color:#38a169">${tf('invoice.actions.markPaid')}</button>` :
-                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">${tf('invoice.actions.markUnpaid')}</button>`}</td>
+                    `<button onclick="markPaid('${i.id}')" class="btn-sm" style="background:#fff5f5;color:#d97706;border-color:#d97706">${tf('invoice.actions.markUnpaid')}</button>`}
+                </td>
             </tr>`).join('')}</tbody>
         </table>` + paginationHtml('invoices', 'invoicePrev()', 'invoiceNext()');
     }
@@ -3355,6 +3658,14 @@
                 <span class="del-tab" onclick="event.stopPropagation();deleteCustomTable('${t.id}','${esc(t.name)}')">&times;</span>
             </button>`
         ).join('');
+        const tablesNav = document.getElementById('tables-custom-nav');
+        const tablesEmpty = document.getElementById('tables-custom-empty');
+        if (tablesNav) {
+            tablesNav.innerHTML = customTables.map(t =>
+                `<button type="button" data-test="tables-more-custom-${t.id}" onclick="openCustomTableTab('${t.id}')">📎 ${esc(t.name)}</button>`
+            ).join('');
+        }
+        if (tablesEmpty) tablesEmpty.style.display = customTables.length ? 'none' : 'block';
     }
 
     function linkedRowSummary(linkedTableId, rowId) {
@@ -3768,13 +4079,23 @@
                     : (data.defaultTaxRate != null ? Number(data.defaultTaxRate) * 100 : 8);
                 taxInput.value = pct;
             }
+            const venmoInput = document.getElementById('account-venmo-handle');
+            if (venmoInput) venmoInput.value = data.venmoHandle || '';
             const linkBtn = document.getElementById('link-google-btn');
             if (linkBtn && data.googleOAuthEnabled && data.googleLinked === false) linkBtn.style.display = 'block';
 
             // Only load data after confirmed auth — prevents extra fetches + partial UI that can look like hang on mobile
+            defaultPickupDateTime();
+            loadClientDropdown();
+            loadAvailableDrivers();
+            loadRides();
+            loadProfiles().then(updateTabVisibility);
             loadCustomTables();
-            setInterval(loadCustomTables, 15000);
             loadDashboard();
+            setInterval(loadRides, 10000);
+            setInterval(loadClientDropdown, 10000);
+            setInterval(loadAvailableDrivers, 10000);
+            setInterval(loadCustomTables, 15000);
         })
         .catch(() => {
             // On any error (incl network/auth), go to login
@@ -4079,6 +4400,26 @@
         if (document.getElementById('help-overlay')?.classList.contains('open')) renderHelpPanel();
     });
 </script>
+
+<nav class="bottom-nav" aria-label="Chauffeur navigation" data-test="chauffeur-bottom-nav">
+    <div class="bottom-nav-inner">
+        <button type="button" class="active" data-tab="dashboard" data-test="bottom-nav-dashboard" onclick="bottomNavGo('dashboard')"><span class="ico" aria-hidden="true">🏠</span><span data-i18n="nav.home">Home</span></button>
+        <button type="button" data-tab="tables" data-test="bottom-nav-tables" onclick="bottomNavGo('tables')"><span class="ico" aria-hidden="true">📊</span><span data-i18n="nav.tables">Tables</span></button>
+        <button type="button" data-tab="invoices" data-test="bottom-nav-invoices" onclick="bottomNavGo('invoices')"><span class="ico" aria-hidden="true">🧾</span><span data-i18n="nav.invoices">Invoices</span></button>
+        <button type="button" data-tab="settings" data-test="bottom-nav-settings" onclick="toggleMoreSheet(event)"><span class="ico" aria-hidden="true">⚙️</span><span data-i18n="nav.settings">Settings</span></button>
+    </div>
+</nav>
+<div class="more-overlay" id="more-overlay" onclick="closeMoreSheet()"></div>
+<div id="more-sheet" class="more-sheet" role="menu" aria-label="Settings">
+    <h3 data-i18n="nav.settings">Settings</h3>
+    <button type="button" data-test="more-nav-activity" onclick="showTabFromMore('activity')">📋 <span data-i18n="nav.activity">Activity</span></button>
+    <button type="button" data-test="more-nav-api" onclick="showTabFromMore('api')">🔌 <span data-i18n="nav.api">API Spec</span></button>
+    <button type="button" onclick="openHelp(); closeMoreSheet();">❓ <span data-i18n="nav.help">Help</span></button>
+    <div class="more-sheet-divider"></div>
+    <button type="button" data-test="more-nav-account" onclick="openAccountFromMore(event)">👤 <span data-i18n="account.settings">Account &amp; settings</span></button>
+    <div class="more-sheet-divider"></div>
+    <button type="button" class="menu-item-danger" onclick="doLogout()" data-i18n="account.logout">Logout</button>
+</div>
 
 <footer class="status-footer" aria-label="Environment status">
     <span class="badge badge-poc">POC</span>

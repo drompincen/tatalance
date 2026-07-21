@@ -1,21 +1,46 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 
+/** Header tab button ids → mobile bottom nav / tables sub-bar / settings sheet targets. */
+const TABLE_SUBS = new Set(['btn-clients', 'btn-drivers', 'btn-rides', 'btn-jobs']);
+const TAB_TARGETS: Record<string, { kind: 'bottom'; testId: string } | { kind: 'settings'; testId: string }> = {
+  'btn-dashboard': { kind: 'bottom', testId: 'bottom-nav-dashboard' },
+  'btn-invoices': { kind: 'bottom', testId: 'bottom-nav-invoices' },
+  'btn-activity': { kind: 'settings', testId: 'more-nav-activity' },
+  'btn-api': { kind: 'settings', testId: 'more-nav-api' },
+};
+
 export class MobilePage {
   constructor(readonly page: Page) {}
 
   async gotoApp() {
     await this.page.goto('/');
-    await expect(this.page.locator('#hamburger')).toBeVisible();
+    await expect(this.page.locator('[data-test="chauffeur-bottom-nav"]')).toBeVisible();
   }
 
   async openTab(buttonId: string) {
-    await this.page.locator('#hamburger').click();
-    await this.page.locator(`#${buttonId}`).click();
+    // Table tabs: tap Tables bottom nav, then the sub-bar button
+    if (TABLE_SUBS.has(buttonId)) {
+      await this.page.locator('[data-test="bottom-nav-tables"]').click();
+      const sub = buttonId.replace('btn-', '');
+      await this.page.locator(`#tables-sub-bar button[data-sub="${sub}"]`).click();
+      return;
+    }
+    const target = TAB_TARGETS[buttonId];
+    if (!target) {
+      throw new Error(`Unknown mobile tab button: ${buttonId}`);
+    }
+    if (target.kind === 'bottom') {
+      await this.page.locator(`[data-test="${target.testId}"]`).click();
+      return;
+    }
+    await this.page.locator('[data-test="bottom-nav-settings"]').click();
+    await this.page.locator(`[data-test="${target.testId}"]`).click();
   }
 
   async openAccountMenu() {
-    await this.page.locator('#account-menu-btn').click();
-    await expect(this.page.locator('#account-menu-panel.open')).toBeVisible();
+    await this.page.locator('[data-test="bottom-nav-settings"]').click();
+    await this.page.locator('[data-test="more-nav-account"]').click();
+    await expect(this.page.locator('#tab-settings.active')).toBeVisible();
   }
 
   async assertNoHorizontalScroll() {

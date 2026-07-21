@@ -4,7 +4,7 @@ import type { APIRequestContext, Page } from '@playwright/test';
 export async function useAccountWideProfileScope(page: Page) {
   await page.addInitScript(() => localStorage.removeItem('activeProfileId'));
   await page.goto('/index.html');
-  await page.waitForSelector('#hamburger', { timeout: 15_000 });
+  await page.waitForSelector('[data-test="chauffeur-bottom-nav"]', { timeout: 15_000 });
 }
 
 export const uniq = () => Math.random().toString(36).slice(2, 8);

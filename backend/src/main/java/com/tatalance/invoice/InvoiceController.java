@@ -135,9 +135,13 @@ public class InvoiceController {
     @ApiResponse(responseCode = "200", description = "PDF bytes")
     @GetMapping("/{id}/pdf")
     public void downloadPdf(@PathVariable String id, HttpServletResponse response) throws IOException {
-        Invoice invoice = invoiceRepository.findByIdAndUserId(id, authHelper.getCurrentUserId())
+        String userId = authHelper.getCurrentUserId();
+        Invoice invoice = invoiceRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
-        byte[] pdf = InvoicePdfService.render(invoice);
+        String liveVenmo = appUserRepository.findById(userId)
+                .map(AppUser::getVenmoHandle)
+                .orElse(null);
+        byte[] pdf = InvoicePdfService.render(invoice, liveVenmo);
         String filename = (invoice.getInvoiceNumber() != null ? invoice.getInvoiceNumber() : "invoice") + ".pdf";
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
