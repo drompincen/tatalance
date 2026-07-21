@@ -124,6 +124,11 @@ jobs:
           fi
 
       - name: Deploy to Elastic Beanstalk
+        id: eb_deploy
+        # continue-on-error: EB can finish the version deploy successfully while enhanced
+        # health stays Grey/Suspended (all envs observed 2026-07). The action then fails the
+        # job even though the JAR is live. Smoke-check below is the real pass/fail gate.
+        continue-on-error: true
         uses: einaregilsson/beanstalk-deploy@v22
         with:
           aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
@@ -134,10 +139,54 @@ jobs:
           region: us-east-1
           version_label: ${{ github.sha }}-${{ env.TARGET_ENV }}
           deployment_package: tatalance-0.0.1-SNAPSHOT.jar
-          wait_for_environment_recovery: 120
+          wait_for_environment_recovery: 60
           # Allow re-deploying the same commit (e.g. workflow_dispatch re-runs): reuse the
           # existing application version instead of failing on a duplicate version label.
           use_existing_version_if_available: true
+
+      - name: Confirm version + origin smoke (app responds)
+        env:
+          EXPECTED_VERSION: ${{ github.sha }}-${{ env.TARGET_ENV }}
+        run: |
+          set -e
+          ENV_NAME="tatalance-${TARGET_ENV}"
+          ORIGIN="http://${ENV_NAME}.eba-7u2dj39y.us-east-1.elasticbeanstalk.com"
+
+          # Ensure the environment is running the version we just shipped (not only "some" app).
+          for i in $(seq 1 24); do
+            CURRENT=$(aws elasticbeanstalk describe-environments \
+              --application-name tatalance \
+              --environment-names "$ENV_NAME" \
+              --query "Environments[0].VersionLabel" --output text 2>/dev/null || echo "")
+            echo "attempt $i: VersionLabel=$CURRENT (want $EXPECTED_VERSION)"
+            if [ "$CURRENT" = "$EXPECTED_VERSION" ]; then
+              break
+            fi
+            sleep 5
+          done
+          CURRENT=$(aws elasticbeanstalk describe-environments \
+            --application-name tatalance \
+            --environment-names "$ENV_NAME" \
+            --query "Environments[0].VersionLabel" --output text)
+          if [ "$CURRENT" != "$EXPECTED_VERSION" ]; then
+            echo "::error::EB still on '$CURRENT', expected '$EXPECTED_VERSION'. Deploy did not land."
+            exit 1
+          fi
+
+          # Health color can be Grey/Suspended while nginx still serves the app.
+          for i in $(seq 1 30); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$ORIGIN/login.html" || echo "000")
+            echo "attempt $i: HTTP $CODE $ORIGIN/login.html"
+            case "$CODE" in
+              200|301|302|401|403)
+                echo "Origin smoke OK (version $EXPECTED_VERSION)"
+                exit 0
+                ;;
+            esac
+            sleep 5
+          done
+          echo "::error::Origin not responding after deploy (version is $EXPECTED_VERSION)"
+          exit 1
 
   e2e:
     needs: deploy
