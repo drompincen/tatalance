@@ -16,6 +16,7 @@
 | Local/test DB | Flapdoodle embedded MongoDB |
 | Frontend | Plain HTML/JS in `static/` (not React) |
 | Hosting | AWS Elastic Beanstalk (branch-per-env) |
+| HTTPS / CDN | AWS CloudFront — one distribution per EB env (mobile HTTPS; EB origins are HTTP-only) |
 | CI/CD | GitHub Actions (OIDC deploy) |
 | Auth | Spring Security form login + optional Google OAuth; static `login.html` |
 | Errors | `GlobalExceptionHandler` + `ApiMessageResolver` (EN/ES via `Accept-Language`) |
@@ -110,3 +111,33 @@ Entries below marked **[SUPERSEDED]** are historical — kept for context, not c
 **Context:** The legacy `de.flapdoodle.embed.mongo` artifact does not auto-configure with Spring Boot 3. `@DataMongoTest` silently fails to start an embedded MongoDB, causing all repository tests to fail with connection refused.
 **Decision:** Use `de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x` in `test` scope.
 **Consequences:** `@DataMongoTest` slices work correctly. `@SpringBootTest` also auto-configures embedded MongoDB. No test profile MongoDB URI override needed.
+
+## 2026-07-20 CloudFront in front of each EB env for mobile HTTPS
+**Context:** Elastic Beanstalk's `*.eba-*.us-east-1.elasticbeanstalk.com` domains serve **HTTP only** — there is no TLS listener, so `https://<env>.elasticbeanstalk.com` simply times out. Mobile Safari (and most real-device testing) requires HTTPS. We needed HTTPS without buying a domain or managing a certificate.
+**Decision:** Put **one CloudFront distribution in front of each EB environment**. CloudFront terminates TLS with its free default `*.cloudfront.net` certificate and forwards to the EB origin. The distributions are created **manually in the console — they are NOT in the repo / IaC**.
+
+```
+Mobile browser ──HTTPS──▶ CloudFront (d……..cloudfront.net) ──HTTP:80──▶ EB nginx ──▶ Spring Boot
+     (viewer)             TLS terminated here                origin (no TLS)          API + static UI
+```
+
+Distribution behavior (all three identical; verified 2026-07-20 via `aws cloudfront get-distribution-config`):
+- **Viewer protocol:** `redirect-to-https` — plain `http://…cloudfront.net` is redirected up to HTTPS.
+- **Origin protocol:** `http-only`, port 80 — EB has no HTTPS for CloudFront to talk to.
+- **Allowed methods:** ALL (`GET/HEAD/OPTIONS/PUT/POST/PATCH/DELETE`) — the REST API needs writes.
+- **Cache policy:** AWS-managed **CachingDisabled** — nothing is cached (the app is dynamic).
+- **Origin request policy:** AWS-managed **AllViewer** — forwards **all** viewer headers, cookies, and query strings to the origin, including `Authorization`, the `JSESSIONID` cookie, and the CSRF token. This is why HTTP Basic, form-login sessions, and CSRF all keep working through CloudFront.
+
+Current domains (they are not in code — look them up with `aws cloudfront list-distributions --profile drom-admin`):
+
+| Env | HTTPS URL (open `/login.html`) | Distribution Id | Origin |
+|---|---|---|---|
+| drom | https://d22fckr1nry9y2.cloudfront.net | `ERMUPVT68E4VF` | tatalance-drom |
+| luciano | https://d1azhf85ydpcl8.cloudfront.net | `EQ5A0IC19GWVE` | tatalance-luciano |
+| prod | https://d233sbm7obwqjh.cloudfront.net | `E1U9J0OLW93VDR` | tatalance-prod |
+
+**Consequences:**
+- **`*.cloudfront.net` domains are random and assigned at creation.** Delete + recreate a distribution and the domain changes, breaking old bookmarks. This bit us on **2026-06-30**: an AWS billing lapse deleted the distributions, and recreating them produced the domains above — which is why previously-saved mobile links stopped working ("links not working after I upgraded my plan").
+- **No IaC** — these distributions are undocumented "pets." Recreating one is a manual console step; when you do, update the table above and `CLAUDE.md` → Cloud Infrastructure.
+- **CloudFront passes the origin's `401` through unchanged.** `/`, `/index.html`, and `/favicon.ico` return `401 WWW-Authenticate: Basic` (Spring Security `httpBasic`), and browsers auto-request `/favicon.ico` on every page — so the **native Basic-auth dialog can pop even on the public login/register pages**. Enter the app at **`/login.html`**. (See `docs/troubleshooting.md` → CloudFront / HTTPS.)
+- **Durable fix (not done yet):** a custom domain (Route 53 + an ACM certificate as a CloudFront alias) gives a stable URL that survives distribution recreation.

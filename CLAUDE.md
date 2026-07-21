@@ -106,6 +106,7 @@ If not, follow `docs/luciano-setup.md` Step 2.
 - MongoDB Atlas cluster: `tatalance-cluster.6mdixph.mongodb.net`
 - GitHub Actions deploys via OIDC (no long-lived AWS keys in repo)
 - Pipeline: push to branch → build JAR (Flapdoodle excluded via `-P-dev`) → deploy to matching EB env
+- HTTPS via CloudFront (one distribution per EB env; EB domains are HTTP-only and mobile needs HTTPS). The `*.cloudfront.net` domains are random and change if a distribution is recreated (recreated 2026-06-30 after a billing lapse, which broke old mobile links). Look up with `aws cloudfront list-distributions --profile drom-admin`. Current — drom `https://d22fckr1nry9y2.cloudfront.net`, luciano `https://d1azhf85ydpcl8.cloudfront.net`, prod `https://d233sbm7obwqjh.cloudfront.net`; open `/login.html`. How it works: `context/DECISIONS.md`.
 
 ---
 

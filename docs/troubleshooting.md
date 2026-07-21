@@ -127,6 +127,37 @@ aws elasticbeanstalk describe-environments \
 
 ---
 
+## Cloud (CloudFront / HTTPS)
+
+Each environment is fronted by a CloudFront distribution that terminates TLS — mobile needs HTTPS and the EB `*.elasticbeanstalk.com` domain is **HTTP-only**. How it works: `context/DECISIONS.md` → "CloudFront in front of each EB env for mobile HTTPS".
+
+### `https://…elasticbeanstalk.com` times out / mobile can't open the site
+
+**Symptom:** An `https://tatalance-<env>.eba-….elasticbeanstalk.com/...` link hangs forever and never loads (plain `http://` responds).
+
+**Cause:** EB serves **HTTP only** — there is no TLS on the `*.elasticbeanstalk.com` domain, so `https://` to it times out. HTTPS comes **only** from the per-env CloudFront distribution. Old CloudFront bookmarks break too if the distribution was recreated and got a new random domain (e.g. after the 2026-06-30 billing recreation).
+
+**Fix:** Use the current CloudFront HTTPS URL. Look them up:
+
+```bash
+aws cloudfront list-distributions --profile drom-admin \
+  --query "DistributionList.Items[].{Domain:DomainName,Enabled:Enabled,Origin:Origins.Items[0].DomainName}" \
+  --output table
+```
+
+Match the `Origin` (`tatalance-<env>`) to its `Domain`, then open `https://<domain>/login.html`.
+Current: drom `d22fckr1nry9y2`, luciano `d1azhf85ydpcl8`, prod `d233sbm7obwqjh`.
+
+### Native "Sign in to …cloudfront.net" username/password popup
+
+**Symptom:** A browser-native credentials dialog titled **Sign in to `d….cloudfront.net`** appears over the page, especially on mobile.
+
+**Cause:** Not a CloudFront or billing bug — CloudFront forwards the origin response unchanged. `/`, `/index.html`, and `/favicon.ico` return `401 WWW-Authenticate: Basic` (Spring Security `httpBasic`), and the browser auto-requests `/favicon.ico` on every page, so the native Basic dialog can pop even on the public login/register pages.
+
+**Fix / workaround:** Open the app at **`/login.html`** (the form login), not the root. Typing the app credentials (`admin` / `admin`) into the popup also authenticates. To remove the popup entirely, permit `/favicon.ico` and stop sending the Basic challenge to browsers in `SecurityConfig` — a code change, deferred.
+
+---
+
 ## GitHub / Git
 
 ### Can't push directly to `main`
