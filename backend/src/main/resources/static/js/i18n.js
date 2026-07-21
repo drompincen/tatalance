@@ -26,6 +26,8 @@
         help: 'Help',
         home: 'Home',
         more: 'More',
+        tables: 'Tables',
+        settings: 'Settings',
       },
       account: {
         label: 'Account',
@@ -474,6 +476,7 @@
         falseLabel: 'False label',
         deleteColumn: 'Delete Column',
         noRows: 'No rows yet',
+        noTablesYet: 'No custom tables yet',
         addColumnTitle: 'Add column',
       },
       search: {
@@ -702,6 +705,8 @@
         help: 'Ayuda',
         home: 'Inicio',
         more: 'Más',
+        tables: 'Tablas',
+        settings: 'Ajustes',
       },
       account: {
         label: 'Cuenta',
@@ -1150,6 +1155,7 @@
         falseLabel: 'Etiqueta falso',
         deleteColumn: 'Eliminar columna',
         noRows: 'Aún no hay filas',
+        noTablesYet: 'Aún no hay tablas personalizadas',
         addColumnTitle: 'Agregar columna',
       },
       search: {

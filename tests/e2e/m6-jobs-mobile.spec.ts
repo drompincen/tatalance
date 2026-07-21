@@ -11,7 +11,7 @@ test.describe('M6 — Jobs (freelance hourly) on iPhone SE', () => {
     await expect(page.locator('[data-test="chauffeur-bottom-nav"]')).toBeVisible();
   });
 
-  test('Jobs tab reachable in two taps from dashboard via More sheet', async ({ page }) => {
+  test('Jobs tab reachable in two taps from dashboard via Tables sub-bar', async ({ page }) => {
     await expect(page.locator('#tab-dashboard.active')).toBeVisible();
     await mobile.openTab('btn-jobs');
     await expect(page.locator('#tab-jobs.active')).toBeVisible();

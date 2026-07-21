@@ -9,12 +9,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.*;
 
+import com.tatalance.invoice.Invoice;
+import com.tatalance.invoice.InvoiceRepository;
 import com.tatalance.invoice.TaxRateResolver;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,13 +26,16 @@ public class UserController {
 
     private final AppUserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final InvoiceRepository invoiceRepository;
 
     @Autowired(required = false)
     private ClientRegistrationRepository clientRegistrationRepository;
 
-    public UserController(AppUserRepository repository, PasswordEncoder passwordEncoder) {
+    public UserController(AppUserRepository repository, PasswordEncoder passwordEncoder,
+                          InvoiceRepository invoiceRepository) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.invoiceRepository = invoiceRepository;
     }
 
     @GetMapping("/me")
@@ -112,6 +118,7 @@ public class UserController {
                 }
                 user.setVenmoHandle(handle);
             }
+            syncInvoiceVenmoHandles(user);
         }
         repository.save(user);
         Map<String, Object> out = new LinkedHashMap<>();
@@ -121,6 +128,21 @@ public class UserController {
         out.put("defaultTaxRatePercent", taxRatePercent(user.getDefaultTaxRate()));
         out.put("venmoHandle", user.getVenmoHandle() != null ? user.getVenmoHandle() : "");
         return ResponseEntity.ok(out);
+    }
+
+    private void syncInvoiceVenmoHandles(AppUser user) {
+        if (user.getId() == null) {
+            return;
+        }
+        List<Invoice> invoices = invoiceRepository.findByUserId(user.getId());
+        if (invoices.isEmpty()) {
+            return;
+        }
+        String handle = user.getVenmoHandle();
+        for (Invoice invoice : invoices) {
+            invoice.setVenmoHandle(handle);
+        }
+        invoiceRepository.saveAll(invoices);
     }
 
     private static BigDecimal taxRatePercent(BigDecimal rate) {

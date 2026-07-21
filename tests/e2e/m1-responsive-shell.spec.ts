@@ -27,13 +27,11 @@ test.describe('M1 — Responsive shell on iPhone SE', () => {
     await mobile.assertMinFontSize();
   });
 
-  test('account menu and freelance mode are reachable on mobile', async ({ page }) => {
+  test('account menu and freelance mode switch are reachable on mobile', async ({ page }) => {
+    await expect(page.locator('[data-test="header-freelance-link"]')).toBeVisible();
     await mobile.openAccountMenu();
-    await expect(page.locator('[data-test="account-freelance-link"]')).toBeVisible();
     await expect(page.locator('[data-test="account-venmo-input"]')).toBeVisible();
-    await page.locator('#account-menu-overlay').click();
-    await page.locator('[data-test="bottom-nav-more"]').click();
-    await expect(page.locator('[data-test="more-freelance-mode"]')).toBeVisible();
+    await expect(page.locator('[data-test="more-freelance-mode"]')).toHaveCount(0);
   });
 
   test('bottom nav fits within viewport width', async ({ page }) => {

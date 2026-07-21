@@ -14,7 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.tatalance.invoice.Invoice;
+import com.tatalance.invoice.InvoiceRepository;
+
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.containsString;
@@ -44,6 +48,9 @@ class UserControllerTest {
 
     @MockBean
     private UserDetailsService userDetailsService;
+
+    @MockBean
+    private InvoiceRepository invoiceRepository;
 
     private AppUser sampleUser() {
         AppUser u = new AppUser();
@@ -484,5 +491,28 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"no\",\"securityAnswer\":\"ans\",\"newPassword\":\"newp\"}"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateSettings_venmoHandle_backfillsInvoices() throws Exception {
+        AppUser u = sampleUser();
+        u.setId("user-1");
+        Invoice inv = new Invoice();
+        inv.setId("inv-1");
+        inv.setUserId("user-1");
+        inv.setVenmoHandle(null);
+        when(repository.findByUsername(USERNAME)).thenReturn(Optional.of(u));
+        when(invoiceRepository.findByUserId("user-1")).thenReturn(List.of(inv));
+        when(invoiceRepository.saveAll(any())).thenAnswer(i -> i.getArgument(0));
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        mockMvc.perform(patch("/api/users/me/settings").with(user(USERNAME))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"venmoHandle\":\"luchi\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.venmoHandle").value("@luchi"));
+
+        verify(invoiceRepository).saveAll(argThat(invoices ->
+                invoices.iterator().next().getVenmoHandle().equals("@luchi")));
     }
 }
